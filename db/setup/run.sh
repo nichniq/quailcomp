@@ -14,6 +14,33 @@ echo "Starting quailcomp database setup..."
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
+# Load environment variables from .env if present
+# This allows local development without exporting variables manually
+
+if [[ -f "$SCRIPT_DIR/.env" ]]; then
+  echo "Loading environment variables from .env"
+  set -a            # automatically export all variables
+  source "$SCRIPT_DIR/.env"
+  set +a
+fi
+
+# Verify that env variables required by psql are set
+
+REQUIRED_VARS=(
+  PGHOST
+  PGPORT
+  PGUSER
+  # PGPASSWORD # Add password if you know you need it
+  PGDATABASE
+)
+
+for var in "${REQUIRED_VARS[@]}"; do
+  if [[ -z "${!var:-}" ]]; then
+    echo "Error: required environment variable '$var' is not set"
+    exit 1
+  fi
+done
+
 # Execute setup files order:
 # 1. Roles must exist before databases can be owned
 # 2. Database must exist before schemas can be altered
