@@ -7,21 +7,18 @@
 
 set -euo pipefail
 
-echo "Starting quailcomp database setup..."
-
-# Resolve absolute path of this script's directory. This allows
-# it to be run from anywhere.
+# Resolve absolute path of this script's directory
+# This allows it to be run from anywhere
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
 # Load environment variables from .env if present
-# This allows local development without exporting variables manually
 
 if [[ -f "$SCRIPT_DIR/.env" ]]; then
   echo "Loading environment variables from .env"
-  set -a            # automatically export all variables
+  set -a # export following vars to environment
   source "$SCRIPT_DIR/.env"
-  set +a
+  set +a # turn off automatic export
 fi
 
 # Verify that env variables required by psql are set
@@ -30,7 +27,7 @@ REQUIRED_VARS=(
   PGHOST
   PGPORT
   PGUSER
-  # PGPASSWORD # Add password if you know you need it
+  # PGPASSWORD # Add password if needed
   PGDATABASE
 )
 
@@ -46,12 +43,13 @@ done
 # 2. Database must exist before schemas can be altered
 # 3. Schemas must exist before privileges can be applied
 #
-# -v ON_ERROR_STOP=1 tells psql to immediately stop if any SQL
-# statement fails instead of continuing silently.
+# -v ON_ERROR_STOP=1 - Stop immediately if any statement fails
+
+echo "Starting quailcomp database setup..."
 
 psql -v ON_ERROR_STOP=1 -f "$SCRIPT_DIR/001_roles.sql"
 psql -v ON_ERROR_STOP=1 -f "$SCRIPT_DIR/002_database.sql"
 psql -v ON_ERROR_STOP=1 -f "$SCRIPT_DIR/003_schemas.sql"
 psql -v ON_ERROR_STOP=1 -f "$SCRIPT_DIR/004_privileges.sql"
 
-echo "Quailcomp database setup completed successfully."
+echo "Quailcomp database setup completed successfully"
