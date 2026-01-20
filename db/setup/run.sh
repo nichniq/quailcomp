@@ -53,3 +53,8 @@ psql -v ON_ERROR_STOP=1 -f "$SCRIPT_DIR/003_schemas.sql"
 psql -v ON_ERROR_STOP=1 -f "$SCRIPT_DIR/004_privileges.sql"
 
 echo "Quailcomp database setup completed successfully"
+
+# Run verification
+
+echo "Running verification checks..."
+"$SCRIPT_DIR/verify.sh"
