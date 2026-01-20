@@ -10,6 +10,12 @@ GRANT SELECT, INSERT
 ON ALL TABLES IN SCHEMA public
 TO quailcomp_app;
 
+-- Grant privilege to existing sequences to quailcomp_app
+-- Required for auto-incrementing columns and sequence operations in triggers
+GRANT USAGE
+ON ALL SEQUENCES IN SCHEMA public
+TO quailcomp_app;
+
 -- Set default privileges for future tables to quailcomp_app
 ALTER DEFAULT PRIVILEGES -- Alter default privilege granted...
 FOR ROLE quailcomp_owner -- For objects created by quailcomp_owner...
@@ -17,3 +23,11 @@ IN SCHEMA public         -- In the public schema...
 GRANT SELECT, INSERT     -- Grant SELECT and INSERT... (append only)
 ON TABLES                -- For tables... (one object kind per ALTER)
 TO quailcomp_app;        -- To quailcomp_app
+
+-- Set default privileges for future sequences to quailcomp_app
+ALTER DEFAULT PRIVILEGES
+FOR ROLE quailcomp_owner
+IN SCHEMA public
+GRANT USAGE
+ON SEQUENCES
+TO quailcomp_app;
