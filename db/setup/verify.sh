@@ -52,17 +52,17 @@ echo ""
 # Helper functions
 pass() {
   echo -e "${GREEN}✓${NC} $1"
-  ((PASSED++))
+  ((PASSED++)) || true
 }
 
 fail() {
   echo -e "${RED}✗${NC} $1"
-  ((FAILED++))
+  ((FAILED++)) || true
 }
 
 warn() {
   echo -e "${YELLOW}⚠${NC} $1"
-  ((WARNINGS++))
+  ((WARNINGS++)) || true
 }
 
 section() {
@@ -76,13 +76,13 @@ check_role() {
   local role_name=$1
   local expected_login=$2
 
-  local result=$(psql -tAc "SELECT 1 FROM pg_roles WHERE rolname = '$role_name';")
+  result=$(psql -d postgres -tAc "SELECT 1 FROM pg_roles WHERE rolname = '$role_name';")
 
   if [[ "$result" == "1" ]]; then
     pass "Role '$role_name' exists"
 
     # Check login capability
-    local can_login=$(psql -tAc "SELECT rolcanlogin FROM pg_roles WHERE rolname = '$role_name';")
+    can_login=$(psql -d postgres -tAc "SELECT rolcanlogin FROM pg_roles WHERE rolname = '$role_name';")
     if [[ "$can_login" == "$expected_login" ]]; then
       pass "Role '$role_name' has correct login capability (LOGIN=$expected_login)"
     else
@@ -98,13 +98,13 @@ check_database() {
   local db_name=$1
   local expected_owner=$2
 
-  local result=$(psql -tAc "SELECT 1 FROM pg_database WHERE datname = '$db_name';")
+  result=$(psql -d postgres -tAc "SELECT 1 FROM pg_database WHERE datname = '$db_name';")
 
   if [[ "$result" == "1" ]]; then
     pass "Database '$db_name' exists"
 
     # Check ownership
-    local owner=$(psql -tAc "SELECT pg_catalog.pg_get_userbyid(d.datdba) FROM pg_catalog.pg_database d WHERE d.datname = '$db_name';")
+    owner=$(psql -d postgres -tAc "SELECT pg_catalog.pg_get_userbyid(d.datdba) FROM pg_catalog.pg_database d WHERE d.datname = '$db_name';")
     if [[ "$owner" == "$expected_owner" ]]; then
       pass "Database '$db_name' is owned by '$expected_owner'"
     else
@@ -121,7 +121,7 @@ check_schema_owner() {
   local schema_name=$2
   local expected_owner=$3
 
-  local owner=$(psql -d "$db_name" -tAc "SELECT pg_catalog.pg_get_userbyid(s.nspowner) FROM pg_catalog.pg_namespace s WHERE s.nspname = '$schema_name';")
+  owner=$(psql -d "$db_name" -tAc "SELECT pg_catalog.pg_get_userbyid(s.nspowner) FROM pg_catalog.pg_namespace s WHERE s.nspname = '$schema_name';")
 
   if [[ -n "$owner" ]]; then
     if [[ "$owner" == "$expected_owner" ]]; then
@@ -140,7 +140,7 @@ check_database_privileges() {
   local role_name=$2
   local privilege=$3
 
-  local has_privilege=$(psql -tAc "SELECT has_database_privilege('$role_name', '$db_name', '$privilege');")
+  has_privilege=$(psql -d postgres -tAc "SELECT has_database_privilege('$role_name', '$db_name', '$privilege');")
 
   if [[ "$has_privilege" == "t" ]]; then
     pass "Role '$role_name' has $privilege privilege on database '$db_name'"
@@ -156,7 +156,7 @@ check_schema_privileges() {
   local role_name=$3
   local privilege=$4
 
-  local has_privilege=$(psql -d "$db_name" -tAc "SELECT has_schema_privilege('$role_name', '$schema_name', '$privilege');")
+  has_privilege=$(psql -d "$db_name" -tAc "SELECT has_schema_privilege('$role_name', '$schema_name', '$privilege');")
 
   if [[ "$has_privilege" == "t" ]]; then
     pass "Role '$role_name' has $privilege privilege on schema '$schema_name'"
@@ -170,7 +170,7 @@ check_public_no_privileges() {
   local db_name=$1
 
   # Check CONNECT privilege
-  local public_connect=$(psql -tAc "SELECT has_database_privilege('public', '$db_name', 'CONNECT');")
+  public_connect=$(psql -d postgres -tAc "SELECT has_database_privilege('public', '$db_name', 'CONNECT');")
   if [[ "$public_connect" == "f" ]]; then
     pass "PUBLIC does not have CONNECT privilege on database '$db_name'"
   else
@@ -178,7 +178,7 @@ check_public_no_privileges() {
   fi
 
   # Check schema USAGE privilege
-  local public_usage=$(psql -d "$db_name" -tAc "SELECT has_schema_privilege('public', 'public', 'USAGE');")
+  public_usage=$(psql -d "$db_name" -tAc "SELECT has_schema_privilege('public', 'public', 'USAGE');")
   if [[ "$public_usage" == "f" ]]; then
     pass "PUBLIC does not have USAGE privilege on schema 'public'"
   else
@@ -190,7 +190,7 @@ check_public_no_privileges() {
 check_default_privileges() {
   local db_name=$1
 
-  local default_privs=$(psql -d "$db_name" -tAc "
+  default_privs=$(psql -d "$db_name" -tAc "
     SELECT COUNT(*)
     FROM pg_default_acl da
     JOIN pg_roles r ON da.defaclrole = r.oid
@@ -242,7 +242,7 @@ check_schema_privileges "quailcomp" "public" "quailcomp_owner" "CREATE"
 check_schema_privileges "quailcomp" "public" "quailcomp_app" "USAGE"
 
 # quailcomp_app should NOT have CREATE
-local app_create=$(psql -d "quailcomp" -tAc "SELECT has_schema_privilege('quailcomp_app', 'public', 'CREATE');")
+app_create=$(psql -d "quailcomp" -tAc "SELECT has_schema_privilege('quailcomp_app', 'public', 'CREATE');")
 if [[ "$app_create" == "f" ]]; then
   pass "Role 'quailcomp_app' does not have CREATE privilege on schema 'public' (correct)"
 else
