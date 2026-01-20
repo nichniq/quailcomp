@@ -2,13 +2,10 @@
 
 -- Our database is quailcomp and is owned by quailcomp_owner
 -- Don't create if the db exists (this makes the query idempotent)
-DO $$
-BEGIN
-    CREATE DATABASE quailcomp OWNER quailcomp_owner;
-EXCEPTION
-  WHEN duplicate_database THEN NULL;
-END
-$$;
+-- Note: We cannot use a DO block here because CREATE DATABASE cannot run inside a txn
+-- \gexec executes the returned text as a SQL command
+SELECT 'CREATE DATABASE quailcomp OWNER quailcomp_owner'
+WHERE NOT EXISTS (SELECT FROM pg_database WHERE datname = 'quailcomp')\gexec
 
 -- Ensure that the database owner is quailcomp_owner
 -- We include this in case the db exists and skips the above creation

@@ -105,7 +105,12 @@ The [run.sh](run.sh) script includes several safety mechanisms:
 
 ## Idempotency
 
-All SQL scripts use idempotent patterns (e.g., `DO $$ BEGIN ... EXCEPTION WHEN duplicate_object THEN NULL; END $$;`), making them safe to run multiple times. If objects already exist, the scripts will skip creation and update ownership/privileges as needed.
+All SQL scripts use idempotent patterns, making them safe to run multiple times. If objects already exist, the scripts will skip creation and update ownership/privileges as needed.
+
+**Idempotency patterns used:**
+- Roles ([001_roles.sql](001_roles.sql)): `DO $$ BEGIN ... EXCEPTION WHEN duplicate_object THEN NULL; END $$;`
+- Database ([002_database.sql](002_database.sql)): `SELECT ... WHERE NOT EXISTS (...)\gexec`
+- Schemas and privileges: `ALTER`, `GRANT`, and `REVOKE` statements are naturally idempotent
 
 ## Troubleshooting
 
