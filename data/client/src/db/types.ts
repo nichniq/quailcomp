@@ -90,7 +90,7 @@ export type EntityDataType<T extends EntityType> = EntityTypeRegistry[T];
  * - Adding new types requires updating the union
  */
 
-import type { Entry } from "../db/entities";
+import type { Entry } from "./entities";
 
 export type TypedEntry =
   | (Entry<UserData> & { type: "user" })
@@ -237,8 +237,8 @@ export function upgradeUserData(data: VersionedUserData): CurrentUserData {
  * Great for building type-safe wrappers around the entities client.
  */
 
-import { type Sql } from "../db/connection";
-import { EntitiesClient, type CreateEntityInput, type Entry as BaseEntry } from "../db/entities";
+import { type Sql } from "./connection";
+import { EntitiesClient, type CreateEntityInput, type Entry as BaseEntry } from "./entities";
 
 /**
  * A typed repository for a specific entity type

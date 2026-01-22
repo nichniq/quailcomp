@@ -15,7 +15,7 @@ import {
   upgradeUserData,
   type UserDataV1,
   type UserDataV2,
-} from "../src/types/entities";
+} from "../src/db/types";
 
 const TEST_DB_NAME = process.env.DB_TEST_NAME ?? "quailcomp_test";
 

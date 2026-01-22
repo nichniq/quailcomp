@@ -11,13 +11,9 @@
     "resolveJsonModule": true,
     "isolatedModules": true,
     "declaration": true,
-    "outDir": "./dist",
-    "rootDir": ".",
     "baseUrl": ".",
-    "paths": {
-      "@/*": ["./src/*"]
-    }
+    "rootDir": "."
   },
   "include": ["src/**/*", "tests/**/*", "scripts/**/*"],
-  "exclude": ["node_modules", "dist"]
+  "exclude": ["node_modules"]
 }

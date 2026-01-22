@@ -1,0 +1,17 @@
+{
+  "name": "@quailcomp/data",
+  "version": "0.0.1",
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "test": "bun test",
+    "test:watch": "bun test --watch",
+    "setup": "bun run scripts/setup-test-db.ts",
+    "teardown": "bun run scripts/teardown-test-db.ts"
+  },
+  "devDependencies": {
+    "@types/bun": "latest"
+  }
+}
