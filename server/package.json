@@ -1,0 +1,15 @@
+{
+  "name": "quailcomp-server",
+  "version": "0.0.1",
+  "type": "module",
+  "scripts": {
+    "test": "bun test",
+    "test:watch": "bun test --watch",
+    "test:db": "bun test tests/entities.test.ts",
+    "db:setup": "bun run scripts/setup-test-db.ts",
+    "db:teardown": "bun run scripts/teardown-test-db.ts"
+  },
+  "devDependencies": {
+    "@types/bun": "latest"
+  }
+}

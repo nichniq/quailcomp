@@ -38,7 +38,7 @@ CREATE TABLE entities (
   entered_at TIMESTAMPTZ DEFAULT NOW(),
   type VARCHAR(100) NOT NULL,
   data JSONB NOT NULL,
-  entity_id BIGINT NOT NULL DEFAULT nextval('entity_id_seq'),
+  entity_id BIGINT NOT NULL,
   deleted_at TIMESTAMPTZ DEFAULT NULL
 );
 
@@ -59,48 +59,46 @@ ALTER SEQUENCE entity_id_seq OWNED BY entities.entity_id;
 -- ============================================================================
 -- ENTITY_ID VALIDATION TRIGGER
 -- ============================================================================
--- This trigger enforces the dual-use pattern for entity_id:
--- 1. New entities: Omit entity_id, get auto-generated value from sequence
--- 2. Updates/Deletes: Provide existing entity_id, sequence is not consumed
+-- This trigger validates that entity_id values follow the correct pattern:
+-- - New entities: Must use nextval('entity_id_seq') to get a fresh ID
+-- - Updates/Deletes: Must use an existing entity_id
 --
--- The trigger prevents:
--- - Creating new entities with explicit (non-existent) entity_id values
--- - Wasting sequence numbers when reusing entity_ids for updates
+-- The client is responsible for:
+-- - Creating: INSERT with entity_id = nextval('entity_id_seq')
+-- - Updating: INSERT with entity_id = <existing_id>
 --
--- Implementation:
--- - Always calls nextval() to get the next sequence value
--- - If entity_id matches the sequence value → new entity (keep sequence value)
--- - If entity_id differs → explicit ID provided (rollback sequence, validate exists)
+-- The trigger rejects inserts where entity_id doesn't exist and wasn't
+-- just allocated by the sequence (detected by checking if it matches currval).
 -- ============================================================================
 CREATE OR REPLACE FUNCTION validate_entity_id()
 RETURNS TRIGGER AS $$
 DECLARE
-  next_id BIGINT;
   id_exists BOOLEAN;
+  seq_val BIGINT;
 BEGIN
-  -- Get the next sequence value (will be rolled back if not used)
-  next_id := nextval('entity_id_seq');
-
-  -- Check if the entity_id that will be used already exists in the table
+  -- Check if the entity_id already exists in the table
   SELECT EXISTS(SELECT 1 FROM entities WHERE entity_id = NEW.entity_id)
   INTO id_exists;
 
-  -- Determine if this is a new entity or an update to an existing entity
-  IF NEW.entity_id = next_id THEN
-    -- entity_id came from the default (nextval), this is a NEW entity
-    -- Keep the sequence value and proceed
+  IF id_exists THEN
+    -- This is an UPDATE to an existing entity - allowed
     RETURN NEW;
   ELSE
-    -- entity_id was explicitly provided, this is an UPDATE or DELETE
-    -- Roll back the sequence since we're not using this number
-    PERFORM setval('entity_id_seq', next_id - 1, true);
-
-    -- Verify the provided entity_id actually exists (prevent orphaned updates)
-    IF NOT id_exists THEN
-      RAISE EXCEPTION 'entity_id % does not exist. To add an entry for an existing entity, use a valid entity_id. For new entities, omit entity_id to auto-generate.', NEW.entity_id;
-    END IF;
-
-    RETURN NEW;
+    -- Entity doesn't exist - verify this is a fresh sequence value
+    -- Get current sequence value (what was last returned by nextval in this session)
+    BEGIN
+      seq_val := currval('entity_id_seq');
+      IF NEW.entity_id = seq_val THEN
+        -- This is a new entity using the sequence correctly
+        RETURN NEW;
+      ELSE
+        -- entity_id doesn't match the sequence - reject
+        RAISE EXCEPTION 'entity_id % does not exist. For new entities, use nextval(''entity_id_seq''). For updates, use an existing entity_id.', NEW.entity_id;
+      END IF;
+    EXCEPTION WHEN object_not_in_prerequisite_state THEN
+      -- nextval hasn't been called in this session - reject
+      RAISE EXCEPTION 'entity_id % does not exist and no sequence value was obtained. For new entities, use nextval(''entity_id_seq'').', NEW.entity_id;
+    END;
   END IF;
 END;
 $$ LANGUAGE plpgsql;

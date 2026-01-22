@@ -1,0 +1,11 @@
+{
+  "name": "quailcomp",
+  "private": true,
+  "workspaces": ["server"],
+  "scripts": {
+    "test": "bun test --cwd server",
+    "test:watch": "bun test --watch --cwd server",
+    "db:setup": "bun run --cwd server db:setup",
+    "db:teardown": "bun run --cwd server db:teardown"
+  }
+}

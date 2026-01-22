@@ -11,8 +11,9 @@ ON ALL TABLES IN SCHEMA public
 TO quailcomp_app;
 
 -- Grant privilege to existing sequences to quailcomp_app
--- Required for auto-incrementing columns and sequence operations in triggers
-GRANT USAGE
+-- USAGE: allows nextval() for auto-incrementing columns
+-- UPDATE: allows setval() which the validate_entity_id() trigger uses
+GRANT USAGE, UPDATE
 ON ALL SEQUENCES IN SCHEMA public
 TO quailcomp_app;
 
@@ -28,6 +29,6 @@ TO quailcomp_app;        -- To quailcomp_app
 ALTER DEFAULT PRIVILEGES
 FOR ROLE quailcomp_owner
 IN SCHEMA public
-GRANT USAGE
+GRANT USAGE, UPDATE
 ON SEQUENCES
 TO quailcomp_app;
