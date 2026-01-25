@@ -76,7 +76,7 @@ async function setup() {
     // Read the migration file
     const migrationPath = join(
       import.meta.dir,
-      "../../postgres/migrations/001_entities.sql"
+      "../../postgres/migrations/001_initial_schema.sql"
     );
     const migrationSql = readFileSync(migrationPath, "utf-8");
 

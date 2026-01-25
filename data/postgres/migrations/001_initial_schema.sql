@@ -130,3 +130,83 @@ CREATE TRIGGER check_entity_id
 -- using both immediate grants (for existing objects) and default privileges
 -- (for future objects). No per-table permission grants are needed.
 -- ============================================================================
+
+-- ============================================================================
+-- EVENTS TABLE - Immutable log of facts about entities
+-- ============================================================================
+--
+-- Design goals:
+-- 1. Immutability: Events are never updated or deleted
+-- 2. Time-ordered: Events capture when things happened
+-- 3. Entity relationships: Events reference entities but aren't entities
+-- 4. Flexible schema: JSONB data field allows arbitrary event structure
+--
+-- Table structure:
+-- - event_id: Unique identifier for this event (TEXT for flexibility)
+-- - event_type: Type of event (e.g., 'book_acquired', 'book_lent')
+-- - occurred_at: When the event actually happened
+-- - recorded_at: When we recorded it in the system
+-- - data: JSONB containing event details (entity references, amounts, etc.)
+--
+-- Usage pattern:
+-- - Recording events: INSERT with (event_id, event_type, occurred_at, data)
+-- - Querying timeline: SELECT * WHERE event_type = X ORDER BY occurred_at
+-- - Finding events for entity: SELECT * WHERE data @> '{"book_id": "123"}'
+--
+-- Known or potential issues:
+-- - Event types are not currently constrained
+-- - No foreign key constraints to entities (flexible but less safe)
+-- - Updates are blocked by trigger but not at schema level
+-- ============================================================================
+
+CREATE TABLE events (
+  event_id TEXT PRIMARY KEY,
+  event_type VARCHAR(100) NOT NULL,
+  occurred_at TIMESTAMPTZ NOT NULL,
+  data JSONB NOT NULL,
+  recorded_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+-- Index for time-series queries (most common pattern)
+CREATE INDEX idx_events_occurred ON events (occurred_at DESC);
+
+-- Index for querying by event type and time
+CREATE INDEX idx_events_type_occurred ON events (event_type, occurred_at DESC);
+
+-- Index for JSONB queries (finding events about specific entities)
+CREATE INDEX idx_events_data_gin ON events USING GIN (data);
+
+-- ============================================================================
+-- EVENT IMMUTABILITY TRIGGER
+-- ============================================================================
+-- Events are immutable facts. This trigger prevents any updates to events
+-- after they're recorded. Events can only be INSERT-ed, never UPDATE-ed.
+-- If an event was recorded incorrectly, record a correction event instead.
+-- ============================================================================
+
+CREATE OR REPLACE FUNCTION prevent_event_updates()
+RETURNS TRIGGER AS $$
+BEGIN
+  RAISE EXCEPTION 'Events are immutable and cannot be updated. Record a correction event instead.';
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE TRIGGER enforce_event_immutability
+  BEFORE UPDATE ON events
+  FOR EACH ROW
+  EXECUTE FUNCTION prevent_event_updates();
+
+-- ============================================================================
+-- REQUIRED PERMISSIONS
+-- ============================================================================
+-- For a role to interact with this table:
+--
+-- 1. Schema access:
+--    GRANT USAGE ON SCHEMA public TO <role>;
+--
+-- 2. Table operations (append-only):
+--    GRANT SELECT, INSERT ON events TO <role>;
+--    (Note: UPDATE and DELETE intentionally omitted)
+--
+-- Permissions granted in db/setup/004_privileges.sql
+-- ============================================================================
