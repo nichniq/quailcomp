@@ -7,7 +7,7 @@ TypeScript client library for all data sources in the Quailcomp project.
 This package provides type-safe clients for accessing various data sources:
 - **`db`** - PostgreSQL database client
   - **Entities** - Event-sourced mutable state (nouns: books, people, locations)
-  - **Events** - Immutable facts about what happened (verbs: purchased, moved, lent)
+  - **Events** - Enrichable facts about what happened (verbs: purchased, moved, lent)
 - **`fs`** - Filesystem integration *(planned)*
 - **`plaid`** - Plaid API client *(planned)*
 
@@ -68,18 +68,18 @@ const latest = await entities.getById(user.entityId)
 const history = await entities.getHistory(user.entityId)
 ```
 
-#### Events Client (Immutable Facts)
+#### Events Client (Enrichable Facts)
 
-Use the events client for recording what happened (cannot be changed later):
+Use the events client for recording what happened. Events are append-only facts
+that can be enriched with additional data (tags, corrections, links) over time:
 
 ```typescript
 import { EventsClient, getConnection } from "@quailcomp/data"
 
 const events = new EventsClient(getConnection())
 
-// Record an event
+// Record an event (event_id is auto-generated)
 const event = await events.record({
-  eventId: "evt_123",
   eventType: "book_acquired",
   occurredAt: new Date("2026-01-15"),
   data: {
@@ -89,23 +89,41 @@ const event = await events.record({
   }
 })
 
-// Find events by type
-const acquisitions = await events.findByType("book_acquired")
+// Enrich the event later with additional data (adds new entry, preserves original)
+await events.enrich({
+  eventId: event.eventId,
+  eventType: "book_acquired",
+  occurredAt: event.occurredAt,  // Keep the same occurred_at
+  data: {
+    book_id: 42,
+    title: "The Great Gatsby",
+    price: 15.99,
+    tags: ["fiction", "classic"],  // Added later
+    notes: "Gift from grandmother"  // Added later
+  }
+})
 
-// Find events for a specific entity
+// Get the latest (enriched) version
+const latest = await events.getById(event.eventId)
+
+// Get full history of enrichments
+const history = await events.getHistory(event.eventId)
+
+// Void an event (soft delete)
+await events.void({
+  eventId: event.eventId,
+  eventType: event.eventType,
+  occurredAt: event.occurredAt,
+  data: event.data
+})
+
+// Query events
+const acquisitions = await events.getByType("book_acquired")
 const bookHistory = await events.findForEntity("book_id", 42)
-
-// Find events in a time range
-const january = await events.findByTimeRange(
+const january = await events.getByTimeRange(
   new Date("2026-01-01"),
   new Date("2026-01-31")
 )
-
-// Query by JSONB data
-const expensiveBooks = await events.findByData({
-  event_type: "book_acquired",
-  price: { $gt: 20 }
-})
 ```
 
 ### Typed Repository Pattern
@@ -199,12 +217,13 @@ The database distinguishes between two fundamental concepts:
 - Soft deletes via `deleted_at` timestamp
 - Query pattern: "What is the current state of X?"
 
-**Events (Verbs)** - Immutable facts about what happened:
+**Events (Verbs)** - Facts about what happened, enrichable over time:
 - Examples: purchased, moved, lent, deposited
-- Immutable: Cannot be updated after recording
-- Time-ordered by `occurred_at` (when it happened)
+- Append-only: Original fact preserved, can be enriched with new entries
+- Time-ordered by `occurred_at` (when it happened in the real world)
 - Reference entities but aren't entities themselves
-- Trigger-enforced immutability
+- Support annotations, corrections, tags, and links added after the fact
+- Soft voids via `voided_at` timestamp (for cancelled/invalid events)
 - Query patterns:
   - "What happened to entity X?"
   - "Show me all events of type Y"
@@ -224,14 +243,16 @@ The entities table uses an append-only event-sourcing pattern:
 - Full history is preserved
 - Latest entry represents current state
 
-### Immutable Events
+### Enrichable Events
 
-The events table enforces strict immutability:
-- Events are never updated or deleted
-- Database trigger blocks any UPDATE operations
-- Corrections require recording a new correction event
-- `occurred_at` tracks when it happened (can be historical)
-- `recorded_at` tracks when we logged it (always now)
+The events table uses the same append-only pattern as entities:
+- Original event data is preserved (immutable first entry)
+- Events can be "enriched" by appending new entries with the same `event_id`
+- Each entry is immutable; the latest entry represents current enriched state
+- Use enrichments for: tags, corrections, annotations, links to other entities
+- `occurred_at` tracks when it happened (fixed, part of the fact)
+- `entered_at` tracks when each entry was recorded (changes with enrichments)
+- Soft voids via `voided_at` (for events that were recorded in error)
 
 ### Type Safety
 

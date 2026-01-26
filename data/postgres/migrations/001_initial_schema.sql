@@ -132,81 +132,142 @@ CREATE TRIGGER check_entity_id
 -- ============================================================================
 
 -- ============================================================================
--- EVENTS TABLE - Immutable log of facts about entities
+-- EVENTS TABLE - Event-sourced append-only log of facts
 -- ============================================================================
 --
 -- Design goals:
--- 1. Immutability: Events are never updated or deleted
--- 2. Time-ordered: Events capture when things happened
--- 3. Entity relationships: Events reference entities but aren't entities
--- 4. Flexible schema: JSONB data field allows arbitrary event structure
+-- 1. Append-only: Entries are immutable and never updated or deleted
+-- 2. Event sourcing: Each entry represents a point-in-time snapshot of an event
+-- 3. Time-ordered: Events capture when things happened (occurred_at)
+-- 4. Enrichable: Event data can be "updated" by appending new entries
+-- 5. Flexible schema: JSONB data field allows arbitrary event structure
 --
 -- Table structure:
--- - event_id: Unique identifier for this event (TEXT for flexibility)
+-- - entry_id: Unique, auto-incremented ID for each immutable entry
+-- - entered_at: Timestamp when this entry was created in the database
 -- - event_type: Type of event (e.g., 'book_acquired', 'book_lent')
--- - occurred_at: When the event actually happened
--- - recorded_at: When we recorded it in the system
--- - data: JSONB containing event details (entity references, amounts, etc.)
+-- - occurred_at: When the event actually happened in the real world
+-- - data: JSONB containing event details (entity refs, amounts, annotations, etc.)
+-- - event_id: Logical event identifier (multiple entries share same event_id)
+-- - voided_at: NULL for active events, timestamp when event was voided/cancelled
 --
 -- Usage pattern:
--- - Recording events: INSERT with (event_id, event_type, occurred_at, data)
--- - Querying timeline: SELECT * WHERE event_type = X ORDER BY occurred_at
+-- - Recording new event: INSERT with event_id from sequence - gets new event_id
+-- - Enriching event: INSERT with existing event_id - adds annotations/corrections
+-- - Voiding event: INSERT with (event_id, voided_at) - marks as cancelled
+-- - Querying latest state: SELECT * WHERE event_id = X ORDER BY entered_at DESC LIMIT 1
+-- - Querying timeline: SELECT latest by event_id ORDER BY occurred_at
 -- - Finding events for entity: SELECT * WHERE data @> '{"book_id": "123"}'
+--
+-- Key distinction from entities:
+-- - Entities represent things that exist (nouns) - their state changes over time
+-- - Events represent facts that happened (verbs) - immutable but enrichable
+-- - occurred_at is fixed (when it happened), entered_at tracks data changes
 --
 -- Known or potential issues:
 -- - Event types are not currently constrained
 -- - No foreign key constraints to entities (flexible but less safe)
--- - Updates are blocked by trigger but not at schema level
+-- - Race condition possible if adding/checking simultaneously (same as entities)
 -- ============================================================================
 
+CREATE SEQUENCE event_id_seq;
+
 CREATE TABLE events (
-  event_id TEXT PRIMARY KEY,
+  entry_id BIGSERIAL PRIMARY KEY,
+  entered_at TIMESTAMPTZ DEFAULT NOW(),
   event_type VARCHAR(100) NOT NULL,
   occurred_at TIMESTAMPTZ NOT NULL,
   data JSONB NOT NULL,
-  recorded_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+  event_id BIGINT NOT NULL,
+  voided_at TIMESTAMPTZ DEFAULT NULL
 );
 
--- Index for time-series queries (most common pattern)
-CREATE INDEX idx_events_occurred ON events (occurred_at DESC);
+-- Primary use case: Get latest version of active (non-voided) events
+-- Partial index significantly reduces index size and improves query performance
+CREATE INDEX idx_events_active ON events (event_id, entered_at DESC) WHERE voided_at IS NULL;
+
+-- Index for time-series queries by occurred_at (when things actually happened)
+CREATE INDEX idx_events_occurred ON events (occurred_at DESC) WHERE voided_at IS NULL;
 
 -- Index for querying by event type and time
-CREATE INDEX idx_events_type_occurred ON events (event_type, occurred_at DESC);
+CREATE INDEX idx_events_type_occurred ON events (event_type, occurred_at DESC) WHERE voided_at IS NULL;
 
 -- Index for JSONB queries (finding events about specific entities)
-CREATE INDEX idx_events_data_gin ON events USING GIN (data);
+CREATE INDEX idx_events_data_gin ON events USING GIN (data) WHERE voided_at IS NULL;
+
+ALTER SEQUENCE event_id_seq OWNED BY events.event_id;
 
 -- ============================================================================
--- EVENT IMMUTABILITY TRIGGER
+-- EVENT_ID VALIDATION TRIGGER
 -- ============================================================================
--- Events are immutable facts. This trigger prevents any updates to events
--- after they're recorded. Events can only be INSERT-ed, never UPDATE-ed.
--- If an event was recorded incorrectly, record a correction event instead.
+-- This trigger validates that event_id values follow the correct pattern:
+-- - New events: Must use nextval('event_id_seq') to get a fresh ID
+-- - Updates/Enrichments: Must use an existing event_id
+--
+-- The client is responsible for:
+-- - Recording: INSERT with event_id = nextval('event_id_seq')
+-- - Enriching: INSERT with event_id = <existing_id>
+--
+-- The trigger rejects inserts where event_id doesn't exist and wasn't
+-- just allocated by the sequence (detected by checking if it matches currval).
 -- ============================================================================
-
-CREATE OR REPLACE FUNCTION prevent_event_updates()
+CREATE OR REPLACE FUNCTION validate_event_id()
 RETURNS TRIGGER AS $$
+DECLARE
+  id_exists BOOLEAN;
+  seq_val BIGINT;
 BEGIN
-  RAISE EXCEPTION 'Events are immutable and cannot be updated. Record a correction event instead.';
+  -- Check if the event_id already exists in the table
+  SELECT EXISTS(SELECT 1 FROM events WHERE event_id = NEW.event_id)
+  INTO id_exists;
+
+  IF id_exists THEN
+    -- This is an enrichment to an existing event - allowed
+    RETURN NEW;
+  ELSE
+    -- Event doesn't exist - verify this is a fresh sequence value
+    -- Get current sequence value (what was last returned by nextval in this session)
+    BEGIN
+      seq_val := currval('event_id_seq');
+      IF NEW.event_id = seq_val THEN
+        -- This is a new event using the sequence correctly
+        RETURN NEW;
+      ELSE
+        -- event_id doesn't match the sequence - reject
+        RAISE EXCEPTION 'event_id % does not exist. For new events, use nextval(''event_id_seq''). For enrichments, use an existing event_id.', NEW.event_id;
+      END IF;
+    EXCEPTION WHEN object_not_in_prerequisite_state THEN
+      -- nextval hasn't been called in this session - reject
+      RAISE EXCEPTION 'event_id % does not exist and no sequence value was obtained. For new events, use nextval(''event_id_seq'').', NEW.event_id;
+    END;
+  END IF;
 END;
 $$ LANGUAGE plpgsql;
 
-CREATE TRIGGER enforce_event_immutability
-  BEFORE UPDATE ON events
+CREATE TRIGGER check_event_id
+  BEFORE INSERT ON events
   FOR EACH ROW
-  EXECUTE FUNCTION prevent_event_updates();
+  EXECUTE FUNCTION validate_event_id();
 
 -- ============================================================================
 -- REQUIRED PERMISSIONS
 -- ============================================================================
--- For a role to interact with this table:
+-- For a role to interact with this table, the following permissions are needed:
 --
 -- 1. Schema access:
 --    GRANT USAGE ON SCHEMA public TO <role>;
 --
--- 2. Table operations (append-only):
+-- 2. Table operations (append-only pattern):
 --    GRANT SELECT, INSERT ON events TO <role>;
---    (Note: UPDATE and DELETE intentionally omitted)
+--    (Note: UPDATE and DELETE are intentionally omitted for immutability)
 --
--- Permissions granted in db/setup/004_privileges.sql
+-- 3. Sequence operations (required by trigger and BIGSERIAL):
+--    GRANT USAGE ON ALL SEQUENCES IN SCHEMA public TO <role>;
+--    - Covers event_id_seq (explicit) and events_entry_id_seq (auto-generated)
+--    - Required because the validate_event_id() trigger executes as the inserting
+--      user and calls nextval() on event_id_seq
+--
+-- All permissions are granted at the setup level in db/setup/004_privileges.sql
+-- using both immediate grants (for existing objects) and default privileges
+-- (for future objects). No per-table permission grants are needed.
 -- ============================================================================
