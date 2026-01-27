@@ -15,6 +15,7 @@ bun run db:teardown      # Drop test database (automated cleanup)
 ## Rules
 
 - Run `bun test` after modifying code to verify changes
+- Suggest committing work with a descriptive message after completing a task
 - Use Bun's built-in SQL tagged templates for all queries (not raw strings)
 - Use `EntitiesClient` for mutable data, `EventsClient` for immutable facts
 - Tests must use unique type names (with timestamps) to avoid conflicts
@@ -94,6 +95,35 @@ DB_TEST_NAME (default: quailcomp_test)
 - `getByType(type)` - Query by event type
 - `findForEntity(fieldName, value)` - Events for entity
 - `getByTimeRange(start, end)` - Time-range queries
+
+---
+
+## Domains Directory
+
+The /domains directory is the authoritative source of truth for domain models, combining human-readable documentation with machine-readable type definitions in TypeScript files.
+
+### Your Role
+
+When working on features or making architectural decisions:
+
+1. Look for opportunities to create or enhance domain documentation
+2. Add new domains when introducing new concepts (e.g., authentication, finances, contacts)
+3. Update existing domains when types or concepts evolve
+4. Integrate types by defining them after their documentation
+5. Maintain clarity by writing for human understanding first, types second
+
+### Guidelines
+
+- Create domain files as /domains/<domain-name>.ts
+- Follow the format and philosophy described in /domains/README.md
+- Use /** */ block comments with Markdown formatting for documentation
+- Use blockquotes (>) after headers for section summaries
+- Define TypeScript types immediately after their explanatory documentation
+- Include concrete examples showing common and edge-case scenarios
+- Export all types so they can be imported throughout the codebase
+- Cross-reference related domains naturally in prose
+
+Before implementing features that touch multiple domains or introduce new concepts, consider whether domain documentation needs to be created or updated.
 
 ---
 

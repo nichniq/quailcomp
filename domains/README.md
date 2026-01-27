@@ -1,6 +1,6 @@
 # Domains Directory
 
-This directory contains the domain models for the personal data management system. Each subdirectory represents a **bounded context** in Domain-Driven Design terms.
+This directory contains the authoritative source of truth for each domain in the system. Each domain represents a **bounded context** in Domain-Driven Design terms.
 
 ## Purpose
 
@@ -9,33 +9,82 @@ The `/domains` directory serves as:
 2. **Type definitions** used throughout the application
 3. **Single source of truth** for domain logic and structure
 
-## Structure
+## Philosophy
 
-Each domain follows this structure:
+Each domain combines human-readable explanation with machine-readable specifications. This approach:
+- Prevents drift between documentation and implementation
+- Reduces cognitive load when learning (no "flip to another page" problem)
+- Ensures concepts are explained at the point they're defined
+- Makes the domain model accessible to both humans and machines
+- Allows direct imports without extraction scripts
 
+## Format
+
+We use TypeScript files (.ts) with long-form Markdown comments. Types are directly importable while documentation lives alongside them.
+
+### File Structure
+
+Each domain is a single TypeScript file: `/domains/<domain-name>.ts`
+
+Example structure:
+
+```typescript
+/**
+ * # Authentication
+ *
+ * > Authentication proves user identity through multiple methods.
+ *
+ * Users can authenticate through passwords, passkeys, OAuth providers, or API keys.
+ * Each authentication method produces a UserId that identifies them throughout
+ * the system. Authentication is separate from authorization - proving identity is
+ * different from determining permissions.
+ *
+ * ## Sessions
+ *
+ * > Sessions track authenticated user activity over time.
+ *
+ * When a user successfully authenticates, we create a session containing their
+ * user_id and expiration information. Sessions enable stateless authentication
+ * through JWT tokens while maintaining security.
+ */
+
+export type UserId = number & { readonly __brand: 'UserId' };
+
+export type Session = {
+  session_id: string;
+  user_id: UserId;
+  created_at: Date;
+  expires_at: Date | null;
+};
+
+/**
+ * ## Authentication Methods
+ *
+ * > Multiple authentication methods map to a single user identity.
+ *
+ * The system supports multiple ways to prove identity. Each method stores
+ * different credential data but all resolve to the same UserId.
+ */
+
+export type AuthMethod = 'password' | 'passkey' | 'oauth' | 'api_key';
 ```
-/domains
-  /{domain-name}
-    schema.md       # Human-readable domain documentation
-    types.ts        # TypeScript types (domain + persistence)
-    queries.ts      # (Optional) Domain-specific query helpers
-    README.md       # (Optional) Additional context
-```
 
-### `schema.md`
+### Multiple Reading Depths
 
-Documents the domain using Domain-Driven Design concepts:
-- **Bounded Context** - What this domain is responsible for
-- **Ubiquitous Language** - Key terms and their precise meanings
-- **Domain Model** - Entities, events, value objects, and their relationships
-- **Invariants** - Rules that must always be true
-- **Context Map** - How this domain relates to others
+Support different levels of detail within comments:
+- Blockquotes (>): Single-sentence summaries after headers
+- Full paragraphs: Detailed explanations
+- Inline examples: Show usage patterns
+- Edge cases: Document how the model handles real-world messiness
 
-This file should be readable by non-developers and serve as the authoritative reference for how we think about this domain.
+### Comment Formatting
 
-### `types.ts`
+- Use `/** */` block comments for documentation sections
+- Write Markdown inside comments (headers, lists, code blocks, etc.)
+- Place documentation immediately before related type definitions
+- Use blockquotes (>) after headers for summaries
 
-Contains TypeScript type definitions:
+### Type Categories
 
 **Domain Types** - How we think about the domain:
 - Entities (aggregate roots)
@@ -50,12 +99,23 @@ Contains TypeScript type definitions:
 
 **Query Types** - Common query results and projections
 
-The `data` module imports these types to ensure type safety between domain logic and database operations.
+## Creating Domain Files
+
+When creating or enhancing domain documentation:
+
+1. Start with concepts: What is this domain about? Why does it exist?
+2. Introduce types naturally: Define types after explaining the concept
+3. Provide examples: Show how concepts manifest in practice
+4. Include summaries: Add blockquote summaries after headers for skimmability
+5. Link related domains: Reference other domains when there are relationships
+6. Document edge cases: Explain how the model handles messy real-world data
 
 ## Current Domains
 
 ### Books (`/domains/books`)
 Manages physical books in the collection and their acquisition history. This is the first domain implemented and serves as the template for future domains.
+
+> Note: This domain uses the older subdirectory structure with separate `schema.md` and `types.ts` files. New domains should use the single-file format described above.
 
 ## Future Domains
 
@@ -103,27 +163,27 @@ We use DDD concepts where they help (ubiquitous language, bounded contexts, doma
 ### Importing Types
 
 ```typescript
-// Import domain types
-import { PhysicalBook, AcquisitionEvent } from '@/domains/books/types'
-import { Location } from '@/domains/locations/types'
+// Import from single-file domains
+import { UserId, Session } from '@/domains/auth'
 
-// Import persistence types
-import { BookEntityRow, BookEntitySnapshot } from '@/domains/books/types'
+// Import from subdirectory domains (legacy structure)
+import { PhysicalBook, AcquisitionEvent } from '@/domains/books/types'
 ```
 
 ### Reading Documentation
 
 Before working with a domain:
-1. Read its `schema.md` to understand the concepts
-2. Review the `types.ts` to see the technical implementation
-3. Check the Context Map section to understand dependencies
+1. Read the domain file to understand concepts and types together
+2. Check for cross-references to related domains
+3. Review examples and edge cases
 
 ### Adding a New Domain
 
-1. Create a new directory: `/domains/{domain-name}`
-2. Write `schema.md` following the Book Collection template
-3. Define types in `types.ts` (domain + persistence)
-4. Update this README with the new domain
+1. Create a single TypeScript file: `/domains/<domain-name>.ts`
+2. Write documentation in `/** */` block comments with Markdown
+3. Define types immediately after their explanatory documentation
+4. Export all types for use throughout the codebase
+5. Update this README with the new domain
 
 ## Context Map
 
@@ -156,6 +216,21 @@ High-level view of how domains relate:
 │    Ideas    │─────references?────> People
 └─────────────┘
 ```
+
+## Benefits of Single-File TypeScript Domains
+
+- Direct imports: `import { UserId } from '@/domains/auth'`
+- Type checking: Types are validated by TypeScript compiler
+- IDE support: Full autocomplete and type hints
+- No extraction needed: Documentation and types are already together
+- Single source of truth: One file for both humans and machines
+
+## Inspiration
+
+- Literate programming (Donald Knuth)
+- Domain-Driven Design ubiquitous language
+- Textbook-style integrated diagrams and equations
+- TSDoc and JSDoc conventions
 
 ## Notes
 
