@@ -7,9 +7,9 @@ Quailcomp is a personal data management system using event-sourced append-only s
 ```bash
 bun test                 # Run all tests (do this after code changes)
 bun test:watch           # Watch mode for data/client
-bun run db:setup         # Create test database and schema
-bun run db:teardown      # Drop test database
-bun run db:migrate       # Run pending migrations on existing database
+bun run db:migrate       # Run pending migrations on development database
+bun run db:setup         # Create test database (automated by tests, rarely needed manually)
+bun run db:teardown      # Drop test database (automated cleanup)
 ```
 
 ## Rules
@@ -46,6 +46,8 @@ domains/           # DDD domain models and documentation
 - **Migrations**: Tracked in schema_migrations table (version, applied_at, checksum)
   - Migration runner: `data/postgres/migrations/run.sh`
   - Auto-discovery via filename pattern: `[0-9][0-9][0-9]_*.sql`
+  - `bun run db:migrate` applies to development database (quailcomp)
+  - Test database migrations are fully automated by test runner
 - Soft deletes via `deleted_at` / `voided_at` timestamps
 - JSONB for flexible schema storage
 
