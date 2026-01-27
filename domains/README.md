@@ -112,10 +112,8 @@ When creating or enhancing domain documentation:
 
 ## Current Domains
 
-### Books (`/domains/books`)
-Manages physical books in the collection and their acquisition history. This is the first domain implemented and serves as the template for future domains.
-
-> Note: This domain uses the older subdirectory structure with separate `schema.md` and `types.ts` files. New domains should use the single-file format described above.
+### Books (`/domains/books.ts`)
+Manages physical books in the collection and their acquisition history. Tracks acquisition events (purchased, ordered, given, won, inherited) and references other domains like Locations, People, and Series.
 
 ## Future Domains
 
@@ -165,9 +163,7 @@ We use DDD concepts where they help (ubiquitous language, bounded contexts, doma
 ```typescript
 // Import from single-file domains
 import { UserId, Session } from '@/domains/auth'
-
-// Import from subdirectory domains (legacy structure)
-import { PhysicalBook, AcquisitionEvent } from '@/domains/books/types'
+import { PhysicalBook, AcquisitionEvent } from '@/domains/books'
 ```
 
 ### Reading Documentation

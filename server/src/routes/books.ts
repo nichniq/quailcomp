@@ -12,7 +12,7 @@ import type { Sql } from "@quailcomp/data";
 import { createEntitiesClient } from "@quailcomp/data";
 import type { Router } from "../router";
 import { requireAuth } from "../auth/middleware";
-import type { BookEntitySnapshot } from "../../../domains/books/types";
+import type { BookEntitySnapshot } from "../../../domains/books";
 
 const BOOK_TYPE = "book";
 
