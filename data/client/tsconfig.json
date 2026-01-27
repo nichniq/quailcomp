@@ -12,7 +12,10 @@
     "isolatedModules": true,
     "declaration": true,
     "baseUrl": ".",
-    "rootDir": "."
+    "rootDir": ".",
+    "paths": {
+      "@domains/*": ["../../domains/*"]
+    }
   },
   "include": ["src/**/*", "tests/**/*", "scripts/**/*"],
   "exclude": ["node_modules"]

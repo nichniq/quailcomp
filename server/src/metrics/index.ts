@@ -2,5 +2,5 @@
  * Metrics exports
  */
 
-export * from "./collector";
-export * from "./request-metrics";
+export * from "@/metrics/collector";
+export * from "@/metrics/request-metrics";

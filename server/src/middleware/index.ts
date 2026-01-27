@@ -2,7 +2,7 @@
  * Middleware exports
  */
 
-export * from "./types";
-export * from "./compose";
-export * from "./error-handler";
-export * from "./cors";
+export * from "@/middleware/types";
+export * from "@/middleware/compose";
+export * from "@/middleware/error-handler";
+export * from "@/middleware/cors";

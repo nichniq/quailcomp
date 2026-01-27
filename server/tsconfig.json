@@ -15,7 +15,8 @@
     "rootDir": "..",
     "baseUrl": ".",
     "paths": {
-      "@/*": ["./src/*"]
+      "@/*": ["./src/*"],
+      "@domains/*": ["../domains/*"]
     }
   },
   "include": ["src/**/*", "tests/**/*", "scripts/**/*", "../domains/**/*"],

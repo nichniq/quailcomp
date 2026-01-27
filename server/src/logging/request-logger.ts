@@ -4,7 +4,7 @@
  * Logs request start and completion with timing information.
  */
 
-import type { Middleware } from "../middleware/types";
+import type { Middleware } from "@/middleware/types";
 
 /**
  * Middleware that logs request start and completion

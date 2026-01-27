@@ -5,12 +5,13 @@
  */
 
 import type { Sql } from "@quailcomp/data";
+
 import {
   hasAccess,
   type AccessLevel,
   type EntityAccess,
   AuthorizationError,
-} from "../../../domains/authorization";
+} from "@domains/authorization";
 
 export class AuthorizationService {
   constructor(private sql: Sql) {}

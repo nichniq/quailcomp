@@ -2,9 +2,9 @@
  * Authentication exports
  */
 
-export * from "./types";
-export * from "./password";
-export * from "./jwt";
-export * from "./service";
-export * from "./middleware";
-export * from "./routes";
+export * from "@/auth/types";
+export * from "@/auth/password";
+export * from "@/auth/jwt";
+export * from "@/auth/service";
+export * from "@/auth/middleware";
+export * from "@/auth/routes";

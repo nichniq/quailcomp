@@ -2,7 +2,7 @@
  * Core types for the middleware system
  */
 
-import type { RequestContext } from "../context";
+import type { RequestContext } from "@/context";
 
 /**
  * Handler receives context and request, returns Response

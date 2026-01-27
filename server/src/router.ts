@@ -4,7 +4,7 @@
  * Supports static paths and path parameters (e.g., /api/entities/:id)
  */
 
-import type { Handler, HttpMethod, Middleware, Route, RouteMatch } from "./middleware/types";
+import type { Handler, HttpMethod, Middleware, Route, RouteMatch } from "@/middleware/types";
 
 export class Router {
   private routes: Route[] = [];

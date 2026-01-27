@@ -4,10 +4,11 @@
  * Provides middleware factories for checking entity access.
  */
 
-import type { RequestContext } from "../context";
-import type { Middleware } from "../middleware/types";
-import { AuthorizationService } from "./service";
-import type { AccessLevel } from "../../../domains/authorization";
+import type { AccessLevel } from "@domains/authorization";
+
+import type { RequestContext } from "@/context";
+import type { Middleware } from "@/middleware/types";
+import { AuthorizationService } from "@/authz/service";
 
 /**
  * Function that extracts entity ID from request context

@@ -2,6 +2,6 @@
  * Authorization exports
  */
 
-export * from "./types";
-export * from "./service";
-export * from "./middleware";
+export * from "@/authz/types";
+export * from "@/authz/service";
+export * from "@/authz/middleware";

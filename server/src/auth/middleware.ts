@@ -4,8 +4,8 @@
  * Provides middleware for requiring or optionally checking authentication.
  */
 
-import type { Middleware } from "../middleware/types";
-import { extractToken, verifyToken } from "./jwt";
+import type { Middleware } from "@/middleware/types";
+import { extractToken, verifyToken } from "@/auth/jwt";
 
 /**
  * Require authentication - returns 401 if not authenticated

@@ -5,8 +5,9 @@
  */
 
 import type { Sql } from "@quailcomp/data";
-import type { Logger } from "./logging/logger";
-import { createLogger } from "./logging/logger";
+
+import type { Logger } from "@/logging/logger";
+import { createLogger } from "@/logging/logger";
 
 /**
  * Authenticated user information extracted from JWT

@@ -5,17 +5,18 @@
  */
 
 import { getConnection, type Sql } from "@quailcomp/data";
-import { createContext } from "./context";
-import { compose } from "./middleware/compose";
-import { defaultCors } from "./middleware/cors";
-import { errorHandler } from "./middleware/error-handler";
-import type { Handler, Middleware } from "./middleware/types";
-import { requestLogger } from "./logging/request-logger";
-import { requestMetrics } from "./metrics/request-metrics";
-import { createRouter, type Router } from "./router";
-import { healthHandler, metricsHandler } from "./routes/health";
-import { registerAuthRoutes } from "./auth/routes";
-import { registerBookRoutes } from "./routes/books";
+
+import { createContext } from "@/context";
+import { compose } from "@/middleware/compose";
+import { defaultCors } from "@/middleware/cors";
+import { errorHandler } from "@/middleware/error-handler";
+import type { Handler, Middleware } from "@/middleware/types";
+import { requestLogger } from "@/logging/request-logger";
+import { requestMetrics } from "@/metrics/request-metrics";
+import { createRouter, type Router } from "@/router";
+import { healthHandler, metricsHandler } from "@/routes/health";
+import { registerAuthRoutes } from "@/auth/routes";
+import { registerBookRoutes } from "@/routes/books";
 
 export interface ServerConfig {
   port?: number;

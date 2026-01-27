@@ -4,8 +4,8 @@
  * Collects request counts and latency metrics.
  */
 
-import type { Middleware } from "../middleware/types";
-import { metrics } from "./collector";
+import type { Middleware } from "@/middleware/types";
+import { metrics } from "@/metrics/collector";
 
 /**
  * Normalize path for metrics (replace IDs with placeholders)

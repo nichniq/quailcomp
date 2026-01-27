@@ -2,8 +2,8 @@
  * Health check and metrics endpoints
  */
 
-import type { Handler } from "../middleware/types";
-import { metrics } from "../metrics/collector";
+import type { Handler } from "@/middleware/types";
+import { metrics } from "@/metrics/collector";
 
 /**
  * GET /health - Basic health check

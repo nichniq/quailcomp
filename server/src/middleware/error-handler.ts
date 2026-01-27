@@ -4,7 +4,7 @@
  * Catches unhandled errors and returns appropriate HTTP responses.
  */
 
-import type { Middleware } from "./types";
+import type { Middleware } from "@/middleware/types";
 
 /**
  * Base error class for HTTP errors

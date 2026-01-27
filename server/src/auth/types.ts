@@ -6,4 +6,4 @@
  * This file re-exports them for backward compatibility.
  */
 
-export * from "../../../domains/authentication";
+export * from "@domains/authentication";

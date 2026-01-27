@@ -10,9 +10,11 @@
 
 import type { Sql } from "@quailcomp/data";
 import { createEntitiesClient } from "@quailcomp/data";
-import type { Router } from "../router";
-import { requireAuth } from "../auth/middleware";
-import type { BookEntitySnapshot } from "../../../domains/books";
+
+import type { BookEntitySnapshot } from "@domains/books";
+
+import type { Router } from "@/router";
+import { requireAuth } from "@/auth/middleware";
 
 const BOOK_TYPE = "book";
 

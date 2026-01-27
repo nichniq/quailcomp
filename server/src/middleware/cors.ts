@@ -4,7 +4,7 @@
  * Handles Cross-Origin Resource Sharing headers.
  */
 
-import type { Middleware } from "./types";
+import type { Middleware } from "@/middleware/types";
 
 export interface CorsOptions {
   origin?: string | string[] | ((origin: string) => boolean);

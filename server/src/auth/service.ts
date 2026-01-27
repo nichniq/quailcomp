@@ -5,8 +5,7 @@
  */
 
 import type { Sql } from "@quailcomp/data";
-import { hashPassword, validatePassword, verifyPassword } from "./password";
-import { getTokenExpiration, signToken } from "./jwt";
+
 import {
   AuthError,
   type AuthResponse,
@@ -14,7 +13,10 @@ import {
   type PasswordCredentialData,
   type RegisterRequest,
   type User,
-} from "../../../domains/authentication";
+} from "@domains/authentication";
+
+import { hashPassword, validatePassword, verifyPassword } from "@/auth/password";
+import { getTokenExpiration, signToken } from "@/auth/jwt";
 
 export class AuthService {
   constructor(private sql: Sql) {}

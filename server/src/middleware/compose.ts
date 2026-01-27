@@ -5,7 +5,7 @@
  * This allows natural ordering: compose(a, b, c) executes as a -> b -> c -> handler
  */
 
-import type { Handler, Middleware } from "./types";
+import type { Handler, Middleware } from "@/middleware/types";
 
 /**
  * Compose multiple middleware into a single middleware
