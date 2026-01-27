@@ -93,8 +93,8 @@ export function createServer(config: ServerConfig = {}): ServerInstance {
   });
 
   return {
-    port: server.port,
-    hostname: server.hostname,
+    port: server.port as number,
+    hostname: server.hostname as string,
     stop: () => server.stop(),
     router,
   };
