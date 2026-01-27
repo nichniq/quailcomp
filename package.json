@@ -1,5 +1,6 @@
 {
   "name": "quailcomp",
+  "type": "module",
   "private": true,
   "workspaces": ["data/client", "server", "frontend"],
   "scripts": {
@@ -7,6 +8,17 @@
     "test:watch": "bun test --watch --cwd data/client",
     "db:setup": "bun run --cwd data/client setup",
     "db:teardown": "bun run --cwd data/client teardown",
-    "db:migrate": "bun run --cwd data/client migrate"
+    "db:migrate": "bun run --cwd data/client migrate",
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix"
+  },
+  "devDependencies": {
+    "@typescript-eslint/eslint-plugin": "^8.54.0",
+    "@typescript-eslint/parser": "^8.54.0",
+    "eslint": "^9.39.2",
+    "eslint-import-resolver-typescript": "^4.4.4",
+    "eslint-plugin-import": "^2.32.0",
+    "eslint-plugin-vue": "^10.7.0",
+    "vue-eslint-parser": "^10.2.0"
   }
 }

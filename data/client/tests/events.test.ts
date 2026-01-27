@@ -60,7 +60,7 @@
 
 import { describe, it, expect, beforeAll, afterAll } from "bun:test";
 import { SQL } from "bun";
-import { EventsClient, type EventEntry } from "../src/db/events";
+import { EventsClient, type EventEntry } from "@/db/events";
 
 // =============================================================================
 // Test Setup

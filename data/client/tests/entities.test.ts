@@ -59,7 +59,7 @@
 
 import { describe, it, expect, beforeAll, afterAll, beforeEach } from "bun:test";
 import { SQL } from "bun";
-import { EntitiesClient, type Entry } from "../src/db/entities";
+import { EntitiesClient, type Entry } from "@/db/entities";
 
 // =============================================================================
 // Test Setup
