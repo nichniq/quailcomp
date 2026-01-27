@@ -10,7 +10,7 @@ import type { Sql } from "@quailcomp/data";
 import type { Router } from "../router";
 import { requireAuth } from "./middleware";
 import { AuthService } from "./service";
-import { AuthError, type LoginRequest, type RegisterRequest } from "./types";
+import { AuthError, type LoginRequest, type RegisterRequest } from "../../../domains/authentication";
 
 /**
  * Register authentication routes

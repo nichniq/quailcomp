@@ -7,7 +7,7 @@
 import type { RequestContext } from "../context";
 import type { Middleware } from "../middleware/types";
 import { AuthorizationService } from "./service";
-import type { AccessLevel } from "./types";
+import type { AccessLevel } from "../../../domains/authorization";
 
 /**
  * Function that extracts entity ID from request context

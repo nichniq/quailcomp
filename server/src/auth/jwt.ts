@@ -5,7 +5,7 @@
  */
 
 import * as jose from "jose";
-import type { CredentialType, JWTPayload } from "./types";
+import type { CredentialType, JWTPayload } from "../../../domains/authentication";
 
 // JWT configuration from environment
 const JWT_SECRET = new TextEncoder().encode(

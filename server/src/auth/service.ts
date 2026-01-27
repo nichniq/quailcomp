@@ -14,7 +14,7 @@ import {
   type PasswordCredentialData,
   type RegisterRequest,
   type User,
-} from "./types";
+} from "../../../domains/authentication";
 
 export class AuthService {
   constructor(private sql: Sql) {}

@@ -12,12 +12,12 @@
     "isolatedModules": true,
     "declaration": true,
     "outDir": "./dist",
-    "rootDir": ".",
+    "rootDir": "..",
     "baseUrl": ".",
     "paths": {
       "@/*": ["./src/*"]
     }
   },
-  "include": ["src/**/*", "tests/**/*", "scripts/**/*"],
+  "include": ["src/**/*", "tests/**/*", "scripts/**/*", "../domains/**/*"],
   "exclude": ["node_modules", "dist"]
 }

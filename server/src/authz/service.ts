@@ -10,7 +10,7 @@ import {
   type AccessLevel,
   type EntityAccess,
   AuthorizationError,
-} from "./types";
+} from "../../../domains/authorization";
 
 export class AuthorizationService {
   constructor(private sql: Sql) {}
