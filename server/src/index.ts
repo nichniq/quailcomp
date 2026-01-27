@@ -6,4 +6,4 @@ import { createServer } from "@/server";
 
 const server = createServer();
 
-console.log(`Server running on http://${server.hostname}:${server.port}`);
+console.log(`Server running on ${server.url}`);

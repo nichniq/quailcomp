@@ -24,8 +24,7 @@ export interface ServerConfig {
 }
 
 export interface ServerInstance {
-  port: number;
-  hostname: string;
+  url: URL;
   stop(): void;
   router: Router;
 }
@@ -93,8 +92,7 @@ export function createServer(config: ServerConfig = {}): ServerInstance {
   });
 
   return {
-    port: server.port as number,
-    hostname: server.hostname as string,
+    url: server.url,
     stop: () => server.stop(),
     router,
   };
