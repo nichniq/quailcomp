@@ -72,7 +72,7 @@ export class AuthService {
 
       const [credential] = await tx`
         INSERT INTO user_credentials (user_id, credential_type, credential_data)
-        VALUES (${user.user_id}, 'password', ${JSON.stringify(credentialData)})
+        VALUES (${user.user_id}, 'password', ${credentialData})
         RETURNING credential_id
       `;
 
