@@ -15,6 +15,7 @@ import { requestMetrics } from "./metrics/request-metrics";
 import { createRouter, type Router } from "./router";
 import { healthHandler, metricsHandler } from "./routes/health";
 import { registerAuthRoutes } from "./auth/routes";
+import { registerBookRoutes } from "./routes/books";
 
 export interface ServerConfig {
   port?: number;
@@ -39,7 +40,8 @@ function registerRoutes(router: Router, sql: Sql): void {
   // Authentication routes
   registerAuthRoutes(router, sql);
 
-  // Entity routes will be added here
+  // Book routes
+  registerBookRoutes(router, sql);
 }
 
 /**
