@@ -15,7 +15,7 @@ bun run db:teardown      # Drop test database (automated cleanup)
 ## Rules
 
 - Run `bun test` after modifying code to verify changes
-- Suggest committing work with a descriptive message after completing a task
+- **ALWAYS suggest a commit after completing work** - See Commit Protocol below
 - Use Bun's built-in SQL tagged templates for all queries (not raw strings)
 - Use `EntitiesClient` for mutable data, `EventsClient` for immutable facts
 - Tests must use unique type names (with timestamps) to avoid conflicts
@@ -24,6 +24,32 @@ bun run db:teardown      # Drop test database (automated cleanup)
 - Never modify existing migration files (checksums are tracked)
 - Migrations run as quailcomp_owner, test idempotency before committing
 - Double check this file when changes are made to ensure it remains up to date
+
+## Commit Protocol
+
+After completing any task that modifies files:
+
+1. Run `bun test` to verify changes
+2. Stage files with `git add`
+3. Create commit with:
+   - **Subject line**: Imperative mood, concise summary (e.g., "Add feature X", "Fix bug in Y")
+   - **Body**: Bullet points describing specific changes
+   - **Co-authorship**: Always include `Co-Authored-By: Claude Sonnet 4.5 <noreply@anthropic.com>`
+4. Use heredoc format for multi-line commit messages:
+   ```bash
+   git commit -m "$(cat <<'EOF'
+   Subject line here
+
+   - First change
+   - Second change
+   - Third change
+
+   Co-Authored-By: Claude Sonnet 4.5 <noreply@anthropic.com>
+   EOF
+   )"
+   ```
+
+**Important**: This is a mandatory step, not optional. Every completed task should end with a commit suggestion.
 
 ## Avoid
 
