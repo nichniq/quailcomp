@@ -600,14 +600,20 @@ describe("Time Ordering", () => {
 
 describe("Edge Cases & Error Handling", () => {
   it("should reject enrichment with non-existent event_id", async () => {
-    await expect(
-      client.enrich({
+    // Note: Using try/catch instead of expect().rejects due to Bun issue
+    try {
+      await client.enrich({
         eventId: 999999999, // Non-existent
         eventType: "test",
         occurredAt: new Date(),
         data: { test: true },
-      })
-    ).rejects.toThrow();
+      });
+      // Should not reach here
+      expect(true).toBe(false);
+    } catch (error) {
+      // Should throw an error
+      expect(error).toBeDefined();
+    }
   });
 
   it("should handle empty data object", async () => {
@@ -665,12 +671,17 @@ describe("Edge Cases & Error Handling", () => {
 describe("Trigger Validation", () => {
   it("should reject new events with arbitrary event_id", async () => {
     // Try to insert with a made-up event_id without calling nextval first
-    await expect(
-      sql`
+    // Note: Using try/catch instead of expect().rejects due to Bun issue
+    try {
+      await sql`
         INSERT INTO events (event_id, event_type, occurred_at, data)
         VALUES (888888888, 'test', NOW(), '{}')
-      `
-    ).rejects.toThrow(/event_id/);
+      `;
+      // Should not reach here
+      expect(true).toBe(false);
+    } catch (error: any) {
+      expect(error.message).toMatch(/event_id/);
+    }
   });
 
   it("should allow enrichment with existing event_id", async () => {

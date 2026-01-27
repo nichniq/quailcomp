@@ -3,11 +3,14 @@
   "version": "0.0.1",
   "type": "module",
   "scripts": {
+    "start": "bun run src/index.ts",
+    "dev": "bun --watch run src/index.ts",
     "test": "bun test",
     "test:watch": "bun test --watch"
   },
   "dependencies": {
-    "@quailcomp/data": "workspace:*"
+    "@quailcomp/data": "workspace:*",
+    "jose": "^5.0.0"
   },
   "devDependencies": {
     "@types/bun": "latest"

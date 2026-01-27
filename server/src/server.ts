@@ -1,0 +1,98 @@
+/**
+ * HTTP Server using Bun.serve()
+ *
+ * Sets up routing, middleware, and request handling.
+ */
+
+import { getConnection, type Sql } from "@quailcomp/data";
+import { createContext } from "./context";
+import { compose } from "./middleware/compose";
+import { defaultCors } from "./middleware/cors";
+import { errorHandler } from "./middleware/error-handler";
+import type { Handler, Middleware } from "./middleware/types";
+import { requestLogger } from "./logging/request-logger";
+import { requestMetrics } from "./metrics/request-metrics";
+import { createRouter, type Router } from "./router";
+import { healthHandler, metricsHandler } from "./routes/health";
+import { registerAuthRoutes } from "./auth/routes";
+
+export interface ServerConfig {
+  port?: number;
+  hostname?: string;
+}
+
+export interface ServerInstance {
+  port: number;
+  hostname: string;
+  stop(): void;
+  router: Router;
+}
+
+/**
+ * Register all routes on the router
+ */
+function registerRoutes(router: Router, sql: Sql): void {
+  // Health and metrics
+  router.get("/health", healthHandler);
+  router.get("/metrics", metricsHandler);
+
+  // Authentication routes
+  registerAuthRoutes(router, sql);
+
+  // Entity routes will be added here
+}
+
+/**
+ * Create and start the HTTP server
+ */
+export function createServer(config: ServerConfig = {}): ServerInstance {
+  const port = config.port ?? Number(process.env.PORT) ?? 3000;
+  const hostname = config.hostname ?? "0.0.0.0";
+
+  const router = createRouter();
+  const sql = getConnection();
+
+  // Register all routes
+  registerRoutes(router, sql);
+
+  // Global middleware stack (applied to all requests)
+  const globalMiddleware = compose(
+    errorHandler,
+    requestLogger,
+    requestMetrics,
+    defaultCors
+  );
+
+  const server = Bun.serve({
+    port,
+    hostname,
+
+    async fetch(req: Request): Promise<Response> {
+      const url = new URL(req.url);
+      const match = router.match(req.method, url.pathname);
+
+      if (!match) {
+        return Response.json({ error: "Not found" }, { status: 404 });
+      }
+
+      // Create request context
+      const ctx = createContext(req, sql);
+      ctx.params = match.params;
+
+      // Build handler chain: route middleware -> global middleware -> handler
+      const routeMiddleware = match.route.middleware ?? [];
+      const handler = compose(...routeMiddleware)(
+        globalMiddleware(match.route.handler)
+      );
+
+      return handler(ctx, req);
+    },
+  });
+
+  return {
+    port: server.port,
+    hostname: server.hostname,
+    stop: () => server.stop(),
+    router,
+  };
+}

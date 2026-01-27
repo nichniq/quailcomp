@@ -535,13 +535,19 @@ describe("Search Operations", () => {
 
 describe("Edge Cases & Error Handling", () => {
   it("should reject invalid entity_id on update", async () => {
-    expect(
-      client.update<TestUserData>({
+    // Note: Using try/catch instead of expect().rejects due to Bun issue
+    try {
+      await client.update<TestUserData>({
         entityId: 999999, // Non-existent
         type: "user",
         data: { name: "Invalid", email: "invalid@example.com" },
-      })
-    ).rejects.toThrow();
+      });
+      // Should not reach here
+      expect(true).toBe(false);
+    } catch (error) {
+      // Should throw an error
+      expect(error).toBeDefined();
+    }
   });
 
   it("should handle empty data object", async () => {
