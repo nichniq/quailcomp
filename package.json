@@ -1,11 +1,12 @@
 {
   "name": "quailcomp",
   "private": true,
-  "workspaces": ["data/client", "server"],
+  "workspaces": ["data/client", "server", "frontend"],
   "scripts": {
     "test": "bun test --cwd data/client && bun test --cwd server",
     "test:watch": "bun test --watch --cwd data/client",
     "db:setup": "bun run --cwd data/client setup",
-    "db:teardown": "bun run --cwd data/client teardown"
+    "db:teardown": "bun run --cwd data/client teardown",
+    "db:migrate": "bun run --cwd data/client migrate"
   }
 }

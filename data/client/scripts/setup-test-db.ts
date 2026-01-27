@@ -5,12 +5,10 @@
  * Run with: bun run db:setup
  *
  * This script connects as the superuser to create the database,
- * then connects as quailcomp_owner to run migrations.
+ * then uses the migration runner to apply all migrations.
  */
 
 import { SQL } from "bun";
-import { readFileSync } from "fs";
-import { join } from "path";
 
 const TEST_DB_NAME = process.env.DB_TEST_NAME ?? "quailcomp_test";
 const SUPERUSER = process.env.DB_SUPERUSER ?? process.env.USER ?? "postgres";
@@ -39,7 +37,7 @@ async function setup() {
     await adminSql.close();
   }
 
-  // Connect to test database as superuser to set up schema and run migrations
+  // Connect to test database as superuser to set up schema
   const testSql = new SQL({
     url: `postgres://${SUPERUSER}@localhost:5432/${TEST_DB_NAME}`,
   });
@@ -70,39 +68,32 @@ async function setup() {
       GRANT USAGE ON SEQUENCES TO quailcomp_app
     `);
 
-    // Run migrations as quailcomp_owner
-    console.log("Running migrations...");
-
-    // Read the migration file
-    const migrationPath = join(
-      import.meta.dir,
-      "../../postgres/migrations/001_initial_schema.sql"
-    );
-    const migrationSql = readFileSync(migrationPath, "utf-8");
-
-    // Switch to quailcomp_owner role and run migration
-    await testSql.unsafe(`SET ROLE quailcomp_owner`);
-    await testSql.unsafe(migrationSql);
-    await testSql.unsafe(`RESET ROLE`);
-
-    console.log("Migrations completed successfully");
-
-    // Grant privileges to newly created objects
-    await testSql.unsafe(
-      `GRANT SELECT, INSERT ON ALL TABLES IN SCHEMA public TO quailcomp_app`
-    );
-    // USAGE allows nextval(), UPDATE allows setval() which the trigger uses
-    await testSql.unsafe(
-      `GRANT USAGE, SELECT, UPDATE ON ALL SEQUENCES IN SCHEMA public TO quailcomp_app`
-    );
-
-    console.log("\n✅ Test database setup complete!");
-    console.log(`   Database: ${TEST_DB_NAME}`);
-    console.log(`   User: quailcomp_app`);
-    console.log(`\nRun tests with: bun test`);
+    console.log("Schema setup completed successfully");
   } finally {
     await testSql.close();
   }
+
+  // Run migrations via shell script
+  console.log("Running migrations...");
+
+  const migrateResult = Bun.spawnSync(
+    ["bash", "../../postgres/migrations/run.sh"],
+    {
+      cwd: import.meta.dir,
+      env: { ...process.env, PGDATABASE: TEST_DB_NAME },
+      stdout: "inherit",
+      stderr: "inherit",
+    }
+  );
+
+  if (migrateResult.exitCode !== 0) {
+    throw new Error("Migrations failed");
+  }
+
+  console.log("\n✅ Test database setup complete!");
+  console.log(`   Database: ${TEST_DB_NAME}`);
+  console.log(`   User: quailcomp_app`);
+  console.log(`\nRun tests with: bun test`);
 }
 
 setup().catch((err) => {

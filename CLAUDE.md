@@ -9,6 +9,7 @@ bun test                 # Run all tests (do this after code changes)
 bun test:watch           # Watch mode for data/client
 bun run db:setup         # Create test database and schema
 bun run db:teardown      # Drop test database
+bun run db:migrate       # Run pending migrations on existing database
 ```
 
 ## Rules
@@ -17,7 +18,10 @@ bun run db:teardown      # Drop test database
 - Use Bun's built-in SQL tagged templates for all queries (not raw strings)
 - Use `EntitiesClient` for mutable data, `EventsClient` for immutable facts
 - Tests must use unique type names (with timestamps) to avoid conflicts
-- Ask before modifying files in `data/postgres/migrations/`
+- New migrations must follow naming: `NNN_description.sql` (zero-padded numbers)
+- Migrations must be idempotent (safe to run multiple times)
+- Never modify existing migration files (checksums are tracked)
+- Migrations run as quailcomp_owner, test idempotency before committing
 - Double check this file when changes are made to ensure it remains up to date
 
 ## Avoid
@@ -39,6 +43,9 @@ domains/           # DDD domain models and documentation
 
 - **Entities**: Append-only entries sharing `entity_id`. Latest = current state.
 - **Events**: Immutable facts, can be enriched. Grouped by `event_id`.
+- **Migrations**: Tracked in schema_migrations table (version, applied_at, checksum)
+  - Migration runner: `data/postgres/migrations/run.sh`
+  - Auto-discovery via filename pattern: `[0-9][0-9][0-9]_*.sql`
 - Soft deletes via `deleted_at` / `voided_at` timestamps
 - JSONB for flexible schema storage
 

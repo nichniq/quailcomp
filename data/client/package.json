@@ -9,7 +9,8 @@
     "test": "bun test",
     "test:watch": "bun test --watch",
     "setup": "bun run scripts/setup-test-db.ts",
-    "teardown": "bun run scripts/teardown-test-db.ts"
+    "teardown": "bun run scripts/teardown-test-db.ts",
+    "migrate": "bun run scripts/run-migrations.ts"
   },
   "devDependencies": {
     "@types/bun": "latest"
