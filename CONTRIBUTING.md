@@ -1,4 +1,4 @@
-# Quailcomp Instructions
+# Contributing to Quailcomp
 
 Quailcomp is a personal data management system using event-sourced append-only storage. TypeScript monorepo with Bun runtime and PostgreSQL 16.
 
@@ -13,10 +13,9 @@ bun run db:teardown      # Drop test database (automated cleanup)
 bash scripts/install-hooks.sh  # Install git hooks from .githooks/ to .git/hooks/
 ```
 
-## Rules
+## Development Rules
 
 - Run `bun test` after modifying code to verify changes
-- **ALWAYS suggest a commit after completing work** - See Commit Protocol below
 - Use Bun's built-in SQL tagged templates for all queries (not raw strings)
 - Use `EntitiesClient` for mutable data, `EventsClient` for immutable facts
 - Tests must use unique type names (with timestamps) to avoid conflicts
@@ -26,7 +25,6 @@ bash scripts/install-hooks.sh  # Install git hooks from .githooks/ to .git/hooks
 - Migrations run as quailcomp_owner, test idempotency before committing
 - Git hooks are templates in `.githooks/` - edit templates, then run `bash scripts/install-hooks.sh`
 - Pre-commit hook warns if out of sync with template
-- Double check this file when changes are made to ensure it remains up to date
 
 ## Commit Protocol
 
@@ -47,13 +45,9 @@ After completing any task that modifies files:
    - First change
    - Second change
    - Third change
-
-   Co-Authored-By: AI Assistant <noreply@example.com>
    EOF
    )"
    ```
-
-**Important**: This is a mandatory step, not optional. Every completed task should end with a commit suggestion.
 
 ## Avoid
 
@@ -134,7 +128,7 @@ DB_TEST_NAME (default: quailcomp_test)
 
 The /domains directory is the authoritative source of truth for domain models, combining human-readable Markdown documentation with machine-readable TypeScript type definitions.
 
-### Your Role
+### Working with Domains
 
 When working on features or making architectural decisions:
 
@@ -166,20 +160,3 @@ Types are automatically extracted from Markdown domain files:
 - Import types using: `import type { Type } from "@domains/types/<domain-name>"`
 
 Before implementing features that touch multiple domains or introduce new concepts, consider whether domain documentation needs to be created or updated.
-
----
-
-## Improving This File
-
-AI Assistant: Help me improve this instructions file over time. When you notice opportunities, suggest additions:
-
-- **After fixing a bug**: "Should I add a rule about [pattern that caused the bug]?"
-- **After I clarify a preference**: "Want me to add that to instructions so I remember?"
-- **After repeated questions**: "I've asked about [X] a few times. Should this be documented?"
-- **When conventions emerge**: "I notice you prefer [pattern]. Add to rules?"
-
-Good instruction entries are:
-
-- **Directive**: "Do X" or "Avoid Y" (not just descriptions)
-- **Specific**: "Use `bun test`" (not "run tests appropriately")
-- **Born from friction**: Rules that prevent real mistakes you've encountered

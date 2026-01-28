@@ -237,9 +237,10 @@ quailcomp/
 │   │   └── extract-types.ts  # Type extraction script
 │   └── README.md             # Domain philosophy
 │
-├── .ai/
-│   └── instructions.md       # Development guidelines
+├── .claude/
+│   └── CLAUDE.md             # AI assistant instructions
 ├── .githooks/                # Git hook templates
+├── CONTRIBUTING.md           # Development guidelines
 ├── package.json              # Workspace configuration
 └── README.md                 # This file
 ```
@@ -637,7 +638,7 @@ EOF
 - **Git hooks** - Edit `.githooks/` templates, run `bash scripts/install-hooks.sh`
 - **Domain types** - Update Markdown docs, run type extraction
 
-See [.ai/instructions.md](.ai/instructions.md) for complete development guidelines.
+See [CONTRIBUTING.md](CONTRIBUTING.md) for complete development guidelines.
 
 ## License
 
