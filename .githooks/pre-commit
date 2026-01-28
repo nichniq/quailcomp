@@ -1,9 +1,47 @@
 #!/bin/sh
-# Pre-commit hook to run ESLint on staged files
+# Pre-commit hook to extract domain types and run ESLint on staged files
 #
 # To install this hook:
-#   cp .githooks/pre-commit .git/hooks/pre-commit
-#   chmod +x .git/hooks/pre-commit
+#   bash scripts/install-hooks.sh
+
+# Check if this hook is out of sync with the template
+if ! cmp -s .githooks/pre-commit .git/hooks/pre-commit; then
+  echo "⚠️  Warning: .git/hooks/pre-commit is out of sync with .githooks/pre-commit"
+  echo "   Run: bash scripts/install-hooks.sh"
+  echo ""
+fi
+
+# Check if any domain markdown files are staged
+STAGED_DOMAINS=$(git diff --cached --name-only --diff-filter=ACM | grep '^domains/.*\.md$' | grep -v 'README.md' || true)
+
+if [ -n "$STAGED_DOMAINS" ]; then
+  echo "Extracting domain types from markdown..."
+  bun run domains/scripts/extract-types.ts
+
+  EXTRACT_EXIT_CODE=$?
+  if [ $EXTRACT_EXIT_CODE -ne 0 ]; then
+    echo ""
+    echo "❌ Domain type extraction failed. Please fix the markdown files."
+    exit 1
+  fi
+
+  # Stage the generated types directory if it changed
+  git add domains/types/ 2>/dev/null || true
+  echo "✅ Domain types extracted!"
+fi
+
+# Run TypeScript type checking on domains
+echo "Running TypeScript type checks on domains..."
+cd domains && bunx tsc --noEmit
+TSC_EXIT_CODE=$?
+cd ..
+
+if [ $TSC_EXIT_CODE -ne 0 ]; then
+  echo ""
+  echo "❌ TypeScript type checking failed in domains directory."
+  exit 1
+fi
+echo "✅ TypeScript checks passed!"
 
 # Get list of staged TypeScript, JavaScript, and Vue files
 STAGED_FILES=$(git diff --cached --name-only --diff-filter=ACM | grep -E '\.(ts|tsx|js|jsx|vue)$')

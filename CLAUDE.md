@@ -10,6 +10,7 @@ bun test:watch           # Watch mode for data/client
 bun run db:migrate       # Run pending migrations on development database
 bun run db:setup         # Create test database (automated by tests, rarely needed manually)
 bun run db:teardown      # Drop test database (automated cleanup)
+bash scripts/install-hooks.sh  # Install git hooks from .githooks/ to .git/hooks/
 ```
 
 ## Rules
@@ -23,6 +24,8 @@ bun run db:teardown      # Drop test database (automated cleanup)
 - Migrations must be idempotent (safe to run multiple times)
 - Never modify existing migration files (checksums are tracked)
 - Migrations run as quailcomp_owner, test idempotency before committing
+- Git hooks are templates in `.githooks/` - edit templates, then run `bash scripts/install-hooks.sh`
+- Pre-commit hook warns if out of sync with template
 - Double check this file when changes are made to ensure it remains up to date
 
 ## Commit Protocol

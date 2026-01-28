@@ -10,7 +10,8 @@
     "db:teardown": "bun run --cwd data/client teardown",
     "db:migrate": "bun run --cwd data/client migrate",
     "lint": "eslint .",
-    "lint:fix": "eslint . --fix"
+    "lint:fix": "eslint . --fix",
+    "install-hooks": "bash scripts/install-hooks.sh"
   },
   "devDependencies": {
     "@typescript-eslint/eslint-plugin": "^8.54.0",
