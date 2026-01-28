@@ -10,8 +10,10 @@
     "db:setup": "bun run --cwd data/client setup",
     "db:teardown": "bun run --cwd data/client teardown",
     "db:migrate": "bun run --cwd data/client migrate",
-    "lint": "eslint . --max-warnings=0",
-    "lint:fix": "eslint . --fix --max-warnings=0",
+    "lint": "eslint . --max-warnings=0 && markdownlint-cli2",
+    "lint:fix": "eslint . --fix --max-warnings=0 && markdownlint-cli2 --fix",
+    "lint:md": "markdownlint-cli2",
+    "lint:md:fix": "markdownlint-cli2 --fix",
     "install-hooks": "bash scripts/install-hooks.sh"
   },
   "devDependencies": {
@@ -22,6 +24,7 @@
     "eslint-import-resolver-typescript": "^4.4.4",
     "eslint-plugin-import": "^2.32.0",
     "eslint-plugin-vue": "^10.7.0",
+    "markdownlint-cli2": "^0.20.0",
     "vue-eslint-parser": "^10.2.0"
   }
 }

@@ -19,12 +19,14 @@ system operates entirely on `user_id` - a stable identifier that doesn't change
 regardless of how the user logged in (password, passkey, OAuth, or API key).
 
 This separation allows:
+
 - Adding new authentication methods without changing domain logic
 - Users having multiple ways to access the same account
 - Authorization rules that are independent of authentication method
 
 Example: A user (user_id=1) can log in with:
-- Password: nick@example.com + password123
+
+- Password: <nick@example.com> + password123
 - Passkey: Biometrics on their iPhone
 - OAuth: "Login with Google" button
 - API Key: For automation scripts
@@ -108,12 +110,14 @@ Passwords must meet minimum requirements (8+ characters) and are hashed using
 bcrypt with cost factor 10.
 
 **Security considerations:**
+
 - Passwords are never stored in plain text
 - Rate limiting prevents brute force attacks
 - Failed login attempts may trigger account lockout
 - Consider checking against breach databases (HaveIBeenPwned)
 
 **Authentication flow:**
+
 1. User provides identifier + password
 2. Look up credential by type='password' and identifier
 3. Verify password against bcrypt hash
@@ -137,6 +141,7 @@ only the public key. Users authenticate with device biometrics (Face ID, Touch I
 Windows Hello) or device PIN.
 
 **Key concepts:**
+
 - credential_id: Unique identifier from the WebAuthn device
 - public_key: Used to verify signatures (private key stays on device)
 - counter: Signature counter prevents replay attacks
@@ -144,6 +149,7 @@ Windows Hello) or device PIN.
 - transports: How the device communicates (USB, NFC, Bluetooth, internal)
 
 **Registration flow:**
+
 1. User initiates passkey registration
 2. Server generates challenge (random bytes)
 3. Device creates key pair, returns credential_id + public_key
@@ -151,6 +157,7 @@ Windows Hello) or device PIN.
 5. Private key never leaves user's device
 
 **Authentication flow:**
+
 1. User initiates passkey login
 2. Server generates challenge
 3. Device signs challenge with private key
@@ -161,6 +168,7 @@ Windows Hello) or device PIN.
 8. Generate and return JWT with user_id
 
 **Security considerations:**
+
 - Phishing-resistant (signature tied to domain)
 - No password to steal or forget
 - Requires HTTPS in production
@@ -186,12 +194,14 @@ The provider handles authentication and returns user profile information. Users
 can "Login with Google" or "Login with GitHub" instead of managing passwords.
 
 **Key concepts:**
+
 - provider_user_id: Provider's unique ID for this user (never changes)
 - email: From OAuth profile (used to link accounts)
 - profile: Optional cached profile data (name, avatar, locale)
 - token hashes: Optional stored tokens for API access (never store raw tokens)
 
 **Authentication flow:**
+
 1. User clicks "Login with Google"
 2. Redirect to OAuth provider's authorization URL
 3. User authorizes, provider redirects back with authorization code
@@ -207,6 +217,7 @@ account. This prevents duplicate accounts when users have multiple login methods
 Example: User signs up with password, later adds "Login with Google" to same account.
 
 **Security considerations:**
+
 - Validate state parameter (CSRF protection)
 - Verify token signatures if using ID tokens
 - Handle email changes at provider
@@ -237,6 +248,7 @@ Common use cases: CI/CD pipelines, automation scripts, mobile apps, third-party
 integrations. Keys can have restricted scopes and IP whitelists.
 
 **Key concepts:**
+
 - key_hash: SHA-256 hash of full key (never store raw key)
 - prefix: Visible prefix for identification ("pk_live_")
 - last_4: Last 4 characters for user reference
@@ -246,6 +258,7 @@ integrations. Keys can have restricted scopes and IP whitelists.
 - rate_limit: Optional per-hour rate limit
 
 **Generation flow:**
+
 1. User requests new API key
 2. Server generates secure random key: `pk_live_<random_32_bytes>`
 3. Display full key to user ONCE (never shown again)
@@ -253,6 +266,7 @@ integrations. Keys can have restricted scopes and IP whitelists.
 5. Store prefix and last_4 for user reference
 
 **Authentication flow:**
+
 1. Client sends key in header: `Authorization: Bearer pk_live_abc123...`
 2. Hash the provided key
 3. Look up credential by type='api_key' and key_hash
@@ -262,6 +276,7 @@ integrations. Keys can have restricted scopes and IP whitelists.
 7. Proceed with request using associated user_id
 
 **Security considerations:**
+
 - Keys should be long and cryptographically random
 - Support key rotation (multiple active keys)
 - Support key revocation (set is_active = false)
@@ -305,12 +320,14 @@ standardized claims. The token is stateless (no server-side session storage) and
 contains everything needed to identify the user and their authentication context.
 
 **Token lifecycle:**
+
 - Short-lived access tokens (15 minutes - 1 hour)
 - Optional refresh tokens for longer sessions
 - Token expiration forces re-authentication
 - Consider token blacklist for logout/revocation
 
 **Claims:**
+
 - user_id: Always present - the authenticated user
 - email: Stable identifier
 - username: May be null for OAuth-only users
@@ -321,6 +338,7 @@ contains everything needed to identify the user and their authentication context
 - session_id: Optional session tracking identifier
 
 Example JWT payload:
+
 ```json
 {
   user_id: 1,
@@ -493,9 +511,10 @@ export function isApiKeyCredential(data: CredentialData): data is ApiKeyCredenti
 Shows the credential type and relevant identifier for user-facing display.
 
 Examples:
-- "Password (nick@example.com)"
+
+- "Password (<nick@example.com>)"
 - "Passkey (Nick's iPhone)"
-- "Google (nick@gmail.com)"
+- "Google (<nick@gmail.com>)"
 - "API Key (CI/CD Pipeline)"
 
 ```typescript
@@ -555,6 +574,7 @@ for details on permission checking and access control.
 > Rules that must be maintained.
 
 **Hard Invariants** (enforced by system):
+
 1. Every user has a unique user_id
 2. Every user has a unique email address
 3. Usernames are unique when present
@@ -564,6 +584,7 @@ for details on permission checking and access control.
 7. API keys are never stored in plain text
 
 **Soft Expectations** (usually true, not enforced):
+
 - Most users have a username
 - Users typically have 1-3 credentials
 - Credentials are used regularly (last_used_at is recent)
@@ -574,6 +595,7 @@ for details on permission checking and access control.
 > Primary ways this domain is used.
 
 **Primary Use Cases:**
+
 1. User registration (create account with password)
 2. User login (authenticate with any credential type)
 3. Add additional authentication methods to existing account
@@ -583,6 +605,7 @@ for details on permission checking and access control.
 7. Verify JWT tokens on protected endpoints
 
 **Key Queries:**
+
 - Find user by email
 - Find credential by identifier (password login)
 - Find credential by provider_user_id (OAuth login)

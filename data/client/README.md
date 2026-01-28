@@ -5,6 +5,7 @@ TypeScript client library for all data sources in the Quailcomp project.
 ## Overview
 
 This package provides type-safe clients for accessing various data sources:
+
 - **`db`** - PostgreSQL database client
   - **Entities** - Event-sourced mutable state (nouns: books, people, locations)
   - **Events** - Enrichable facts about what happened (verbs: purchased, moved, lent)
@@ -14,6 +15,7 @@ This package provides type-safe clients for accessing various data sources:
 ## Installation
 
 This is a workspace package. Add it to your `package.json`:
+
 ```json
 {
   "dependencies": {
@@ -195,10 +197,12 @@ To add a new data source (e.g., filesystem integration):
 
 1. Create `src/fs/` directory with your client code
 2. Export it from `src/index.ts`:
+
    ```typescript
    export * from "./db"
    export * from "./fs"  // new
    ```
+
 3. Add tests in `tests/fs.test.ts`
 
 This keeps all data access logic in one importable package while organizing by data source.
@@ -210,6 +214,7 @@ This keeps all data access logic in one importable package while organizing by d
 The database distinguishes between two fundamental concepts:
 
 **Entities (Nouns)** - Things that exist and can change:
+
 - Examples: books, people, locations, accounts
 - Mutable: Their state evolves over time
 - Event-sourced: History preserved via append-only entries
@@ -218,6 +223,7 @@ The database distinguishes between two fundamental concepts:
 - Query pattern: "What is the current state of X?"
 
 **Events (Verbs)** - Facts about what happened, enrichable over time:
+
 - Examples: purchased, moved, lent, deposited
 - Append-only: Original fact preserved, can be enriched with new entries
 - Time-ordered by `occurred_at` (when it happened in the real world)
@@ -230,6 +236,7 @@ The database distinguishes between two fundamental concepts:
   - "What happened between date A and B?"
 
 **When to use which:**
+
 - Use **entities** for things that have identity and state
 - Use **events** for recording facts about what happened to those entities
 - Example: A book (entity) can be acquired, lent, and returned (events)
@@ -237,6 +244,7 @@ The database distinguishes between two fundamental concepts:
 ### Event-Sourced Entities
 
 The entities table uses an append-only event-sourcing pattern:
+
 - Each write creates a new entry (immutable)
 - Entries share an `entity_id` to track versions
 - Soft deletes via `deleted_at` timestamp
@@ -246,6 +254,7 @@ The entities table uses an append-only event-sourcing pattern:
 ### Enrichable Events
 
 The events table uses the same append-only pattern as entities:
+
 - Original event data is preserved (immutable first entry)
 - Events can be "enriched" by appending new entries with the same `event_id`
 - Each entry is immutable; the latest entry represents current enriched state
@@ -257,6 +266,7 @@ The events table uses the same append-only pattern as entities:
 ### Type Safety
 
 Multiple typing approaches are provided (see `src/db/types.ts`):
+
 1. Simple type registry (recommended)
 2. Discriminated unions (for pattern matching)
 3. Versioned types (for schema evolution)

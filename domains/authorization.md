@@ -18,6 +18,7 @@ Authentication (identity verification) happens first and produces a `user_id`.
 Authorization then uses that `user_id` to check permissions for requested operations.
 
 Example flow:
+
 1. User authenticates → receives JWT with `user_id: 1`
 2. User requests entity #42 → extract `user_id: 1` from JWT
 3. Authorization checks: Does user 1 have access to entity 42?
@@ -25,6 +26,7 @@ Example flow:
 5. Grant or deny the request
 
 This separation allows:
+
 - Permission checks independent of authentication method
 - Same access rules for all users regardless of how they logged in
 - Easy permission management (grant/revoke access to entities)
@@ -36,6 +38,7 @@ This separation allows:
 
 Every entity in the system can have multiple users with access. Each access grant
 specifies:
+
 - Which entity (entity_id)
 - Which user (user_id)
 - What level (owner, write, read)
@@ -63,6 +66,7 @@ export type AccessLevel = "owner" | "write" | "read"
 Each level grants specific capabilities:
 
 **Owner (level 3):**
+
 - Full control over the entity
 - Read and modify entity data
 - Delete or soft-delete the entity
@@ -70,12 +74,14 @@ Each level grants specific capabilities:
 - Transfer ownership to another user
 
 **Write (level 2):**
+
 - Read entity data
 - Modify entity data
 - Cannot delete entity
 - Cannot change permissions
 
 **Read (level 1):**
+
 - Read entity data only
 - Cannot modify
 - Cannot delete
@@ -100,6 +106,7 @@ Uses the permission hierarchy to determine if a user's access level is sufficien
 for an operation that requires a minimum level.
 
 Examples:
+
 ```typescript
 hasAccess('owner', 'read')  // true - owner can do anything
 hasAccess('write', 'owner') // false - write cannot do owner actions
@@ -125,6 +132,7 @@ one entity. The same entity can have multiple access grants (multiple users),
 and the same user can have access to multiple entities.
 
 **Key fields:**
+
 - entityId, userId: Primary key - one access grant per user per entity
 - accessLevel: What the user can do (owner, write, read)
 - grantedAt: When access was granted
@@ -147,6 +155,7 @@ export interface EntityAccess {
 ### Checking Access
 
 To verify a user can perform an operation:
+
 1. Look up access grant for (entity_id, user_id)
 2. If no grant exists, user has no access
 3. Check if user's access level meets required level using hasAccess()
@@ -155,6 +164,7 @@ To verify a user can perform an operation:
 ### Granting Access
 
 Only owners can grant access to other users:
+
 1. Verify requesting user is owner of entity
 2. Choose access level to grant (owner, write, or read)
 3. Create access grant for target user
@@ -165,6 +175,7 @@ If an access grant already exists for that user, it updates the access level.
 ### Revoking Access
 
 Only owners can revoke access:
+
 1. Verify requesting user is owner of entity
 2. Delete access grant for target user
 3. Cannot revoke own owner access (prevents lockout)
@@ -173,6 +184,7 @@ Only owners can revoke access:
 ### Transferring Ownership
 
 Current owner can transfer ownership to another user:
+
 1. Verify requesting user is owner
 2. Grant owner access to target user
 3. Optionally downgrade requesting user to write or read
@@ -181,6 +193,7 @@ Current owner can transfer ownership to another user:
 ### Auto-granting on Create
 
 When a user creates an entity:
+
 1. Entity is created with new entity_id
 2. System automatically grants owner access to creator
 3. granted_by is null (system-granted, not user-granted)
@@ -333,6 +346,7 @@ their `user_id`.
 > Rules that must be maintained.
 
 **Hard Invariants** (enforced by system):
+
 1. Every entity must have at least one owner
 2. Each (entity_id, user_id) pair has at most one access grant
 3. Access levels are one of: owner, write, read
@@ -341,6 +355,7 @@ their `user_id`.
 6. Only owners can delete entities
 
 **Soft Expectations** (usually true, not enforced):
+
 - Most entities have exactly one owner (the creator)
 - Shared entities typically have 2-5 users with access
 - Write and read access is granted deliberately, not by default
@@ -351,6 +366,7 @@ their `user_id`.
 > Primary ways this domain is used.
 
 **Primary Use Cases:**
+
 1. Check if user can access an entity (on every request)
 2. List all entities a user can access (for browsing/search)
 3. Grant access to share an entity with another user
@@ -360,6 +376,7 @@ their `user_id`.
 7. Auto-grant owner access when user creates entity
 
 **Key Queries:**
+
 - Check access: SELECT access_level WHERE entity_id = ? AND user_id = ?
 - List accessible entities: SELECT * FROM entities JOIN entity_access WHERE user_id = ?
 - List entity accessors: SELECT * FROM entity_access WHERE entity_id = ?
@@ -406,6 +423,7 @@ const accessGrants = [
 ```
 
 In this example:
+
 - User 1 (owner) can do anything: view, edit, delete, manage access
 - User 2 (write) can view and edit the book but cannot delete it or change permissions
 - User 3 (read) can only view the book, no modifications allowed

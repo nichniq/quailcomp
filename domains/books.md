@@ -18,6 +18,7 @@ like ISBN and LCCN are optional attributes. Two different editions of the same w
 are two different Physical Books.
 
 Books may have:
+
 - Bibliographic information (title, subtitle, author) - all optional but usually present
 - Edition identifiers (ISBN-10, ISBN-13, LCCN) - optional
 - Series reference (series_id) - optional
@@ -342,11 +343,13 @@ export function isInherited(acq: AcquisitionEvent): acq is InheritedAcquisition 
 > Creates a human-readable name for a book, using subtitle and author to disambiguate.
 
 When displaying books with identical titles, distinguish them using:
+
 1. Subtitle (if present)
 2. Author (if present)
 3. ISBN (as last resort for technical contexts)
 
 Examples:
+
 - "Water: A Journey Through the Element"
 - "Water: Exploring the Blue Planet"
 
@@ -383,11 +386,13 @@ export function getBookDisplayName(book: PhysicalBook): string {
 > Rules that must be maintained.
 
 **Hard Invariants** (enforced by system):
+
 1. Every book has a unique entity_id
 2. (Future) A book cannot be Lent if currently lent out
 3. (Future) A book cannot have events after Disposed
 
 **Soft Expectations** (usually true, not enforced):
+
 - Books usually have titles
 - Books usually have acquisition information
 - Books usually have some form of identification (ISBN or LCCN)
@@ -401,12 +406,14 @@ information may be lost or never recorded.
 > Primary ways this domain is used.
 
 **Primary Use Cases:**
+
 1. Check if I already own a book (avoid duplicates)
 2. View acquisition history and stories
 3. Track spending on books
 4. Browse collection by various attributes
 
 **Key Queries:**
+
 - Find book by title
 - List all books
 - List books by series

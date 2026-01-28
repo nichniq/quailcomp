@@ -264,6 +264,7 @@ The test suite covers:
 ### Why a Separate Test Database?
 
 Tests use a dedicated `quailcomp_test` database to:
+
 - Avoid polluting development/production data
 - Allow destructive test operations
 - Enable fresh state for consistent results
@@ -271,6 +272,7 @@ Tests use a dedicated `quailcomp_test` database to:
 ### Test Database Setup
 
 The setup script (`scripts/setup-test-db.ts`):
+
 1. Connects as superuser to create the test database
 2. Mirrors the schema/privilege setup from `db/setup/`
 3. Runs migrations from `db/migrations/`
@@ -279,6 +281,7 @@ The setup script (`scripts/setup-test-db.ts`):
 ### Running Tests
 
 Bun's built-in test runner executes tests:
+
 - Tests run in the order defined in test files
 - `beforeAll`/`afterAll` hooks manage connections
 - Each test file runs in isolation
@@ -299,6 +302,7 @@ This allows tests to run without needing to truncate tables between tests.
 ### "permission denied" errors
 
 Ensure `quailcomp_app` has the correct permissions:
+
 ```sql
 GRANT USAGE ON ALL SEQUENCES IN SCHEMA public TO quailcomp_app;
 GRANT SELECT, INSERT ON ALL TABLES IN SCHEMA public TO quailcomp_app;
@@ -307,6 +311,7 @@ GRANT SELECT, INSERT ON ALL TABLES IN SCHEMA public TO quailcomp_app;
 ### "role does not exist" errors
 
 Run the setup scripts in order:
+
 ```bash
 cd db/setup
 ./run.sh
@@ -315,6 +320,7 @@ cd db/setup
 ### Test database connection fails
 
 Check that:
+
 1. PostgreSQL is running: `pg_isready`
 2. Test database exists: `psql -l | grep quailcomp_test`
 3. Environment variables are set correctly
@@ -328,6 +334,7 @@ The validation trigger prevents creating entities with explicit entity_ids that 
 After validating your design with tests:
 
 1. Run the migration on your development database:
+
    ```bash
    psql -U quailcomp_owner -d quailcomp -f db/migrations/001_entities.sql
    ```

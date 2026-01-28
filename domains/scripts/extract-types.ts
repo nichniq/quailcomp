@@ -156,7 +156,7 @@ async function main() {
       const outputFile = join(OUTPUT_DIR, `${domainName}.ts`)
 
       // Generate file content
-      const output = generateHeader(domainName) + extractedTypes
+      const output = generateHeader(domainName) + extractedTypes + '\n'
 
       await writeFile(outputFile, output, 'utf-8')
       generatedFiles.push(outputFile)

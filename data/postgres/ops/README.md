@@ -5,6 +5,7 @@ This directory contains operational scripts for backing up and restoring the qua
 ## Overview
 
 The operations scripts provide simple, reliable tools for:
+
 - Creating consistent database backups
 - Restoring from backup files
 - Disaster recovery and data migration
@@ -16,6 +17,7 @@ The operations scripts provide simple, reliable tools for:
 Creates a timestamped backup of the entire `quailcomp` database in PostgreSQL's custom format.
 
 **Features:**
+
 - Automatic timestamping (`quailcomp_YYYYMMDD_HHMMSS.dump`)
 - Custom format for efficient compression and flexibility
 - Backups stored in `backups/` subdirectory
@@ -36,6 +38,7 @@ Backup completed:
 ```
 
 **What's Backed Up:**
+
 - All tables and data
 - All schemas
 - All sequences and their current values
@@ -44,6 +47,7 @@ Backup completed:
 - Object ownership and privileges (grants)
 
 **What's NOT Backed Up:**
+
 - Roles (these are cluster-wide, not database-specific)
 - Passwords
 - Database creation itself (only contents)
@@ -53,6 +57,7 @@ Backup completed:
 Restores a database from a backup file created by [backup.sh](backup.sh).
 
 **Features:**
+
 - Requires explicit confirmation to prevent accidents
 - Cleans existing objects before restore (`--clean`)
 - Uses `--if-exists` to avoid errors if objects don't exist
@@ -79,6 +84,7 @@ Type 'RESTORE quailcomp' to continue: RESTORE quailcomp
 ```
 
 **Behavior:**
+
 - Drops existing tables, sequences, and other objects
 - Recreates schema from backup
 - Restores all data
@@ -89,6 +95,7 @@ Type 'RESTORE quailcomp' to continue: RESTORE quailcomp
 Both scripts use standard PostgreSQL environment variables. You can set these:
 
 1. **In your shell**:
+
    ```bash
    export PGHOST=localhost
    export PGPORT=5432
@@ -98,15 +105,18 @@ Both scripts use standard PostgreSQL environment variables. You can set these:
    ```
 
 2. **Via command line** (for single command):
+
    ```bash
    PGHOST=localhost PGPORT=5432 PGUSER=postgres ./db/ops/backup.sh
    ```
 
 3. **Via `.pgpass` file** (recommended for passwords):
+
    ```bash
    # ~/.pgpass format: hostname:port:database:username:password
    localhost:5432:quailcomp:postgres:your_password
    ```
+
    Then `chmod 600 ~/.pgpass`
 
 ### Required Variables
@@ -187,6 +197,7 @@ dropdb quailcomp_test
 ### For Backups ([backup.sh](backup.sh))
 
 The database user must have:
+
 - CONNECT privilege on the database
 - SELECT privilege on all tables
 - USAGE privilege on all schemas
@@ -196,6 +207,7 @@ Typically: `postgres` superuser or `quailcomp_owner` role.
 ### For Restores ([restore.sh](restore.sh))
 
 The database user must have:
+
 - CONNECT privilege on the database
 - CREATE privilege on the database
 - Ability to drop and create objects
@@ -210,17 +222,20 @@ Typically: `postgres` superuser.
 ### Local Development
 
 Backups are stored in [backups/](backups/) (gitignored):
+
 - Convenient for quick local backups
 - Not suitable for production (stored on same machine)
 
 ### Production
 
 Store backups externally:
+
 - Cloud storage (S3, GCS, Azure Blob Storage)
 - Separate backup server
 - Managed backup service
 
 Example with S3:
+
 ```bash
 ./db/ops/backup.sh
 aws s3 cp backups/quailcomp_*.dump s3://your-bucket/db-backups/

@@ -39,6 +39,7 @@ After completing any task that modifies files:
    - **Body**: Bullet points describing specific changes
    - **Co-authorship**: Always include `Co-Authored-By: Claude Sonnet 4.5 <noreply@anthropic.com>`
 4. Use heredoc format for multi-line commit messages:
+
    ```bash
    git commit -m "$(cat <<'EOF'
    Subject line here
@@ -107,6 +108,7 @@ DB_TEST_NAME (default: quailcomp_test)
 ### Data Access APIs
 
 **EntitiesClient** (mutable state):
+
 - `create<T>(input)` - Auto-generates entity_id
 - `update<T>(entityId, data)` - Appends new version
 - `getById(entityId)` - Latest version
@@ -116,6 +118,7 @@ DB_TEST_NAME (default: quailcomp_test)
 - `findByData(type, criteria)` - JSONB search
 
 **EventsClient** (immutable facts):
+
 - `record<T>(input)` - Auto-generates event_id
 - `enrich<T>(eventId, data)` - Append enrichment data
 - `getById(eventId)` - Latest enriched version
@@ -155,6 +158,7 @@ When working on features or making architectural decisions:
 ### Type Extraction
 
 Types are automatically extracted from Markdown domain files:
+
 - TypeScript code blocks (```typescript) are extracted from each .md file
 - Extracted types are generated into `/domains/types/<domain-name>.ts`
 - Run `bun run domains/scripts/extract-types.ts` to regenerate manually
@@ -175,6 +179,7 @@ Claude: Help me improve this CLAUDE.md over time. When you notice opportunities,
 - **When conventions emerge**: "I notice you prefer [pattern]. Add to rules?"
 
 Good CLAUDE.md entries are:
+
 - **Directive**: "Do X" or "Avoid Y" (not just descriptions)
 - **Specific**: "Use `bun test`" (not "run tests appropriately")
 - **Born from friction**: Rules that prevent real mistakes you've encountered

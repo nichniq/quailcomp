@@ -5,6 +5,7 @@ This directory contains the authoritative source of truth for each domain in the
 ## Purpose
 
 The `/domains` directory serves as:
+
 1. **Living documentation** of each domain's concepts and rules
 2. **Type definitions** used throughout the application
 3. **Single source of truth** for domain logic and structure
@@ -12,6 +13,7 @@ The `/domains` directory serves as:
 ## Philosophy
 
 Each domain combines human-readable explanation with machine-readable specifications. This approach:
+
 - Prevents drift between documentation and implementation
 - Reduces cognitive load when learning (no "flip to another page" problem)
 - Ensures concepts are explained at the point they're defined
@@ -71,6 +73,7 @@ export type AuthMethod = 'password' | 'passkey' | 'oauth' | 'api_key';
 ### Multiple Reading Depths
 
 Support different levels of detail:
+
 - Blockquotes (>): Single-sentence summaries after headers
 - Full paragraphs: Detailed explanations
 - Inline examples: Show usage patterns
@@ -86,12 +89,14 @@ Support different levels of detail:
 ### Type Categories
 
 **Domain Types** - How we think about the domain:
+
 - Entities (aggregate roots)
 - Domain events
 - Value objects
 - Enums and discriminated unions
 
 **Persistence Types** - How data is stored:
+
 - Entity snapshots (JSONB data structure)
 - Database row types
 - Serialization helpers
@@ -123,47 +128,60 @@ The extraction ensures types stay synchronized with documentation while keeping 
 ## Current Domains
 
 ### Books (`/domains/books.md`)
+
 Manages physical books in the collection and their acquisition history. Tracks acquisition events (purchased, ordered, given, won, inherited) and references other domains like Locations, People, and Series.
 
 ## Future Domains
 
 ### Locations (`/domains/locations`)
+
 Places where events happen - bookstores, museums, coffee shops, etc. Referenced by the Books domain and potentially others.
 
 ### People/Contacts (`/domains/people`)
+
 Relationships with people who give gifts, lend/borrow items, or are otherwise connected to items in the collection.
 
 ### Series (`/domains/series`)
+
 Book series, collections, or multi-volume works. Referenced by individual books.
 
 ### Finance (`/domains/finance`)
+
 Financial tracking, expenses, investments, etc.
 
 ### Ideas (`/domains/ideas`)
+
 Creative ideas, project concepts, and brainstorming notes (e.g., video game ideas).
 
 ## Design Principles
 
 ### 1. Bounded Contexts
+
 Each domain is **independent** and can evolve separately. Changes to one domain shouldn't require changes to others (except for interface contracts).
 
 ### 2. References Between Domains
+
 Domains reference each other through **IDs only**. For example:
+
 - A book stores `location_id` (not the full Location object)
 - A book stores `person_id` (not the full Person object)
 
 This keeps boundaries clean and prevents tight coupling.
 
 ### 3. Event Sourcing
+
 Domains primarily work with **events** (things that happened) rather than just current state. This preserves provenance and history.
 
 ### 4. Minimal Enforcement
+
 The system acknowledges real-world messiness:
+
 - Most fields are optional
 - Historical data may be incomplete
 - Invariants are minimal and pragmatic
 
 ### 5. Pragmatic DDD
+
 We use DDD concepts where they help (ubiquitous language, bounded contexts, domain events) but avoid ceremony and premature complexity.
 
 ## Usage
@@ -179,6 +197,7 @@ import type { PhysicalBook, AcquisitionEvent } from '@/domains/types/books'
 ### Reading Documentation
 
 Before working with a domain:
+
 1. Read the domain file to understand concepts and types together
 2. Check for cross-references to related domains
 3. Review examples and edge cases

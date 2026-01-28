@@ -1,0 +1,29 @@
+{
+  "config": {
+    "default": true,
+    "MD012": false,
+    "MD013": false,
+    "MD024": {
+      "siblings_only": true
+    },
+    "MD025": false,
+    "MD033": false,
+    "MD036": false,
+    "MD040": false,
+    "MD041": false,
+    "MD060": false,
+    "MD031": true,
+    "MD032": true,
+    "blanks-around-fences": true,
+    "blanks-around-headings": true,
+    "blanks-around-lists": true
+  },
+  "globs": [
+    "**/*.md"
+  ],
+  "ignores": [
+    "**/node_modules/**",
+    "**/dist/**",
+    "**/.bun/**"
+  ]
+}

@@ -28,6 +28,7 @@ NNN_description_with_underscores.sql
 - **Extension**: Always `.sql`
 
 Examples:
+
 - `001_initial_schema.sql`
 - `002_auth_tables.sql`
 - `003_add_bookshelf_table.sql`
@@ -74,6 +75,7 @@ COMMENT ON COLUMN new_table.name IS 'Description of column';
 - `DO $$ BEGIN ... EXCEPTION WHEN duplicate_object THEN NULL; END $$;` for roles/extensions
 
 **DO NOT:**
+
 - Use plain `CREATE TABLE` without `IF NOT EXISTS`
 - Use `ALTER TABLE ADD COLUMN` without checking if column exists
 - Use `DROP` statements (use soft deletes instead)
@@ -95,12 +97,14 @@ psql -f data/postgres/migrations/NNN_your_migration.sql
 ### Creating a New Migration
 
 1. **Determine the next migration number**:
+
    ```bash
    ls -1 data/postgres/migrations/[0-9][0-9][0-9]_*.sql | tail -1
    # If last is 002_auth_tables.sql, create 003_...
    ```
 
 2. **Create the migration file**:
+
    ```bash
    cd data/postgres/migrations
    nano 003_add_feature_name.sql
@@ -109,6 +113,7 @@ psql -f data/postgres/migrations/NNN_your_migration.sql
 3. **Write idempotent SQL** following the conventions above
 
 4. **Test the migration**:
+
    ```bash
    # Test on development database
    ./run.sh
@@ -118,12 +123,14 @@ psql -f data/postgres/migrations/NNN_your_migration.sql
    ```
 
 5. **Test idempotency**:
+
    ```bash
    # Run again - should skip with "already applied"
    ./run.sh
    ```
 
 6. **Commit the migration**:
+
    ```bash
    git add 003_add_feature_name.sql
    git commit -m "Add migration: feature name"
@@ -132,17 +139,20 @@ psql -f data/postgres/migrations/NNN_your_migration.sql
 ### Running Migrations
 
 **From anywhere in the project:**
+
 ```bash
 bun run db:migrate
 ```
 
 **Directly:**
+
 ```bash
 cd data/postgres/migrations
 ./run.sh
 ```
 
 **On a specific database:**
+
 ```bash
 export PGDATABASE=quailcomp_dev
 ./run.sh
@@ -156,6 +166,7 @@ cd data/postgres/migrations
 ```
 
 The verification script checks:
+
 1. Schema migrations table exists
 2. Lists all applied migrations
 3. Verifies all migration files have been applied
@@ -194,12 +205,14 @@ The migration runner uses these environment variables (in priority order):
 3. System environment variables
 
 Required variables:
+
 - `PGHOST` - Database host (default: localhost)
 - `PGPORT` - Database port (default: 5432)
 - `PGUSER` - Database superuser (for running migrations)
 - `PGDATABASE` - Target database name
 
 Example `.env` file (copy from `.env.example`):
+
 ```bash
 PGHOST=localhost
 PGPORT=5432
@@ -235,6 +248,7 @@ The migration runner calculates SHA256 checksums of migration files and stores t
 This detects accidental modifications to already-applied migrations.
 
 **If you need to fix a migration:**
+
 1. **DO NOT** modify the existing file
 2. Create a new migration to correct the issue
 3. The new migration will be applied on next run
@@ -244,6 +258,7 @@ This detects accidental modifications to already-applied migrations.
 ### Migration fails with "relation already exists"
 
 Your migration is not idempotent. Add `IF NOT EXISTS`:
+
 ```sql
 -- Bad
 CREATE TABLE users (...);
@@ -255,12 +270,14 @@ CREATE TABLE IF NOT EXISTS users (...);
 ### Checksum mismatch warning
 
 A migration file was modified after being applied. Options:
+
 1. If modification was accidental: revert to original
 2. If correction needed: create new migration instead
 
 ### Migration not found in tracking table
 
 Run the migration runner to apply it:
+
 ```bash
 ./run.sh
 ```
@@ -268,12 +285,14 @@ Run the migration runner to apply it:
 ### Want to re-run a migration
 
 **DO NOT** manually delete from `schema_migrations`. Instead:
+
 1. Create a new migration that reverses the changes
 2. Create another migration with the corrected version
 
 ### Database doesn't exist
 
 Migrations assume the database already exists. Run setup first:
+
 ```bash
 cd data/postgres/setup
 ./run.sh
@@ -292,12 +311,14 @@ bun run db:setup  # Creates test DB and runs migrations
 ### Development Database
 
 For development, you typically:
+
 1. Run setup once: `cd data/postgres/setup && ./run.sh`
 2. Run migrations as needed: `bun run db:migrate`
 
 ### CI/CD
 
 In production environments:
+
 ```bash
 cd data/postgres/migrations
 ./run.sh  # Uses production .env configuration

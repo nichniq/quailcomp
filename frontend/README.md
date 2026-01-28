@@ -5,6 +5,7 @@ Vue 3 frontend for Quailcomp personal data management system.
 ## Dependencies
 
 Minimal dependency footprint:
+
 - **vue** - Vue 3 framework
 - **vue-router** - Routing
 - **pinia** - State management
@@ -36,7 +37,8 @@ bun run type-check
 
 Instead of Storybook, we have a lightweight component playground at `/playground` that lets you view and interact with all components in isolation.
 
-Visit http://localhost:5173/playground during development to:
+Visit <http://localhost:5173/playground> during development to:
+
 - Browse all components by category (Common, Auth, Books)
 - See different states (default, loading, error, etc.)
 - Test component interactions

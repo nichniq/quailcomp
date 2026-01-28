@@ -43,6 +43,7 @@ The setup scripts must be executed in the following order:
 4. [004_privileges.sql](004_privileges.sql) - Set table privileges for existing and future tables
 
 This order is enforced because:
+
 - Roles must exist before databases can be assigned an owner
 - The database must exist before schemas can be altered
 - Schemas must exist before privileges can be applied
@@ -58,11 +59,13 @@ This order is enforced because:
 ### Configuration
 
 1. Copy the example environment file:
+
    ```bash
    cp .env.example .env
    ```
 
 2. Edit [.env](.env) with your database connection details:
+
    ```bash
    PGHOST=localhost
    PGPORT=5432
@@ -88,6 +91,7 @@ Or from within this directory:
 ```
 
 The script will:
+
 1. Load environment variables from [.env](.env)
 2. Verify all required variables are set
 3. Execute SQL files in the correct order
@@ -108,6 +112,7 @@ The [run.sh](run.sh) script includes several safety mechanisms:
 All SQL scripts use idempotent patterns, making them safe to run multiple times. If objects already exist, the scripts will skip creation and update ownership/privileges as needed.
 
 **Idempotency patterns used:**
+
 - Roles ([001_roles.sql](001_roles.sql)): `DO $$ BEGIN ... EXCEPTION WHEN duplicate_object THEN NULL; END $$;`
 - Database ([002_database.sql](002_database.sql)): `SELECT ... WHERE NOT EXISTS (...)\gexec`
 - Schemas and privileges: `ALTER`, `GRANT`, and `REVOKE` statements are naturally idempotent
@@ -121,6 +126,7 @@ If you see permission errors, ensure your `PGUSER` has sufficient privileges (e.
 ### Connection Failed
 
 Verify your connection settings in [.env](.env):
+
 - Check `PGHOST` and `PGPORT` are correct
 - Ensure PostgreSQL server is running
 - Verify firewall allows connections

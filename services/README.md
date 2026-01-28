@@ -50,6 +50,7 @@ Services follow the **Hexagonal Architecture** (ports and adapters) pattern:
 ## Structure
 
 Each service is an npm package with:
+
 ```
 /services
   /isbn-lookup

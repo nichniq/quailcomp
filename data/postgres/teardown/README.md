@@ -5,6 +5,7 @@ This directory contains scripts to completely remove the quailcomp database, inc
 ## ⚠️ WARNING: DESTRUCTIVE OPERATIONS ⚠️
 
 These scripts **permanently delete**:
+
 - The `quailcomp` database and all its data
 - The `quailcomp_app` role
 - The `quailcomp_owner` role
@@ -21,6 +22,7 @@ Teardown is appropriate for:
 - **Failed setup recovery**: Cleaning up after a failed setup to retry
 
 Teardown is **NOT appropriate** for:
+
 - **Production databases**: Protected by `ENVIRONMENT` check
 - **Active development databases**: Risk of losing uncommitted work
 - **Databases with valuable data**: Backup first with [db/ops/backup.sh](../ops/backup.sh)
@@ -36,6 +38,7 @@ The teardown process executes three steps in order:
 ### Execution Order
 
 The order is critical:
+
 - Connections must be terminated before the database can be dropped
 - Objects owned by roles must be dropped before the roles can be removed
 - `quailcomp_app` is dropped before `quailcomp_owner` (dependency order)
@@ -45,22 +48,26 @@ The order is critical:
 ### Prerequisites
 
 You must connect as a role that can:
+
 - Terminate connections
 - Drop databases
 - Drop roles
 
 This is typically:
+
 - A local superuser (e.g., `postgres`)
 - A managed service admin role
 
 ### Configuration
 
 1. Copy the example environment file:
+
    ```bash
    cp .env.example .env
    ```
 
 2. Edit [.env](.env) with your database connection details:
+
    ```bash
    PGHOST=localhost
    PGPORT=5432
@@ -114,6 +121,7 @@ fi
 ```
 
 To mark an environment as production:
+
 ```bash
 export ENVIRONMENT=production
 ```
@@ -121,12 +129,14 @@ export ENVIRONMENT=production
 ### Explicit Confirmation
 
 Manual confirmation is required every time, preventing:
+
 - Accidental execution
 - Scripted deletion without human review
 
 ### Safe Exit on Error
 
 The script uses `set -euo pipefail` to:
+
 - Exit immediately on any error (`-e`)
 - Fail on undefined variables (`-u`)
 - Catch errors in pipelines (`pipefail`)
@@ -136,6 +146,7 @@ This prevents partial teardown that could leave the database in an inconsistent 
 ### Idempotent SQL
 
 All SQL scripts use `IF EXISTS` clauses:
+
 - Safe to run even if objects don't exist
 - Can be re-run after partial failures
 - Won't error if database was already removed
@@ -166,6 +177,7 @@ DROP DATABASE IF EXISTS quailcomp;
 ```
 
 **What's deleted**:
+
 - All tables and their data
 - All schemas (including `public`)
 - All sequences, indexes, constraints
@@ -173,6 +185,7 @@ DROP DATABASE IF EXISTS quailcomp;
 - All privileges granted on database objects
 
 **What's preserved**:
+
 - Roles (dropped separately in step 3)
 - Other databases
 - Cluster-wide settings
@@ -237,6 +250,7 @@ git checkout other-branch
 Teardown **does not** delete backup files in [db/ops/backups/](../ops/backups/). Your backups remain intact and can be used to restore data after teardown.
 
 To completely remove everything including backups:
+
 ```bash
 ./db/teardown/run.sh
 rm -rf ../ops/backups/*.dump
@@ -247,6 +261,7 @@ rm -rf ../ops/backups/*.dump
 ### Cannot Drop Database - Connections Exist
 
 If you see:
+
 ```
 ERROR: database "quailcomp" is being accessed by other users
 ```
@@ -264,10 +279,12 @@ psql -c "SELECT pg_terminate_backend(pid) FROM pg_stat_activity WHERE datname = 
 ### Permission Denied
 
 Ensure your `PGUSER` has sufficient privileges:
+
 - Superuser, OR
 - `CREATEROLE` and `CREATEDB` privileges
 
 Check with:
+
 ```bash
 psql -c "\du"
 ```
@@ -275,6 +292,7 @@ psql -c "\du"
 ### Already Connected to quailcomp
 
 If `PGDATABASE=quailcomp` in your environment:
+
 ```
 ERROR: cannot drop the currently open database
 ```
@@ -319,6 +337,7 @@ The teardown script uses standard PostgreSQL environment variables. See [.env.ex
 ## After Teardown
 
 After successful teardown:
+
 - All quailcomp data is permanently deleted
 - Roles are removed from the PostgreSQL cluster
 - You can run [db/setup/run.sh](../setup/run.sh) to recreate a fresh database

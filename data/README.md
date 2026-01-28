@@ -27,12 +27,14 @@ The client code and database schema are tightly coupled—when you change the sc
 ### Single Package for Multiple Data Sources
 
 The `@quailcomp/data` package can provide access to multiple data sources:
+
 - `db` - PostgreSQL database
 - `fs` - Filesystem operations (future)
 - `plaid` - Plaid API integration (future)
 - etc.
 
 This allows server code to import everything from one place:
+
 ```typescript
 import { EntitiesClient, PlaidClient, FileStore } from "@quailcomp/data"
 ```
@@ -44,6 +46,7 @@ If you later need multiple databases (e.g., adding Redis), just add `data/redis/
 ## Usage
 
 From `server/` or other workspaces:
+
 ```typescript
 import { EntitiesClient, createConnection } from "@quailcomp/data"
 ```

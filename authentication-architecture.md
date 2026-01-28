@@ -97,6 +97,7 @@ CREATE INDEX idx_entity_access_by_user
 Traditional username/password authentication using bcrypt for password hashing.
 
 **Credential Data Schema:**
+
 ```json
 {
     "identifier": "nick@example.com",  // email or username
@@ -106,6 +107,7 @@ Traditional username/password authentication using bcrypt for password hashing.
 ```
 
 **Authentication Flow:**
+
 1. User provides identifier (email/username) + password
 2. Look up credential: `WHERE credential_type = 'password' AND credential_data->>'identifier' = ?`
 3. Verify password against stored hash using bcrypt
@@ -113,6 +115,7 @@ Traditional username/password authentication using bcrypt for password hashing.
 5. Generate and return JWT with `user_id`
 
 **Security Considerations:**
+
 - Minimum password requirements (length, complexity)
 - Rate limiting on failed login attempts
 - Consider password breach checking (HaveIBeenPwned API)
@@ -122,6 +125,7 @@ Traditional username/password authentication using bcrypt for password hashing.
 Modern passwordless authentication using public-key cryptography and device biometrics.
 
 **Credential Data Schema:**
+
 ```json
 {
     "credential_id": "base64_encoded_credential_id",  // from WebAuthn device
@@ -134,6 +138,7 @@ Modern passwordless authentication using public-key cryptography and device biom
 ```
 
 **Registration Flow:**
+
 1. User initiates passkey registration
 2. Server generates challenge (random bytes)
 3. Device creates key pair, returns credential_id + public_key
@@ -141,6 +146,7 @@ Modern passwordless authentication using public-key cryptography and device biom
 5. Private key never leaves user's device
 
 **Authentication Flow:**
+
 1. User initiates passkey login
 2. Server generates challenge
 3. Device signs challenge with private key
@@ -151,6 +157,7 @@ Modern passwordless authentication using public-key cryptography and device biom
 8. Generate and return JWT with `user_id`
 
 **Security Considerations:**
+
 - Phishing-resistant (signature tied to domain)
 - No password to steal or forget
 - Requires HTTPS
@@ -161,6 +168,7 @@ Modern passwordless authentication using public-key cryptography and device biom
 Third-party authentication via OAuth 2.0 providers.
 
 **Credential Data Schema:**
+
 ```json
 {
     "provider_user_id": "1234567890",           // Provider's unique ID for this user
@@ -177,6 +185,7 @@ Third-party authentication via OAuth 2.0 providers.
 ```
 
 **Authentication Flow:**
+
 1. User clicks "Login with Google"
 2. Redirect to OAuth provider's authorization URL
 3. User authorizes, provider redirects back with authorization code
@@ -187,10 +196,12 @@ Third-party authentication via OAuth 2.0 providers.
 8. Generate and return JWT with `user_id`
 
 **Account Linking:**
+
 - If user is already logged in, can link OAuth account to existing user
 - Prevents duplicate accounts when user has multiple login methods
 
 **Security Considerations:**
+
 - Validate state parameter (CSRF protection)
 - Verify token signatures if using ID tokens
 - Handle email changes at provider
@@ -201,6 +212,7 @@ Third-party authentication via OAuth 2.0 providers.
 Long-lived tokens for programmatic access and service-to-service communication.
 
 **Credential Data Schema:**
+
 ```json
 {
     "key_hash": "sha256_hash_of_full_key",  // Never store raw key
@@ -214,6 +226,7 @@ Long-lived tokens for programmatic access and service-to-service communication.
 ```
 
 **Generation Flow:**
+
 1. User requests new API key
 2. Server generates secure random key: `pk_live_<random_32_bytes>`
 3. Display full key to user ONCE (never shown again)
@@ -221,6 +234,7 @@ Long-lived tokens for programmatic access and service-to-service communication.
 5. Store prefix and last_4 for user reference
 
 **Authentication Flow:**
+
 1. Client sends key in header: `Authorization: Bearer pk_live_abc123...`
 2. Hash the provided key
 3. Look up credential: `WHERE credential_type = 'api_key' AND credential_data->>'key_hash' = ?`
@@ -230,6 +244,7 @@ Long-lived tokens for programmatic access and service-to-service communication.
 7. Proceed with request using associated `user_id`
 
 **Security Considerations:**
+
 - Keys should be long and cryptographically random
 - Support key rotation (multiple active keys)
 - Support key revocation (set is_active = false)
@@ -257,6 +272,7 @@ interface JWTPayload {
 ```
 
 **Token Lifecycle:**
+
 - Short-lived access tokens (15 minutes - 1 hour)
 - Optional refresh tokens for longer sessions
 - Token expiration forces re-authentication
@@ -363,7 +379,8 @@ CREATE FUNCTION current_user_id() RETURNS INTEGER AS $$
 $$ LANGUAGE SQL STABLE;
 ```
 
-**Focus:** 
+**Focus:**
+
 - Build entity management
 - Implement domains (Books, Contacts, etc.)
 - Develop frontend without auth UI
@@ -373,6 +390,7 @@ $$ LANGUAGE SQL STABLE;
 **Goal:** Add security with simple username/password.
 
 **Steps:**
+
 1. Create `user_credentials` table
 2. Implement password hashing with bcrypt
 3. Create login endpoint
@@ -381,6 +399,7 @@ $$ LANGUAGE SQL STABLE;
 6. Implement `current_user_id()` from JWT
 
 **New Endpoints:**
+
 - `POST /auth/register` - Create user + password credential
 - `POST /auth/login` - Authenticate and return JWT
 - `POST /auth/logout` - Invalidate token (if using blacklist)
@@ -390,6 +409,7 @@ $$ LANGUAGE SQL STABLE;
 **Goal:** Modern, secure authentication without passwords.
 
 **Steps:**
+
 1. Add passkey credential type
 2. Implement WebAuthn registration flow
 3. Implement WebAuthn authentication flow
@@ -397,6 +417,7 @@ $$ LANGUAGE SQL STABLE;
 5. Support multiple passkeys per user
 
 **New Endpoints:**
+
 - `POST /auth/passkey/register/start` - Begin registration
 - `POST /auth/passkey/register/finish` - Complete registration
 - `POST /auth/passkey/login/start` - Begin authentication
@@ -409,6 +430,7 @@ $$ LANGUAGE SQL STABLE;
 **Goal:** Social login (Google, GitHub, etc.)
 
 **Steps:**
+
 1. Register OAuth applications with providers
 2. Add OAuth credential type
 3. Implement OAuth flows
@@ -416,6 +438,7 @@ $$ LANGUAGE SQL STABLE;
 5. Support profile synchronization
 
 **New Endpoints:**
+
 - `GET /auth/oauth/:provider/login` - Start OAuth flow
 - `GET /auth/oauth/:provider/callback` - Handle provider redirect
 - `POST /auth/oauth/:provider/link` - Link OAuth to existing account
@@ -426,6 +449,7 @@ $$ LANGUAGE SQL STABLE;
 **Goal:** Programmatic access for automation and integrations.
 
 **Steps:**
+
 1. Add API key credential type
 2. Implement key generation
 3. Add key management UI
@@ -433,6 +457,7 @@ $$ LANGUAGE SQL STABLE;
 5. Add rate limiting
 
 **New Endpoints:**
+
 - `POST /auth/api-keys` - Generate new API key
 - `GET /auth/api-keys` - List user's API keys
 - `PATCH /auth/api-keys/:id` - Update key settings
@@ -441,6 +466,7 @@ $$ LANGUAGE SQL STABLE;
 ## Security Best Practices
 
 ### General
+
 - Always use HTTPS in production
 - Implement rate limiting on all auth endpoints
 - Log authentication events for audit trail
@@ -448,6 +474,7 @@ $$ LANGUAGE SQL STABLE;
 - Rotate secrets regularly
 
 ### Password Security
+
 - Minimum 8-10 characters
 - Use bcrypt with appropriate cost factor (10-12)
 - Implement account lockout after failed attempts
@@ -455,6 +482,7 @@ $$ LANGUAGE SQL STABLE;
 - Never log or display passwords
 
 ### Token Security
+
 - Short expiration times (15-60 minutes)
 - Use refresh tokens for longer sessions
 - Sign tokens with strong secret (256+ bits)
@@ -462,6 +490,7 @@ $$ LANGUAGE SQL STABLE;
 - Implement token revocation mechanism
 
 ### API Key Security
+
 - Generate keys with cryptographic randomness
 - Never store raw keys (only hashes)
 - Support key rotation
@@ -469,6 +498,7 @@ $$ LANGUAGE SQL STABLE;
 - Log key usage for security monitoring
 
 ### OAuth Security
+
 - Validate state parameter (CSRF protection)
 - Use PKCE for public clients
 - Verify redirect URIs strictly
@@ -498,6 +528,7 @@ SELECT * FROM user_credentials WHERE user_id = 1;
 ```
 
 Nick can now:
+
 - Log in with password
 - Use biometrics on iPhone or laptop
 - Click "Login with Google"
@@ -540,12 +571,15 @@ async function authorizeRequest(request: Request) {
 ## Future Considerations
 
 ### Multi-tenancy
+
 If expanding beyond personal use:
+
 - Add `organization_id` to users table
 - Separate entity_access per organization
 - Consider organization-level API keys
 
 ### Advanced Features
+
 - Two-factor authentication (2FA/MFA)
 - Conditional access (device, location, risk-based)
 - Session management (view/revoke active sessions)
@@ -555,6 +589,7 @@ If expanding beyond personal use:
 - Magic links (passwordless email login)
 
 ### Performance Optimization
+
 - Cache user lookups
 - Optimize credential lookup queries
 - Consider Redis for session/token storage
