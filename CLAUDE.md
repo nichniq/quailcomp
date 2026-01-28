@@ -126,7 +126,7 @@ DB_TEST_NAME (default: quailcomp_test)
 
 ## Domains Directory
 
-The /domains directory is the authoritative source of truth for domain models, combining human-readable documentation with machine-readable type definitions in TypeScript files.
+The /domains directory is the authoritative source of truth for domain models, combining human-readable Markdown documentation with machine-readable TypeScript type definitions.
 
 ### Your Role
 
@@ -135,19 +135,28 @@ When working on features or making architectural decisions:
 1. Look for opportunities to create or enhance domain documentation
 2. Add new domains when introducing new concepts (e.g., authentication, finances, contacts)
 3. Update existing domains when types or concepts evolve
-4. Integrate types by defining them after their documentation
+4. Write documentation in Markdown, with types in code blocks
 5. Maintain clarity by writing for human understanding first, types second
 
 ### Guidelines
 
-- Create domain files as /domains/<domain-name>.ts
+- Create domain files as /domains/<domain-name>.md (Markdown)
 - Follow the format and philosophy described in /domains/README.md
-- Use /** */ block comments with Markdown formatting for documentation
+- Write in standard Markdown with code blocks for TypeScript
 - Use blockquotes (>) after headers for section summaries
-- Define TypeScript types immediately after their explanatory documentation
+- Define TypeScript types in ```typescript code blocks after explanatory text
 - Include concrete examples showing common and edge-case scenarios
-- Export all types so they can be imported throughout the codebase
+- Export all types from code blocks - they're auto-extracted to /domains/types/
 - Cross-reference related domains naturally in prose
+
+### Type Extraction
+
+Types are automatically extracted from Markdown domain files:
+- TypeScript code blocks (```typescript) are extracted from each .md file
+- Extracted types are generated into `/domains/types/<domain-name>.ts`
+- Run `bun run domains/scripts/extract-types.ts` to regenerate manually
+- Pre-commit hook automatically regenerates when .md files change
+- Import types using: `import type { Type } from "@domains/types/<domain-name>"`
 
 Before implementing features that touch multiple domains or introduce new concepts, consider whether domain documentation needs to be created or updated.
 

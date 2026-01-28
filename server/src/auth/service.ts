@@ -13,7 +13,7 @@ import {
   type PasswordCredentialData,
   type RegisterRequest,
   type User,
-} from "@domains/authentication";
+} from "@domains/types/authentication";
 
 import { hashPassword, validatePassword, verifyPassword } from "@/auth/password";
 import { getTokenExpiration, signToken } from "@/auth/jwt";

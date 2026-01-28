@@ -4,7 +4,7 @@
  * Provides middleware factories for checking entity access.
  */
 
-import type { AccessLevel } from "@domains/authorization";
+import type { AccessLevel } from "@domains/types/authorization";
 
 import type { RequestContext } from "@/context";
 import type { Middleware } from "@/middleware/types";

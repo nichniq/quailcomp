@@ -8,7 +8,7 @@
 
 import type { Sql } from "@quailcomp/data";
 
-import { AuthError, type LoginRequest, type RegisterRequest } from "@domains/authentication";
+import { AuthError, type LoginRequest, type RegisterRequest } from "@domains/types/authentication";
 
 import type { Router } from "@/router";
 import { requireAuth } from "@/auth/middleware";

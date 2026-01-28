@@ -11,7 +11,7 @@ import {
   type AccessLevel,
   type EntityAccess,
   AuthorizationError,
-} from "@domains/authorization";
+} from "@domains/types/authorization";
 
 export class AuthorizationService {
   constructor(private sql: Sql) {}

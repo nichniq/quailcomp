@@ -11,7 +11,7 @@
 import type { Sql } from "@quailcomp/data";
 import { createEntitiesClient } from "@quailcomp/data";
 
-import type { BookEntitySnapshot } from "@domains/books";
+import type { BookEntitySnapshot } from "@domains/types/books";
 
 import type { Router } from "@/router";
 import { requireAuth } from "@/auth/middleware";
