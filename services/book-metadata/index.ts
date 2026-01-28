@@ -30,6 +30,8 @@ export type {
   GoogleBooksConfig,
   OpenLibraryConfig,
   LibraryOfCongressConfig,
+  HardcoverConfig,
+  WorldCatClassifyConfig,
   CompositeConfig,
   BaseProviderConfig,
 } from "./types";
@@ -52,6 +54,8 @@ export {
 export { createGoogleBooksProvider } from "./google-books";
 export { createOpenLibraryProvider } from "./open-library";
 export { createLibraryOfCongressProvider } from "./library-of-congress";
+export { createHardcoverProvider } from "./hardcover";
+export { createWorldCatClassifyProvider } from "./worldcat-classify";
 export { createCompositeProvider, createBookMetadataService } from "./composite";
 
 // =============================================================================

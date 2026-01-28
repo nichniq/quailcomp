@@ -13,7 +13,9 @@
 export type BookMetadataProvider =
   | "google-books"
   | "open-library"
-  | "library-of-congress";
+  | "library-of-congress"
+  | "hardcover"
+  | "worldcat-classify";
 
 /**
  * Normalized book metadata returned by all providers.
@@ -159,6 +161,15 @@ export type OpenLibraryConfig = BaseProviderConfig;
 
 /** Library of Congress configuration */
 export type LibraryOfCongressConfig = BaseProviderConfig;
+
+/** Hardcover specific configuration */
+export interface HardcoverConfig extends BaseProviderConfig {
+  /** API key from hardcover.app/account/api (required) */
+  apiKey: string;
+}
+
+/** WorldCat Classify configuration (no API key needed) */
+export type WorldCatClassifyConfig = BaseProviderConfig;
 
 /** Composite service configuration */
 export interface CompositeConfig {

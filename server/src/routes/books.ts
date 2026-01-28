@@ -17,6 +17,8 @@ import {
   createGoogleBooksProvider,
   createOpenLibraryProvider,
   createLibraryOfCongressProvider,
+  createHardcoverProvider,
+  createWorldCatClassifyProvider,
   normalizeISBN,
   type BookMetadata,
 } from "@quailcomp/book-metadata";
@@ -230,7 +232,7 @@ export function registerBookRoutes(router: Router, sql: Sql): void {
         }
       }
 
-      // Create all three providers
+      // Create all providers
       const googleBooks = createGoogleBooksProvider({
         apiKey: process.env.GOOGLE_BOOKS_API_KEY,
         timeout: 5000,
@@ -245,6 +247,21 @@ export function registerBookRoutes(router: Router, sql: Sql): void {
       });
 
       const providers = [googleBooks, openLibrary, libraryOfCongress];
+
+      // Add Hardcover if API key is available
+      if (process.env.HARDCOVER_API_KEY) {
+        const hardcover = createHardcoverProvider({
+          apiKey: process.env.HARDCOVER_API_KEY,
+          timeout: 5000,
+        });
+        providers.push(hardcover);
+      }
+
+      // Add WorldCat Classify
+      const worldcat = createWorldCatClassifyProvider({
+        timeout: 5000,
+      });
+      providers.push(worldcat);
 
       // Call all providers in parallel
       const providerPromises = providers.map(async (provider) => {

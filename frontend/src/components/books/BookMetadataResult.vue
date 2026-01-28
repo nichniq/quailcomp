@@ -13,7 +13,9 @@ function getProviderName(provider: string): string {
   const names: Record<string, string> = {
     'google-books': 'Google Books',
     'open-library': 'OpenLibrary',
-    'library-of-congress': 'Library of Congress'
+    'library-of-congress': 'Library of Congress',
+    'hardcover': 'Hardcover',
+    'worldcat-classify': 'WorldCat Classify'
   }
   return names[provider] || provider
 }

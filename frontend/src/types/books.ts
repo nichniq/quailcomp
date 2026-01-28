@@ -37,6 +37,8 @@ export type BookMetadataProvider =
   | 'google-books'
   | 'open-library'
   | 'library-of-congress'
+  | 'hardcover'
+  | 'worldcat-classify'
 
 export interface BookMetadata {
   isbn: string
