@@ -1,5 +1,5 @@
 import { api } from './client'
-import type { BookEntry, CreateBookRequest } from '@/types/books'
+import type { BookEntry, CreateBookRequest, MetadataLookupResponse } from '@/types/books'
 
 export const booksApi = {
   list: () =>
@@ -15,5 +15,8 @@ export const booksApi = {
     api.put<{ book: BookEntry }>(`/books/${id}`, data),
 
   delete: (id: number) =>
-    api.delete<{ success: boolean }>(`/books/${id}`)
+    api.delete<{ success: boolean }>(`/books/${id}`),
+
+  lookupMetadata: (identifier: string, identifierType: 'isbn' | 'lccn') =>
+    api.post<MetadataLookupResponse>('/books/metadata/lookup', { identifier, identifierType })
 }

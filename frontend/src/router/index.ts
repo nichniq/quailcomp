@@ -27,6 +27,12 @@ const router = createRouter({
       meta: { requiresAuth: true }
     },
     {
+      path: '/books/lookup',
+      name: 'book-metadata-lookup',
+      component: () => import('@/views/BookMetadataLookupView.vue'),
+      meta: { requiresAuth: true }
+    },
+    {
       path: '/books/:id',
       name: 'book-detail',
       component: () => import('@/views/BookDetailView.vue'),

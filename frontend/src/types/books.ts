@@ -30,3 +30,39 @@ export interface CreateBookRequest {
 export interface UpdateBookRequest extends CreateBookRequest {
   entityId: number
 }
+
+// Book Metadata Lookup Types
+
+export type BookMetadataProvider =
+  | 'google-books'
+  | 'open-library'
+  | 'library-of-congress'
+
+export interface BookMetadata {
+  isbn: string
+  isbn10?: string
+  isbn13?: string
+  lccn?: string
+  title: string
+  subtitle?: string
+  authors: string[]
+  publisher?: string
+  publishedDate?: string
+  description?: string
+  pageCount?: number
+  language?: string
+  subjects?: string[]
+  thumbnailUrl?: string
+  source: BookMetadataProvider
+}
+
+export interface MetadataProviderResult {
+  provider: BookMetadataProvider
+  data: BookMetadata | null
+  error: string | null
+  responseTime: number
+}
+
+export interface MetadataLookupResponse {
+  results: MetadataProviderResult[]
+}

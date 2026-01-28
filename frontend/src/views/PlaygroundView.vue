@@ -14,6 +14,8 @@ import RegisterForm from '@/components/auth/RegisterForm.vue'
 import BookCard from '@/components/books/BookCard.vue'
 import BookForm from '@/components/books/BookForm.vue'
 import BookList from '@/components/books/BookList.vue'
+import BookMetadataResult from '@/components/books/BookMetadataResult.vue'
+import BookMetadataLookup from '@/components/books/BookMetadataLookup.vue'
 
 const selectedComponent = ref('LoadingSpinner')
 const showError = ref(true)
@@ -72,6 +74,56 @@ const sampleBooks = [
   }
 ]
 
+// Sample metadata results for playground
+const sampleMetadataResultSuccess = {
+  provider: 'google-books' as const,
+  data: {
+    isbn: '9780441172719',
+    isbn10: '0441172717',
+    isbn13: '9780441172719',
+    title: 'Dune',
+    subtitle: 'Book One of the Dune Chronicles',
+    authors: ['Frank Herbert'],
+    publisher: 'Ace Books',
+    publishedDate: '1990',
+    description: 'Set on the desert planet Arrakis, Dune is the story of the boy Paul Atreides, heir to a noble family tasked with ruling an inhospitable world where the only thing of value is the "spice" melange, a drug capable of extending life and enhancing consciousness.',
+    pageCount: 688,
+    language: 'en',
+    subjects: ['Science Fiction', 'Fantasy', 'Adventure'],
+    thumbnailUrl: 'https://books.google.com/books/content?id=B1hSG45JCX4C&printsec=frontcover&img=1&zoom=1',
+    source: 'google-books' as const
+  },
+  error: null,
+  responseTime: 234
+}
+
+const sampleMetadataResultMinimal = {
+  provider: 'open-library' as const,
+  data: {
+    isbn: '9780441172719',
+    isbn13: '9780441172719',
+    title: 'Dune',
+    authors: ['Frank Herbert'],
+    source: 'open-library' as const
+  },
+  error: null,
+  responseTime: 456
+}
+
+const sampleMetadataResultNotFound = {
+  provider: 'library-of-congress' as const,
+  data: null,
+  error: null,
+  responseTime: 123
+}
+
+const sampleMetadataResultError = {
+  provider: 'google-books' as const,
+  data: null,
+  error: 'Service temporarily unavailable',
+  responseTime: 789
+}
+
 const components = [
   { name: 'LoadingSpinner', category: 'Common' },
   { name: 'ErrorMessage', category: 'Common' },
@@ -80,7 +132,9 @@ const components = [
   { name: 'RegisterForm', category: 'Auth' },
   { name: 'BookCard', category: 'Books' },
   { name: 'BookForm', category: 'Books' },
-  { name: 'BookList', category: 'Books' }
+  { name: 'BookList', category: 'Books' },
+  { name: 'BookMetadataResult', category: 'Books' },
+  { name: 'BookMetadataLookup', category: 'Books' }
 ]
 </script>
 
@@ -189,6 +243,25 @@ const components = [
 
           <h3>Loading State</h3>
           <BookList :books="[]" :loading="true" @book-click="console.log" @add-click="() => {}" />
+        </div>
+
+        <div v-if="selectedComponent === 'BookMetadataResult'" class="demo-section">
+          <h3>Success - Full Data (Google Books)</h3>
+          <BookMetadataResult :result="sampleMetadataResultSuccess" @select="console.log" />
+
+          <h3>Success - Minimal Data (OpenLibrary)</h3>
+          <BookMetadataResult :result="sampleMetadataResultMinimal" @select="console.log" />
+
+          <h3>Not Found</h3>
+          <BookMetadataResult :result="sampleMetadataResultNotFound" @select="console.log" />
+
+          <h3>Error State</h3>
+          <BookMetadataResult :result="sampleMetadataResultError" @select="console.log" />
+        </div>
+
+        <div v-if="selectedComponent === 'BookMetadataLookup'" class="demo-section">
+          <h3>Full Component (Try with ISBN: 9780441172719)</h3>
+          <BookMetadataLookup />
         </div>
       </div>
     </div>

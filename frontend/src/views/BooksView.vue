@@ -37,6 +37,12 @@ function handleCancel() {
 
 <template>
   <div class="view">
+    <div v-if="!showForm" class="view__header">
+      <router-link to="/books/lookup" class="view__lookup-link">
+        Lookup Metadata
+      </router-link>
+    </div>
+
     <BookForm
       v-if="showForm"
       :loading="booksStore.loading"
@@ -57,5 +63,24 @@ function handleCancel() {
 <style scoped>
 .view {
   padding: 2rem;
+}
+
+.view__header {
+  margin-bottom: 1rem;
+  display: flex;
+  justify-content: flex-end;
+}
+
+.view__lookup-link {
+  padding: 0.5rem 1rem;
+  background: #333;
+  color: white;
+  text-decoration: none;
+  border-radius: 4px;
+  font-size: 0.9rem;
+}
+
+.view__lookup-link:hover {
+  background: #555;
 }
 </style>
