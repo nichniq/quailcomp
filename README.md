@@ -237,8 +237,9 @@ quailcomp/
 │   │   └── extract-types.ts  # Type extraction script
 │   └── README.md             # Domain philosophy
 │
+├── .ai/
+│   └── instructions.md       # Development guidelines
 ├── .githooks/                # Git hook templates
-├── CLAUDE.md                 # Development guidelines
 ├── package.json              # Workspace configuration
 └── README.md                 # This file
 ```
@@ -623,7 +624,7 @@ Add book metadata lookup feature
 - Create POST /books/metadata/lookup endpoint
 - Add tests for metadata lookup
 
-Co-Authored-By: Claude Sonnet 4.5 <noreply@anthropic.com>
+Co-Authored-By: AI Assistant <noreply@example.com>
 EOF
 )"
 ```
@@ -636,7 +637,7 @@ EOF
 - **Git hooks** - Edit `.githooks/` templates, run `bash scripts/install-hooks.sh`
 - **Domain types** - Update Markdown docs, run type extraction
 
-See [CLAUDE.md](CLAUDE.md) for complete development guidelines.
+See [.ai/instructions.md](.ai/instructions.md) for complete development guidelines.
 
 ## License
 

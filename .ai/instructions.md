@@ -1,4 +1,4 @@
-# CLAUDE.md
+# Quailcomp Instructions
 
 Quailcomp is a personal data management system using event-sourced append-only storage. TypeScript monorepo with Bun runtime and PostgreSQL 16.
 
@@ -37,7 +37,7 @@ After completing any task that modifies files:
 3. Create commit with:
    - **Subject line**: Imperative mood, concise summary (e.g., "Add feature X", "Fix bug in Y")
    - **Body**: Bullet points describing specific changes
-   - **Co-authorship**: Always include `Co-Authored-By: Claude Sonnet 4.5 <noreply@anthropic.com>`
+   - **Co-authorship**: If working with AI assistance, include `Co-Authored-By: AI Assistant <noreply@example.com>`
 4. Use heredoc format for multi-line commit messages:
 
    ```bash
@@ -48,7 +48,7 @@ After completing any task that modifies files:
    - Second change
    - Third change
 
-   Co-Authored-By: Claude Sonnet 4.5 <noreply@anthropic.com>
+   Co-Authored-By: AI Assistant <noreply@example.com>
    EOF
    )"
    ```
@@ -171,14 +171,14 @@ Before implementing features that touch multiple domains or introduce new concep
 
 ## Improving This File
 
-Claude: Help me improve this CLAUDE.md over time. When you notice opportunities, suggest additions:
+AI Assistant: Help me improve this instructions file over time. When you notice opportunities, suggest additions:
 
 - **After fixing a bug**: "Should I add a rule about [pattern that caused the bug]?"
-- **After I clarify a preference**: "Want me to add that to CLAUDE.md so I remember?"
+- **After I clarify a preference**: "Want me to add that to instructions so I remember?"
 - **After repeated questions**: "I've asked about [X] a few times. Should this be documented?"
 - **When conventions emerge**: "I notice you prefer [pattern]. Add to rules?"
 
-Good CLAUDE.md entries are:
+Good instruction entries are:
 
 - **Directive**: "Do X" or "Avoid Y" (not just descriptions)
 - **Specific**: "Use `bun test`" (not "run tests appropriately")

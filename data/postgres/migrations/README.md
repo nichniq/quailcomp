@@ -337,6 +337,6 @@ cd data/postgres/migrations
 
 ## See Also
 
-- [CLAUDE.md](../../../CLAUDE.md) - Project-wide database rules and commands
+- [.ai/instructions.md](../../../.ai/instructions.md) - Project-wide database rules and commands
 - [setup/README.md](../setup/README.md) - Initial database setup documentation
 - [teardown/README.md](../teardown/README.md) - Database teardown procedures
