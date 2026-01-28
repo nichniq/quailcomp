@@ -16,38 +16,37 @@ Each domain combines human-readable explanation with machine-readable specificat
 - Reduces cognitive load when learning (no "flip to another page" problem)
 - Ensures concepts are explained at the point they're defined
 - Makes the domain model accessible to both humans and machines
-- Allows direct imports without extraction scripts
+- Auto-generates TypeScript types from markdown documentation
 
 ## Format
 
-We use TypeScript files (.ts) with long-form Markdown comments. Types are directly importable while documentation lives alongside them.
+We use Markdown files (.md) with TypeScript code blocks. Types are automatically extracted and generated into importable TypeScript files.
 
 ### File Structure
 
-Each domain is a single TypeScript file: `/domains/<domain-name>.ts`
+Each domain is a single Markdown file: `/domains/<domain-name>.md`
 
 Example structure:
 
-```typescript
-/**
- * # Authentication
- *
- * > Authentication proves user identity through multiple methods.
- *
- * Users can authenticate through passwords, passkeys, OAuth providers, or API keys.
- * Each authentication method produces a UserId that identifies them throughout
- * the system. Authentication is separate from authorization - proving identity is
- * different from determining permissions.
- *
- * ## Sessions
- *
- * > Sessions track authenticated user activity over time.
- *
- * When a user successfully authenticates, we create a session containing their
- * user_id and expiration information. Sessions enable stateless authentication
- * through JWT tokens while maintaining security.
- */
+```markdown
+# Authentication
 
+> Authentication proves user identity through multiple methods.
+
+Users can authenticate through passwords, passkeys, OAuth providers, or API keys.
+Each authentication method produces a UserId that identifies them throughout
+the system. Authentication is separate from authorization - proving identity is
+different from determining permissions.
+
+## Sessions
+
+> Sessions track authenticated user activity over time.
+
+When a user successfully authenticates, we create a session containing their
+user_id and expiration information. Sessions enable stateless authentication
+through JWT tokens while maintaining security.
+
+```typescript
 export type UserId = number & { readonly __brand: 'UserId' };
 
 export type Session = {
@@ -56,33 +55,34 @@ export type Session = {
   created_at: Date;
   expires_at: Date | null;
 };
+```
 
-/**
- * ## Authentication Methods
- *
- * > Multiple authentication methods map to a single user identity.
- *
- * The system supports multiple ways to prove identity. Each method stores
- * different credential data but all resolve to the same UserId.
- */
+## Authentication Methods
 
+> Multiple authentication methods map to a single user identity.
+
+The system supports multiple ways to prove identity. Each method stores
+different credential data but all resolve to the same UserId.
+
+```typescript
 export type AuthMethod = 'password' | 'passkey' | 'oauth' | 'api_key';
+```
 ```
 
 ### Multiple Reading Depths
 
-Support different levels of detail within comments:
+Support different levels of detail:
 - Blockquotes (>): Single-sentence summaries after headers
 - Full paragraphs: Detailed explanations
 - Inline examples: Show usage patterns
 - Edge cases: Document how the model handles real-world messiness
 
-### Comment Formatting
+### Markdown Formatting
 
-- Use `/** */` block comments for documentation sections
-- Write Markdown inside comments (headers, lists, code blocks, etc.)
-- Place documentation immediately before related type definitions
+- Use Markdown headers (#, ##, ###) to structure the document
 - Use blockquotes (>) after headers for summaries
+- Place TypeScript type definitions in code blocks immediately after their explanation
+- Use standard Markdown features (lists, code blocks, emphasis, etc.)
 
 ### Type Categories
 
@@ -110,9 +110,20 @@ When creating or enhancing domain documentation:
 5. Link related domains: Reference other domains when there are relationships
 6. Document edge cases: Explain how the model handles messy real-world data
 
+## Type Extraction
+
+TypeScript types are automatically extracted from markdown code blocks and generated into `/domains/types/<domain-name>.ts` files. This process:
+
+1. Scans all `.md` files in `/domains`
+2. Extracts TypeScript code blocks (fenced with ` ```typescript`)
+3. Generates importable `.ts` files in `/domains/types/`
+4. Preserves all type exports and definitions
+
+The extraction ensures types stay synchronized with documentation while keeping the markdown files readable and focused on concepts.
+
 ## Current Domains
 
-### Books (`/domains/books.ts`)
+### Books (`/domains/books.md`)
 Manages physical books in the collection and their acquisition history. Tracks acquisition events (purchased, ordered, given, won, inherited) and references other domains like Locations, People, and Series.
 
 ## Future Domains
@@ -161,9 +172,9 @@ We use DDD concepts where they help (ubiquitous language, bounded contexts, doma
 ### Importing Types
 
 ```typescript
-// Import from single-file domains
-import { UserId, Session } from '@/domains/auth'
-import { PhysicalBook, AcquisitionEvent } from '@/domains/books'
+// Import from generated type files
+import type { UserId, Session } from '@/domains/types/authentication'
+import type { PhysicalBook, AcquisitionEvent } from '@/domains/types/books'
 ```
 
 ### Reading Documentation
@@ -175,11 +186,12 @@ Before working with a domain:
 
 ### Adding a New Domain
 
-1. Create a single TypeScript file: `/domains/<domain-name>.ts`
-2. Write documentation in `/** */` block comments with Markdown
-3. Define types immediately after their explanatory documentation
-4. Export all types for use throughout the codebase
-5. Update this README with the new domain
+1. Create a Markdown file: `/domains/<domain-name>.md`
+2. Write documentation using standard Markdown formatting
+3. Define types in TypeScript code blocks immediately after their explanation
+4. Export all types within the code blocks
+5. Run the extraction script to generate the TypeScript file: `bun run extract-types`
+6. Update this README with the new domain
 
 ## Context Map
 
@@ -213,13 +225,15 @@ High-level view of how domains relate:
 └─────────────┘
 ```
 
-## Benefits of Single-File TypeScript Domains
+## Benefits of Markdown-Based Domains
 
-- Direct imports: `import { UserId } from '@/domains/auth'`
-- Type checking: Types are validated by TypeScript compiler
-- IDE support: Full autocomplete and type hints
-- No extraction needed: Documentation and types are already together
-- Single source of truth: One file for both humans and machines
+- Readable documentation: Markdown files are easy to read without code syntax
+- Direct imports: `import type { UserId } from '@/domains/types/authentication'`
+- Type checking: Generated types are validated by TypeScript compiler
+- IDE support: Full autocomplete and type hints in generated `.ts` files
+- Auto-generation: Types are extracted automatically from documentation
+- Single source of truth: One `.md` file for both humans and machines
+- Clean separation: Documentation remains readable while types remain usable
 
 ## Inspiration
 
