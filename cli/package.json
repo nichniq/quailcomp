@@ -9,7 +9,8 @@
   "scripts": {
     "build": "bun build src/index.ts --outdir dist --target bun --format esm",
     "dev": "bun run src/index.ts",
-    "cli": "bun run src/index.ts"
+    "cli": "bun run src/index.ts",
+    "test": "bun test"
   },
   "dependencies": {
     "@quailcomp/data": "workspace:*",

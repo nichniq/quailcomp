@@ -4,9 +4,9 @@
   "private": true,
   "workspaces": ["data/client", "server", "frontend", "services/book-metadata", "cli"],
   "scripts": {
-    "test": "bun run lint && bun test --cwd data/client && bun test --cwd server",
+    "test": "bun run lint && bun test --cwd data/client && bun test --cwd server && bun test --cwd cli",
     "test:watch": "bun test --watch --cwd data/client",
-    "test:unit": "bun test --cwd data/client && bun test --cwd server",
+    "test:unit": "bun test --cwd data/client && bun test --cwd server && bun test --cwd cli",
     "db:setup": "bun run --cwd data/client setup",
     "db:teardown": "bun run --cwd data/client teardown",
     "db:migrate": "bun run --cwd data/client migrate",
