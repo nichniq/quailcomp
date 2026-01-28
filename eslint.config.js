@@ -43,6 +43,10 @@ export default [
           ],
         },
       ],
+      // Enforce 2-space indentation
+      indent: ['error', 2, { SwitchCase: 1 }],
+      // Enforce newline at end of file
+      'eol-last': ['error', 'always'],
     },
     settings: {
       'import/resolver': {
@@ -89,6 +93,10 @@ export default [
       ],
       // Basic Vue rules only (not the opinionated style rules)
       'vue/multi-word-component-names': 'off',
+      // Enforce 2-space indentation
+      indent: ['error', 2, { SwitchCase: 1 }],
+      // Enforce newline at end of file
+      'eol-last': ['error', 'always'],
     },
     settings: {
       'import/resolver': {
