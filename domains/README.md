@@ -67,7 +67,6 @@ different credential data but all resolve to the same UserId.
 ```typescript
 export type AuthMethod = 'password' | 'passkey' | 'oauth' | 'api_key';
 ```
-```
 
 ### Multiple Reading Depths
 
