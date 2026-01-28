@@ -4,13 +4,14 @@
   "private": true,
   "workspaces": ["data/client", "server", "frontend"],
   "scripts": {
-    "test": "bun test --cwd data/client && bun test --cwd server",
+    "test": "bun run lint && bun test --cwd data/client && bun test --cwd server",
     "test:watch": "bun test --watch --cwd data/client",
+    "test:unit": "bun test --cwd data/client && bun test --cwd server",
     "db:setup": "bun run --cwd data/client setup",
     "db:teardown": "bun run --cwd data/client teardown",
     "db:migrate": "bun run --cwd data/client migrate",
-    "lint": "eslint .",
-    "lint:fix": "eslint . --fix",
+    "lint": "eslint . --max-warnings=0",
+    "lint:fix": "eslint . --fix --max-warnings=0",
     "install-hooks": "bash scripts/install-hooks.sh"
   },
   "devDependencies": {

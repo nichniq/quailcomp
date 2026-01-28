@@ -12,6 +12,7 @@ export default [
       '**/.bun/**',
       '**/coverage/**',
       'data/postgres/**', // SQL files, not JS/TS
+      'bun.lock', // Auto-generated lockfile
     ],
   },
   // Configuration for TypeScript files
