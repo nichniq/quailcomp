@@ -1,6 +1,34 @@
 # AI Assistant Instructions
 
-@../CONTRIBUTING.md
+## Key Documentation
+
+Before working on tasks, reference these docs as needed:
+
+- [Development Setup](../docs/how-to/setup-development.md) - Environment and database setup
+- [Running Tests](../docs/how-to/run-tests.md) - Test commands and patterns
+- [Commit Protocol](../docs/how-to/commit-changes.md) - How to commit changes
+- [Run Migrations](../docs/how-to/run-migrations.md) - Database migrations
+- [Event Sourcing](../docs/explanation/event-sourcing.md) - Entities vs events
+- [Database Roles](../docs/explanation/database-roles.md) - quailcomp_owner vs quailcomp_app
+- [Environment Variables](../docs/reference/environment-variables.md) - Configuration reference
+
+## Quick Reference
+
+| Task | Command |
+|------|---------|
+| Run tests | `bun test` |
+| Run migrations | `bun run db:migrate` |
+| Install git hooks | `bash scripts/install-hooks.sh` |
+| Lint code | `bun run lint` |
+
+## Development Rules
+
+- Run `bun test` after modifying code
+- Use Bun's SQL tagged templates (not raw strings)
+- Use `EntitiesClient` for mutable data, `EventsClient` for immutable facts
+- Tests must use unique type names (with timestamps)
+- Never modify existing migration files
+- Migrations must be idempotent
 
 ## AI-Specific Guidelines
 
@@ -20,6 +48,8 @@ When working on features or making architectural decisions:
 5. Maintain clarity by writing for human understanding first, types second
 
 Before implementing features that touch multiple domains or introduce new concepts, consider whether domain documentation needs to be created or updated.
+
+See [Write Domain Documentation](../docs/how-to/write-domain-docs.md) for guidelines.
 
 ---
 

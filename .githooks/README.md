@@ -1,34 +1,21 @@
 # Git Hooks
 
-This directory contains git hook templates that can be installed manually.
+This directory contains git hook templates. See [How to Manage Git Hooks](../docs/how-to/manage-git-hooks.md) for complete documentation.
 
-## Installation
-
-To install the pre-commit hook:
+## Quick Start
 
 ```bash
-cp .githooks/pre-commit .git/hooks/pre-commit
-chmod +x .git/hooks/pre-commit
+bash scripts/install-hooks.sh
 ```
 
-## What the pre-commit hook does
+## What the Pre-Commit Hook Does
 
-- Runs ESLint on all staged `.ts`, `.tsx`, `.js`, `.jsx`, and `.vue` files
-- Prevents commits if linting errors are found
-- Suggests running `bun run lint:fix` to auto-fix issues
+- Runs ESLint on staged `.ts`, `.tsx`, `.js`, `.jsx`, and `.vue` files
+- Extracts types from domain documentation when `.md` files change
+- Blocks commit on linting errors
 
-## Bypassing the hook
-
-If you need to commit despite linting errors (use sparingly):
+## Bypassing (Use Sparingly)
 
 ```bash
 git commit --no-verify
 ```
-
-## Future improvements
-
-When the team grows or you want easier hook management, consider:
-
-- `simple-git-hooks` - Lightweight hook manager (~100 LOC)
-- `husky` - Popular but more complex
-- `lint-staged` - Only lint files that are staged (faster)

@@ -2,6 +2,12 @@
 
 TypeScript client library for all data sources in the Quailcomp project.
 
+For complete API documentation, see:
+
+- [EntitiesClient Reference](../../docs/reference/entities-client.md)
+- [EventsClient Reference](../../docs/reference/events-client.md)
+- [Why Event Sourcing?](../../docs/explanation/event-sourcing.md)
+
 ## Overview
 
 This package provides type-safe clients for accessing various data sources:
@@ -24,130 +30,28 @@ This is a workspace package. Add it to your `package.json`:
 }
 ```
 
-## Usage
-
-### Database Client
-
-#### Entities Client (Mutable State)
-
-Use the entities client for things that exist and can change over time:
+## Quick Start
 
 ```typescript
-import { EntitiesClient, createConnection, getConnection } from "@quailcomp/data"
+import { EntitiesClient, EventsClient, getConnection } from "@quailcomp/data"
 
-// Create a connection
-const sql = createConnection({
-  host: "localhost",
-  port: 5432,
-  database: "quailcomp",
-  user: "quailcomp_app",
-  password: process.env.DB_PASSWORD
-})
-
-// Create an entities client
+const sql = getConnection()
 const entities = new EntitiesClient(sql)
-
-// Or use the singleton
-const entities = new EntitiesClient(getConnection())
+const events = new EventsClient(sql)
 
 // Create an entity
-const user = await entities.create({
-  type: "user",
-  data: { name: "Alice", email: "alice@example.com" }
+const book = await entities.create({
+  type: "book",
+  data: { title: "Domain-Driven Design", author: "Eric Evans" }
 })
 
-// Update an entity (appends new version)
-await entities.update({
-  entityId: user.entityId,
-  type: "user",
-  data: { name: "Alice Smith", email: "alice@example.com" }
-})
-
-// Get latest version
-const latest = await entities.getById(user.entityId)
-
-// Get full history
-const history = await entities.getHistory(user.entityId)
-```
-
-#### Events Client (Enrichable Facts)
-
-Use the events client for recording what happened. Events are append-only facts
-that can be enriched with additional data (tags, corrections, links) over time:
-
-```typescript
-import { EventsClient, getConnection } from "@quailcomp/data"
-
-const events = new EventsClient(getConnection())
-
-// Record an event (event_id is auto-generated)
-const event = await events.record({
+// Record an event
+await events.record({
   eventType: "book_acquired",
-  occurredAt: new Date("2026-01-15"),
-  data: {
-    book_id: 42,
-    title: "The Great Gatsby",
-    price: 15.99
-  }
+  occurredAt: new Date(),
+  data: { book_id: book.entity_id, method: "purchased" }
 })
-
-// Enrich the event later with additional data (adds new entry, preserves original)
-await events.enrich({
-  eventId: event.eventId,
-  eventType: "book_acquired",
-  occurredAt: event.occurredAt,  // Keep the same occurred_at
-  data: {
-    book_id: 42,
-    title: "The Great Gatsby",
-    price: 15.99,
-    tags: ["fiction", "classic"],  // Added later
-    notes: "Gift from grandmother"  // Added later
-  }
-})
-
-// Get the latest (enriched) version
-const latest = await events.getById(event.eventId)
-
-// Get full history of enrichments
-const history = await events.getHistory(event.eventId)
-
-// Void an event (soft delete)
-await events.void({
-  eventId: event.eventId,
-  eventType: event.eventType,
-  occurredAt: event.occurredAt,
-  data: event.data
-})
-
-// Query events
-const acquisitions = await events.getByType("book_acquired")
-const bookHistory = await events.findForEntity("book_id", 42)
-const january = await events.getByTimeRange(
-  new Date("2026-01-01"),
-  new Date("2026-01-31")
-)
 ```
-
-### Typed Repository Pattern
-
-For better type safety, use typed repositories:
-
-```typescript
-import { createUserRepository, type UserData } from "@quailcomp/data"
-
-const users = createUserRepository(sql)
-
-const user = await users.create({
-  name: "Alice",
-  email: "alice@example.com",
-  role: "admin"
-})
-
-// TypeScript knows user.data is UserData
-console.log(user.data.name)
-```
-
-See [`src/db/types.ts`](./src/db/types.ts) for different typing approaches.
 
 ## Structure
 

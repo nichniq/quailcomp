@@ -260,6 +260,12 @@ High-level view of how domains relate:
 - Textbook-style integrated diagrams and equations
 - TSDoc and JSDoc conventions
 
+## Documentation
+
+- [How to Write Domain Documentation](../docs/how-to/write-domain-docs.md) - Complete guide
+- [Domains Reference](../docs/reference/domains.md) - Index of current domains
+- [Event Sourcing](../docs/explanation/event-sourcing.md) - Entities vs events
+
 ## Notes
 
 This structure is **experimental** and will evolve as we learn what works. The goal is to maintain clarity and flexibility while building a system that grows naturally with use.

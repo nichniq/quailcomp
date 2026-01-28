@@ -2,161 +2,80 @@
 
 Quailcomp is a personal data management system using event-sourced append-only storage. TypeScript monorepo with Bun runtime and PostgreSQL 16.
 
-## Commands
+## Quick Reference
 
-```bash
-bun test                 # Run all tests (do this after code changes)
-bun test:watch           # Watch mode for data/client
-bun run db:migrate       # Run pending migrations on development database
-bun run db:setup         # Create test database (automated by tests, rarely needed manually)
-bun run db:teardown      # Drop test database (automated cleanup)
-bash scripts/install-hooks.sh  # Install git hooks from .githooks/ to .git/hooks/
+| Task | Command |
+|------|---------|
+| Run tests | `bun test` |
+| Watch mode | `bun test:watch` |
+| Run migrations | `bun run db:migrate` |
+| Lint code | `bun run lint` |
+| Fix lint issues | `bun run lint:fix` |
+| Install git hooks | `bash scripts/install-hooks.sh` |
+
+## Getting Started
+
+- [Development Setup](docs/how-to/setup-development.md) - Install prerequisites, clone, configure database
+- [Running Tests](docs/how-to/run-tests.md) - Test commands and writing tests
+- [Commit Protocol](docs/how-to/commit-changes.md) - How to commit your changes
+
+## Tutorials
+
+- [Add a New Domain](docs/tutorials/add-a-new-domain.md) - Create a domain from scratch
+
+## How-To Guides
+
+- [Run Migrations](docs/how-to/run-migrations.md) - Create and apply database migrations
+- [Write Domain Documentation](docs/how-to/write-domain-docs.md) - Document domain models with types
+- [Manage Git Hooks](docs/how-to/manage-git-hooks.md) - Install and customize hooks
+- [Backup and Restore](docs/how-to/backup-restore-database.md) - Database backup procedures
+
+## Understanding the Architecture
+
+- [Why Event Sourcing?](docs/explanation/event-sourcing.md) - Entities vs events, append-only storage
+- [Database Roles](docs/explanation/database-roles.md) - Why quailcomp_owner vs quailcomp_app
+- [Services Architecture](docs/explanation/services-architecture.md) - External integrations
+
+## Reference
+
+- [EntitiesClient API](docs/reference/entities-client.md) - Mutable entities
+- [EventsClient API](docs/reference/events-client.md) - Immutable events
+- [CLI Reference](docs/reference/cli.md) - Command-line interface
+- [API Reference](docs/reference/api.md) - HTTP endpoints
+- [Environment Variables](docs/reference/environment-variables.md) - Configuration
+- [Domain Models](docs/reference/domains.md) - Index of domain documentation
+
+## Project Structure
+
+```
+quailcomp/
+├── data/
+│   ├── client/           # @quailcomp/data - TypeScript client library
+│   └── postgres/         # SQL: setup/, teardown/, migrations/
+├── server/               # Backend HTTP server
+├── frontend/             # Vue 3 + Pinia frontend
+├── cli/                  # Command-line interface
+├── services/             # External integrations (book-metadata)
+├── domains/              # Domain documentation with embedded types
+├── docs/                 # Documentation (Diátaxis structure)
+│   ├── tutorials/        # Learning-oriented guides
+│   ├── how-to/           # Task-oriented guides
+│   ├── explanation/      # Understanding-oriented
+│   └── reference/        # Information-oriented
+└── CONTRIBUTING.md       # This file
 ```
 
 ## Development Rules
 
-- Run `bun test` after modifying code to verify changes
-- Use Bun's built-in SQL tagged templates for all queries (not raw strings)
+- Run `bun test` after modifying code
+- Use Bun's SQL tagged templates (not raw strings)
 - Use `EntitiesClient` for mutable data, `EventsClient` for immutable facts
-- Tests must use unique type names (with timestamps) to avoid conflicts
-- New migrations must follow naming: `NNN_description.sql` (zero-padded numbers)
-- Migrations must be idempotent (safe to run multiple times)
-- Never modify existing migration files (checksums are tracked)
-- Migrations run as quailcomp_owner, test idempotency before committing
-- Git hooks are templates in `.githooks/` - edit templates, then run `bash scripts/install-hooks.sh`
-- Pre-commit hook warns if out of sync with template
-
-## Commit Protocol
-
-After completing any task that modifies files:
-
-1. Run `bun test` to verify changes
-2. Stage files with `git add`
-3. Create commit with:
-   - **Subject line**: Imperative mood, concise summary (e.g., "Add feature X", "Fix bug in Y")
-   - **Body**: Bullet points describing specific changes
-   - **Co-authorship**: If working with AI assistance, include `Co-Authored-By: AI Assistant <noreply@example.com>`
-4. Use heredoc format for multi-line commit messages:
-
-   ```bash
-   git commit -m "$(cat <<'EOF'
-   Subject line here
-
-   - First change
-   - Second change
-   - Third change
-   EOF
-   )"
-   ```
+- Tests must use unique type names (with timestamps)
+- Never modify existing migration files
+- Migrations must be idempotent
 
 ## Avoid
 
 - External PostgreSQL drivers (Bun has built-in support)
 - Truncating tables in tests
 - Direct SQL string concatenation (SQL injection risk)
-
-## Project Structure
-
-```
-data/client/       # @quailcomp/data - EntitiesClient, EventsClient, connection
-data/postgres/     # SQL: setup/, teardown/, migrations/
-server/            # Application server
-domains/           # DDD domain models and documentation
-```
-
-## Patterns
-
-- **Entities**: Append-only entries sharing `entity_id`. Latest = current state.
-- **Events**: Immutable facts, can be enriched. Grouped by `event_id`.
-- **Migrations**: Tracked in schema_migrations table (version, applied_at, checksum)
-  - Migration runner: `data/postgres/migrations/run.sh`
-  - Auto-discovery via filename pattern: `[0-9][0-9][0-9]_*.sql`
-  - `bun run db:migrate` applies to development database (quailcomp)
-  - Test database migrations are fully automated by test runner
-- Soft deletes via `deleted_at` / `voided_at` timestamps
-- JSONB for flexible schema storage
-
-## Database Roles
-
-- `quailcomp_app`: Application role (use this for connections)
-- `quailcomp_test`: Test database
-
----
-
-## Reference
-
-### Tech Stack
-
-- **Runtime**: Bun 1.3.6+ (TypeScript execution, built-in PostgreSQL support)
-- **Database**: PostgreSQL 16 with JSONB storage
-- **Language**: TypeScript (ES2022, strict mode)
-- **Architecture**: Event sourcing, domain-driven design
-
-### Environment Variables
-
-```
-DB_HOST, DB_PORT, DB_NAME, DB_USER, DB_PASSWORD
-DB_TEST_NAME (default: quailcomp_test)
-```
-
-### Data Access APIs
-
-**EntitiesClient** (mutable state):
-
-- `create<T>(input)` - Auto-generates entity_id
-- `update<T>(entityId, data)` - Appends new version
-- `getById(entityId)` - Latest version
-- `getHistory(entityId)` - Full history
-- `delete(entityId, data)` - Soft delete
-- `getByType(type, options)` - Query by entity type
-- `findByData(type, criteria)` - JSONB search
-
-**EventsClient** (immutable facts):
-
-- `record<T>(input)` - Auto-generates event_id
-- `enrich<T>(eventId, data)` - Append enrichment data
-- `getById(eventId)` - Latest enriched version
-- `getHistory(eventId)` - Full history
-- `void(eventId)` - Soft void
-- `getByType(type)` - Query by event type
-- `findForEntity(fieldName, value)` - Events for entity
-- `getByTimeRange(start, end)` - Time-range queries
-
----
-
-## Domains Directory
-
-The /domains directory is the authoritative source of truth for domain models, combining human-readable Markdown documentation with machine-readable TypeScript type definitions.
-
-### Working with Domains
-
-When working on features or making architectural decisions:
-
-1. Look for opportunities to create or enhance domain documentation
-2. Add new domains when introducing new concepts (e.g., authentication, finances, contacts)
-3. Update existing domains when types or concepts evolve
-4. Write documentation in Markdown, with types in code blocks
-5. Maintain clarity by writing for human understanding first, types second
-
-### Guidelines
-
-- Create domain files as /domains/<domain-name>.md (Markdown)
-- Follow the format and philosophy described in /domains/README.md
-- Write in standard Markdown with code blocks for TypeScript
-- Use blockquotes (>) after headers for section summaries
-- Define TypeScript types in ```typescript code blocks after explanatory text
-- Include concrete examples showing common and edge-case scenarios
-- Export all types from code blocks - they're auto-extracted to /domains/types/
-- Cross-reference related domains naturally in prose
-
-### Type Extraction
-
-Types are automatically extracted from Markdown domain files:
-
-- TypeScript code blocks (```typescript) are extracted from each .md file
-- Extracted types are generated into `/domains/types/<domain-name>.ts`
-- Run `bun run domains/scripts/extract-types.ts` to regenerate manually
-- Pre-commit hook automatically regenerates when .md files change
-- Import types using: `import type { Type } from "@domains/types/<domain-name>"`
-
-Before implementing features that touch multiple domains or introduce new concepts, consider whether domain documentation needs to be created or updated.

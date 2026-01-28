@@ -51,4 +51,9 @@ From `server/` or other workspaces:
 import { EntitiesClient, createConnection } from "@quailcomp/data"
 ```
 
-See [`client/README.md`](./client/README.md) for more details on the client library.
+## Documentation
+
+- [`client/README.md`](./client/README.md) - Client library details
+- [EntitiesClient Reference](../docs/reference/entities-client.md) - Mutable entities API
+- [EventsClient Reference](../docs/reference/events-client.md) - Immutable events API
+- [Why Event Sourcing?](../docs/explanation/event-sourcing.md) - Architecture explanation

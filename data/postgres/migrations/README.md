@@ -337,6 +337,7 @@ cd data/postgres/migrations
 
 ## See Also
 
-- [CONTRIBUTING.md](../../../CONTRIBUTING.md) - Project-wide database rules and commands
-- [setup/README.md](../setup/README.md) - Initial database setup documentation
-- [teardown/README.md](../teardown/README.md) - Database teardown procedures
+- [How to Run Migrations](../../../docs/how-to/run-migrations.md) - Comprehensive migration guide
+- [Database Roles](../../../docs/explanation/database-roles.md) - Why quailcomp_owner vs quailcomp_app
+- [setup/README.md](../setup/README.md) - Initial database setup
+- [teardown/README.md](../teardown/README.md) - Database teardown

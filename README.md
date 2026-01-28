@@ -35,6 +35,8 @@ Quailcomp is a sophisticated TypeScript application that demonstrates production
 
 ## Quick Start
 
+See [Development Setup](docs/how-to/setup-development.md) for complete instructions.
+
 ### Prerequisites
 
 - [Bun](https://bun.sh) 1.3.6 or higher
@@ -44,71 +46,26 @@ Quailcomp is a sophisticated TypeScript application that demonstrates production
 ### Installation
 
 ```bash
-# Clone the repository
 git clone https://github.com/yourusername/quailcomp.git
 cd quailcomp
-
-# Install dependencies
 bun install
-
-# Set up environment variables
-cp .env.example .env
-# Edit .env with your PostgreSQL credentials
 ```
 
 ### Database Setup
 
 ```bash
-# Create the PostgreSQL database
-createdb quailcomp
-
-# Run migrations
-bun run db:migrate
+cd data/postgres/setup && ./run.sh  # Create database and roles
+bun run db:migrate                   # Run migrations
 ```
 
-### Environment Variables
-
-Create a `.env` file in the project root:
+### Running
 
 ```bash
-# Database (required)
-DB_HOST=localhost
-DB_PORT=5432
-DB_NAME=quailcomp
-DB_USER=quailcomp_app
-DB_PASSWORD=your_password
-
-# Authentication (required)
-JWT_SECRET=your_jwt_secret_key
-
-# Server (optional)
-PORT=3000
-HOSTNAME=0.0.0.0
-LOG_LEVEL=info
-
-# Book Metadata Providers (optional)
-GOOGLE_BOOKS_API_KEY=your_google_books_key
-HARDCOVER_API_KEY=your_hardcover_key
+cd server && bun run dev     # Backend at http://localhost:3000
+cd frontend && bun run dev   # Frontend at http://localhost:5173
 ```
 
-### Running the Application
-
-```bash
-# Start the backend server
-cd server
-bun run dev
-
-# In another terminal, start the frontend (if using)
-cd frontend
-bun run dev
-```
-
-### First Steps
-
-1. Register a user via `POST /auth/register`
-2. Log in to get a JWT token via `POST /auth/login`
-3. Create a book via `POST /books`
-4. Look up book metadata via `POST /books/metadata/lookup`
+See [Environment Variables](docs/reference/environment-variables.md) for configuration.
 
 ## Architecture
 
@@ -599,15 +556,25 @@ test('create book entity', async () => {
 })
 ```
 
+## Documentation
+
+Documentation follows the [Diátaxis](https://diataxis.fr/) framework:
+
+- **[Tutorials](docs/tutorials/)** - Learning-oriented walkthroughs
+- **[How-To Guides](docs/how-to/)** - Task-oriented guides for common operations
+- **[Explanation](docs/explanation/)** - Understanding the architecture
+- **[Reference](docs/reference/)** - API and configuration details
+
+Key starting points:
+
+- [Tutorial: Add a New Domain](docs/tutorials/add-a-new-domain.md)
+- [Development Setup](docs/how-to/setup-development.md)
+- [Why Event Sourcing?](docs/explanation/event-sourcing.md)
+- [Domain Models](docs/reference/domains.md)
+
 ## Contributing
 
-See [CONTRIBUTING.md](CONTRIBUTING.md) for complete development guidelines including:
-
-- Commands and workflow
-- Commit protocol and code style
-- Database patterns and migrations
-- Domain-driven design guidelines
-- API reference
+See [CONTRIBUTING.md](CONTRIBUTING.md) for development guidelines.
 
 ## License
 
