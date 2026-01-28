@@ -2,7 +2,7 @@
   "name": "quailcomp",
   "type": "module",
   "private": true,
-  "workspaces": ["data/client", "server", "frontend"],
+  "workspaces": ["data/client", "server", "frontend", "services/book-metadata"],
   "scripts": {
     "test": "bun run lint && bun test --cwd data/client && bun test --cwd server",
     "test:watch": "bun test --watch --cwd data/client",
