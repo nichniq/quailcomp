@@ -2,7 +2,7 @@
   "name": "quailcomp",
   "type": "module",
   "private": true,
-  "workspaces": ["data/client", "server", "frontend", "services/book-metadata"],
+  "workspaces": ["data/client", "server", "frontend", "services/book-metadata", "cli"],
   "scripts": {
     "test": "bun run lint && bun test --cwd data/client && bun test --cwd server",
     "test:watch": "bun test --watch --cwd data/client",
@@ -14,7 +14,8 @@
     "lint:fix": "eslint . --fix --max-warnings=0 && markdownlint-cli2 --fix",
     "lint:md": "markdownlint-cli2",
     "lint:md:fix": "markdownlint-cli2 --fix",
-    "install-hooks": "bash scripts/install-hooks.sh"
+    "install-hooks": "bash scripts/install-hooks.sh",
+    "cli": "bun run --cwd cli cli"
   },
   "devDependencies": {
     "@typescript-eslint/eslint-plugin": "^8.54.0",

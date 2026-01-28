@@ -602,6 +602,7 @@ test('create book entity', async () => {
 ## Contributing
 
 See [CONTRIBUTING.md](CONTRIBUTING.md) for complete development guidelines including:
+
 - Commands and workflow
 - Commit protocol and code style
 - Database patterns and migrations
