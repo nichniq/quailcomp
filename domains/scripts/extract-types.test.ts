@@ -1,7 +1,5 @@
-import { describe, test, expect, beforeAll, afterAll } from 'bun:test'
-import { writeFile, readFile, mkdir, rm } from 'node:fs/promises'
-import { join } from 'node:path'
-import { spawn } from 'node:child_process'
+import { describe, test, expect } from 'bun:test'
+import { join } from 'path'
 
 const TEST_DIR = join(import.meta.dir, '__test_domains')
 const EXTRACT_SCRIPT = join(import.meta.dir, 'extract-types.ts')
@@ -10,29 +8,21 @@ const EXTRACT_SCRIPT = join(import.meta.dir, 'extract-types.ts')
  * Run the extraction script in a test directory
  */
 async function runExtraction(testDir: string): Promise<{ stdout: string; stderr: string; exitCode: number }> {
-  return new Promise((resolve, reject) => {
-    const proc = spawn('bun', ['run', EXTRACT_SCRIPT], {
-      cwd: testDir,
-      env: { ...process.env, DOMAINS_DIR: testDir },
-    })
-
-    let stdout = ''
-    let stderr = ''
-
-    proc.stdout.on('data', (data) => {
-      stdout += data.toString()
-    })
-
-    proc.stderr.on('data', (data) => {
-      stderr += data.toString()
-    })
-
-    proc.on('close', (code) => {
-      resolve({ stdout, stderr, exitCode: code || 0 })
-    })
-
-    proc.on('error', reject)
+  const proc = Bun.spawn(['bun', 'run', EXTRACT_SCRIPT], {
+    cwd: testDir,
+    env: { ...Bun.env, DOMAINS_DIR: testDir },
+    stdout: 'pipe',
+    stderr: 'pipe',
   })
+
+  const [stdout, stderr] = await Promise.all([
+    new Response(proc.stdout).text(),
+    new Response(proc.stderr).text(),
+  ])
+
+  const exitCode = await proc.exited
+
+  return { stdout, stderr, exitCode }
 }
 
 /**
@@ -40,15 +30,22 @@ async function runExtraction(testDir: string): Promise<{ stdout: string; stderr:
  */
 async function setupTestEnv(files: Record<string, string>): Promise<string> {
   const testDir = `${TEST_DIR}_${Date.now()}`
-  await mkdir(join(testDir, 'scripts'), { recursive: true })
+  const scriptsDir = join(testDir, 'scripts')
+
+  // Create directories using mkdir command
+  const mkdirProc = Bun.spawn(['mkdir', '-p', scriptsDir], {
+    stdout: 'pipe',
+    stderr: 'pipe',
+  })
+  await mkdirProc.exited
 
   // Copy extraction script to test directory
-  const scriptContent = await readFile(EXTRACT_SCRIPT, 'utf-8')
-  await writeFile(join(testDir, 'scripts', 'extract-types.ts'), scriptContent, 'utf-8')
+  const scriptContent = await Bun.file(EXTRACT_SCRIPT).text()
+  await Bun.write(join(testDir, 'scripts', 'extract-types.ts'), scriptContent)
 
   // Write test markdown files
   for (const [filename, content] of Object.entries(files)) {
-    await writeFile(join(testDir, filename), content, 'utf-8')
+    await Bun.write(join(testDir, filename), content)
   }
 
   return testDir
@@ -58,7 +55,11 @@ async function setupTestEnv(files: Record<string, string>): Promise<string> {
  * Clean up test environment
  */
 async function cleanupTestEnv(testDir: string) {
-  await rm(testDir, { recursive: true, force: true })
+  const proc = Bun.spawn(['rm', '-rf', testDir], {
+    stdout: 'pipe',
+    stderr: 'pipe',
+  })
+  await proc.exited
 }
 
 describe('extract-types script', () => {
@@ -78,7 +79,7 @@ export type TestType = {
     const result = await runExtraction(testDir)
     expect(result.exitCode).toBe(0)
 
-    const output = await readFile(join(testDir, 'types', 'test.ts'), 'utf-8')
+    const output = await Bun.file(join(testDir, 'types', 'test.ts')).text()
     expect(output).toContain('export type TestType')
     expect(output).toContain('id: string')
     expect(output).toContain('name: string')
@@ -107,7 +108,7 @@ export type TypeB = { b: number }
     const result = await runExtraction(testDir)
     expect(result.exitCode).toBe(0)
 
-    const output = await readFile(join(testDir, 'types', 'domain.ts'), 'utf-8')
+    const output = await Bun.file(join(testDir, 'types', 'domain.ts')).text()
     expect(output).toContain('export type TypeA')
     expect(output).toContain('export type TypeB')
 
@@ -127,10 +128,10 @@ export type Book = { title: string }
     const result = await runExtraction(testDir)
     expect(result.exitCode).toBe(0)
 
-    const authOutput = await readFile(join(testDir, 'types', 'auth.ts'), 'utf-8')
+    const authOutput = await Bun.file(join(testDir, 'types', 'auth.ts')).text()
     expect(authOutput).toContain('export type User')
 
-    const booksOutput = await readFile(join(testDir, 'types', 'books.ts'), 'utf-8')
+    const booksOutput = await Bun.file(join(testDir, 'types', 'books.ts')).text()
     expect(booksOutput).toContain('export type Book')
 
     await cleanupTestEnv(testDir)
@@ -150,7 +151,7 @@ export function guardE(x: unknown): x is TypeA { return typeof x === 'string' }
     const result = await runExtraction(testDir)
     expect(result.exitCode).toBe(0)
 
-    const output = await readFile(join(testDir, 'types', 'exports.ts'), 'utf-8')
+    const output = await Bun.file(join(testDir, 'types', 'exports.ts')).text()
     expect(output).toContain('export type TypeA')
     expect(output).toContain('export interface InterfaceB')
     expect(output).toContain('export enum EnumC')
@@ -169,11 +170,11 @@ export type Test = { value: number }
 
     const result1 = await runExtraction(testDir)
     expect(result1.exitCode).toBe(0)
-    const output1 = await readFile(join(testDir, 'types', 'test.ts'), 'utf-8')
+    const output1 = await Bun.file(join(testDir, 'types', 'test.ts')).text()
 
     const result2 = await runExtraction(testDir)
     expect(result2.exitCode).toBe(0)
-    const output2 = await readFile(join(testDir, 'types', 'test.ts'), 'utf-8')
+    const output2 = await Bun.file(join(testDir, 'types', 'test.ts')).text()
 
     expect(output1).toBe(output2)
 
@@ -194,12 +195,12 @@ export type Valid = { ok: true }
     const result = await runExtraction(testDir)
     expect(result.exitCode).toBe(0) // Should still succeed
 
-    const { access } = await import('node:fs/promises')
     // empty.ts should not exist
-    await expect(access(join(testDir, 'types', 'empty.ts'))).rejects.toThrow()
+    const emptyExists = await Bun.file(join(testDir, 'types', 'empty.ts')).exists()
+    expect(emptyExists).toBe(false)
 
     // valid.ts should exist
-    const validOutput = await readFile(join(testDir, 'types', 'valid.ts'), 'utf-8')
+    const validOutput = await Bun.file(join(testDir, 'types', 'valid.ts')).text()
     expect(validOutput).toContain('export type Valid')
 
     await cleanupTestEnv(testDir)
@@ -218,12 +219,12 @@ export type ShouldAppear = { good: true }
     const result = await runExtraction(testDir)
     expect(result.exitCode).toBe(0)
 
-    const { access } = await import('node:fs/promises')
     // README.ts should not exist
-    await expect(access(join(testDir, 'types', 'README.ts'))).rejects.toThrow()
+    const readmeExists = await Bun.file(join(testDir, 'types', 'README.ts')).exists()
+    expect(readmeExists).toBe(false)
 
     // domain.ts should exist and contain the right type
-    const domainOutput = await readFile(join(testDir, 'types', 'domain.ts'), 'utf-8')
+    const domainOutput = await Bun.file(join(testDir, 'types', 'domain.ts')).text()
     expect(domainOutput).toContain('ShouldAppear')
     expect(domainOutput).not.toContain('ShouldNotAppear')
 
@@ -262,12 +263,11 @@ export type Test = { version: 1 }
     expect(result1.exitCode).toBe(0)
 
     // Modify file
-    await writeFile(
+    await Bun.write(
       join(testDir, 'test.md'),
       `\`\`\`typescript
 export type Test = { version: 2 }
-\`\`\``,
-      'utf-8'
+\`\`\``
     )
 
     // Second run (should re-extract)
@@ -275,7 +275,7 @@ export type Test = { version: 2 }
     expect(result2.exitCode).toBe(0)
     expect(result2.stdout).toContain('extracting types')
 
-    const output = await readFile(join(testDir, 'types', 'test.ts'), 'utf-8')
+    const output = await Bun.file(join(testDir, 'types', 'test.ts')).text()
     expect(output).toContain('version: 2')
 
     await cleanupTestEnv(testDir)
@@ -283,10 +283,17 @@ export type Test = { version: 2 }
 
   test('error handling: exits with error code when no .md files found', async () => {
     const testDir = `${TEST_DIR}_${Date.now()}`
-    await mkdir(join(testDir, 'scripts'), { recursive: true })
+    const scriptsDir = join(testDir, 'scripts')
 
-    const scriptContent = await readFile(EXTRACT_SCRIPT, 'utf-8')
-    await writeFile(join(testDir, 'scripts', 'extract-types.ts'), scriptContent, 'utf-8')
+    // Create directories using mkdir command
+    const mkdirProc = Bun.spawn(['mkdir', '-p', scriptsDir], {
+      stdout: 'pipe',
+      stderr: 'pipe',
+    })
+    await mkdirProc.exited
+
+    const scriptContent = await Bun.file(EXTRACT_SCRIPT).text()
+    await Bun.write(join(testDir, 'scripts', 'extract-types.ts'), scriptContent)
 
     const result = await runExtraction(testDir)
     expect(result.exitCode).toBe(0) // Script exits cleanly when no files found
