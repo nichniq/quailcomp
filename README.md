@@ -601,44 +601,12 @@ test('create book entity', async () => {
 
 ## Contributing
 
-### Code Style
-
-- **TypeScript** - Strict mode, ES2022
-- **Indentation** - 2 spaces
-- **Linting** - ESLint for TypeScript, Markdownlint for Markdown
-- **SQL** - Bun's built-in tagged templates (never raw strings)
-
-### Commit Protocol
-
-After completing work:
-
-1. Run `bun test` to verify changes
-2. Stage files with `git add`
-3. Create commit with co-authorship:
-
-```bash
-git commit -m "$(cat <<'EOF'
-Add book metadata lookup feature
-
-- Implement multi-provider metadata service
-- Add Google Books and Open Library providers
-- Create POST /books/metadata/lookup endpoint
-- Add tests for metadata lookup
-
-Co-Authored-By: AI Assistant <noreply@example.com>
-EOF
-)"
-```
-
-### Development Guidelines
-
-- **Read before writing** - Check domain documentation first
-- **Event sourcing** - Use EntitiesClient for mutable data, EventsClient for immutable facts
-- **Migrations** - Never modify existing migrations (checksums tracked)
-- **Git hooks** - Edit `.githooks/` templates, run `bash scripts/install-hooks.sh`
-- **Domain types** - Update Markdown docs, run type extraction
-
-See [CONTRIBUTING.md](CONTRIBUTING.md) for complete development guidelines.
+See [CONTRIBUTING.md](CONTRIBUTING.md) for complete development guidelines including:
+- Commands and workflow
+- Commit protocol and code style
+- Database patterns and migrations
+- Domain-driven design guidelines
+- API reference
 
 ## License
 
