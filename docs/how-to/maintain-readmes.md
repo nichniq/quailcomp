@@ -32,6 +32,7 @@ import { something } from './filename'
 ## Documentation
 
 - [Related Doc](../../path/to/doc.md)
+
 ```
 
 **Example**: Creating `server/src/email/`
@@ -59,6 +60,7 @@ await emailService.send({
   data: { name: 'John' }
 })
 ```
+
 ```
 
 ### Adding New Files
@@ -90,6 +92,7 @@ await emailService.send({
 **Action**: Remove references to deleted files from the README.md.
 
 **What to remove**:
+
 - File entries from the "Files" section
 - Usage examples that reference the deleted file
 - Any documentation sections specific to the removed file
@@ -111,6 +114,7 @@ await emailService.send({
 **Action**: Update file references in the README.md.
 
 **What to update**:
+
 - File name and link in the "Files" section
 - Usage examples that import the file
 - Keep the same description unless the purpose changed
@@ -122,6 +126,7 @@ await emailService.send({
 **Action**: Update the README.md to reflect the new architecture.
 
 **What to update**:
+
 - Directory description if purpose changed
 - Usage examples to show new patterns
 - Add migration notes if breaking changes
@@ -151,6 +156,7 @@ await emailService.send({
 **Action**: Update both the source and destination README files.
 
 **What to update**:
+
 - Remove file entry from source README
 - Add file entry to destination README
 - Update any cross-references between READMEs
@@ -210,6 +216,7 @@ import { something } from './file'
 
 // Example usage
 ```
+
 ```
 
 ### 4. Related Documentation (Recommended)
@@ -224,6 +231,7 @@ import { something } from './file'
 ### 5. Additional Sections (Optional)
 
 Add sections as needed:
+
 - `## Installation` - Setup instructions
 - `## Configuration` - Configuration options
 - `## Testing` - How to run tests
@@ -237,11 +245,13 @@ Add sections as needed:
 READMEs should be scannable. One or two sentences per file is enough.
 
 **Good**:
+
 ```markdown
 - [`auth.ts`](auth.ts) - Authentication middleware for protected routes
 ```
 
 **Too verbose**:
+
 ```markdown
 - [`auth.ts`](auth.ts) - This file contains the authentication middleware which is used to protect routes that require the user to be logged in. It checks the JWT token from the request header, validates it, and attaches the user object to the request context if valid. If the token is missing or invalid, it returns a 401 Unauthorized response.
 ```
