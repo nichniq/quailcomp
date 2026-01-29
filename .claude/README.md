@@ -20,5 +20,6 @@ The `CLAUDE.md` file contains:
 - Domain-driven design guidelines
 - AI-specific behaviors (when to commit, when to update docs)
 - README maintenance guidelines
+- Infrastructure testing guidelines
 
 See [CLAUDE.md](CLAUDE.md) for complete instructions.
