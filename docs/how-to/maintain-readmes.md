@@ -305,18 +305,25 @@ These are warnings, not errors. Use your judgment about whether updates are need
 
 ### Testing the Hook
 
-To verify the README maintenance hook is working:
+The README maintenance hook is tested automatically when you run:
+
+```bash
+bun test
+```
+
+The tests are in [`misc.test.ts`](../../misc.test.ts) and verify:
+
+- New directories without READMEs trigger warnings
+- Files added without updating READMEs trigger warnings
+- Files added WITH README updates don't trigger warnings
+
+You can also run the standalone test script:
 
 ```bash
 bash scripts/test-readme-hook.sh
 ```
 
-This test script:
-
-- Runs on a temporary branch (safe to run anytime)
-- Tests all scenarios (missing READMEs, unchanged READMEs, updated READMEs)
-- Cleans up automatically
-- Can be run in CI/CD to ensure hook remains functional
+Both approaches test all scenarios and clean up automatically.
 
 ## Examples
 
