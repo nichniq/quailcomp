@@ -36,6 +36,19 @@ Before working on tasks, reference these docs as needed:
 
 - **ALWAYS suggest a commit after completing work** - This is mandatory, not optional
 - Double check CONTRIBUTING.md when changes are made to ensure it remains up to date
+- Review if any directory READMEs need updates based on changes made
+
+### README Maintenance
+
+Every directory should have a README.md explaining its purpose and contents. When working:
+
+- **Adding new files**: Update the directory's README.md to document them
+- **Removing files**: Update the directory's README.md to remove references
+- **Creating directories**: Create a README.md explaining the new directory's purpose
+- **Changing architecture**: Update affected READMEs to reflect new patterns
+- **Before committing**: Check if READMEs in modified directories need updates
+
+See [README Maintenance Checklist](../docs/how-to/maintain-readmes.md) for details.
 
 ### Your Role with Domains
 
