@@ -49,6 +49,7 @@ export type YourType = {
 > Summary.
 
 More explanation, then more types as needed.
+
 ```
 
 ### 3. Extract Types
@@ -98,6 +99,7 @@ export type Session = {
   expires_at: Date | null;
 };
 ```
+
 ```
 
 ### Type Categories
@@ -217,6 +219,7 @@ export type AcquisitionEvent = {
   };
 };
 ```
+
 ```
 
 ## Updating Existing Domains

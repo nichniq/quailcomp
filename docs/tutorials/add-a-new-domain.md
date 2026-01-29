@@ -68,6 +68,7 @@ export type Location = {
   notes?: string;
 };
 ```
+
 ```
 
 Notice how we explain the concept first, then define the type.
@@ -121,6 +122,7 @@ export type Coordinates = {
   longitude: number;
 };
 ```
+
 ```
 
 ## Step 5: Add a Location Event
@@ -146,6 +148,7 @@ export type VisitEvent = {
   notes?: string;
 };
 ```
+
 ```
 
 ## Step 6: Extract the Types
@@ -376,6 +379,7 @@ export type VisitEvent = {
   notes?: string;
 };
 ```
+
 ```
 
 ## What You Learned

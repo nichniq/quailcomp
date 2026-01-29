@@ -206,14 +206,14 @@ A book acquisition might have:
 
 ## When to Use Which
 
-### Use Entities When:
+### Use Entities When
 
 - The thing has identity that persists
 - You care about current state
 - Changes represent evolution of the same thing
 - Examples: users, books, locations, accounts
 
-### Use Events When:
+### Use Events When
 
 - Recording something that happened
 - The fact shouldn't change (but can be annotated)
