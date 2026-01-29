@@ -584,4 +584,4 @@ You are free to copy, modify, publish, use, compile, sell, or distribute this so
 
 ---
 
-**Quailcomp** - A state-of-the-art computer powered by quails (and event sourcing)
+**Quailcomp** - A state-of-the-art computer powered by quails
