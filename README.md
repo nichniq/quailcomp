@@ -578,12 +578,9 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for development guidelines.
 
 ## License
 
-[Add your license here]
+This project is released into the public domain under the [Unlicense](https://unlicense.org/). See [LICENSE](LICENSE) for details.
 
-## Contact
-
-- Report bugs: [GitHub Issues](https://github.com/yourusername/quailcomp/issues)
-- Ask questions: [GitHub Discussions](https://github.com/yourusername/quailcomp/discussions)
+You are free to copy, modify, publish, use, compile, sell, or distribute this software for any purpose, commercial or non-commercial, and by any means.
 
 ---
 

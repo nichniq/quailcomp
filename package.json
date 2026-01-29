@@ -1,7 +1,7 @@
 {
   "name": "quailcomp",
   "type": "module",
-  "private": true,
+  "license": "Unlicense",
   "workspaces": ["data/client", "server", "frontend", "services/book-metadata", "cli"],
   "scripts": {
     "test": "bun run lint && bun test --cwd data/client && bun test --cwd server && bun test --cwd cli",
