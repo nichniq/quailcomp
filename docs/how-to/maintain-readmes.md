@@ -303,6 +303,21 @@ The git pre-commit hook checks for README maintenance issues:
 
 These are warnings, not errors. Use your judgment about whether updates are needed.
 
+### Testing the Hook
+
+To verify the README maintenance hook is working:
+
+```bash
+bash scripts/test-readme-hook.sh
+```
+
+This test script:
+
+- Runs on a temporary branch (safe to run anytime)
+- Tests all scenarios (missing READMEs, unchanged READMEs, updated READMEs)
+- Cleans up automatically
+- Can be run in CI/CD to ensure hook remains functional
+
 ## Examples
 
 See existing READMEs throughout the codebase for examples:
