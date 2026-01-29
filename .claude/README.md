@@ -19,5 +19,6 @@ The `CLAUDE.md` file contains:
 - Development rules (testing, migrations, commit protocol)
 - Domain-driven design guidelines
 - AI-specific behaviors (when to commit, when to update docs)
+- README maintenance guidelines
 
 See [CLAUDE.md](CLAUDE.md) for complete instructions.

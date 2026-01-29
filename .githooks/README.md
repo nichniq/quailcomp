@@ -12,7 +12,8 @@ bash scripts/install-hooks.sh
 
 - Runs ESLint on staged `.ts`, `.tsx`, `.js`, `.jsx`, and `.vue` files
 - Extracts types from domain documentation when `.md` files change
-- Blocks commit on linting errors
+- Checks for README maintenance (warns about missing/outdated READMEs)
+- Blocks commit on linting errors or type extraction failures
 
 ## Bypassing (Use Sparingly)
 
