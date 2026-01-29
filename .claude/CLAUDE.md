@@ -50,6 +50,23 @@ Every directory should have a README.md explaining its purpose and contents. Whe
 
 See [README Maintenance Checklist](../docs/how-to/maintain-readmes.md) for details.
 
+### Infrastructure Testing
+
+Proactively add tests to `misc.test.ts` for infrastructure scripts and tooling:
+
+- **When creating scripts**: Add tests to verify they work correctly
+- **When testing scripts manually**: Convert manual tests to automated tests in `misc.test.ts`
+- **When modifying hooks or tooling**: Ensure tests exist and update them
+- **Good candidates for testing**:
+  - Git hooks and their behavior
+  - Build/deployment scripts
+  - Database setup/teardown scripts
+  - Configuration validation
+  - File generation scripts
+  - CI/CD workflow components
+
+Tests in `misc.test.ts` run automatically with `bun test`, providing confidence that project infrastructure works correctly.
+
 ### Your Role with Domains
 
 When working on features or making architectural decisions:
