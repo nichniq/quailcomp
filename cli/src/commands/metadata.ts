@@ -1,6 +1,6 @@
 import type { Command, CLIContext } from "@cli/types";
 import {
-  createCompositeProvider,
+  createBookMetadataService,
   createGoogleBooksProvider,
   createOpenLibraryProvider,
   createLibraryOfCongressProvider,
@@ -10,14 +10,14 @@ import {
 import { error, info, formatJSON } from "@cli/utils/output";
 
 /**
- * Lookup book metadata by ISBN or LCCN
+ * Lookup book metadata by ISBN
  */
 async function lookupMetadata(context: CLIContext): Promise<void> {
   const { args } = context;
 
   if (args.length === 0) {
-    error("ISBN or LCCN is required");
-    info("Usage: quailcomp metadata lookup <isbn|lccn> [--provider <provider>]");
+    error("ISBN is required");
+    info("Usage: quailcomp metadata lookup <isbn> [--provider <provider>]");
     info("\nProviders:");
     info("  all (default)     Try all providers (composite)");
     info("  google            Google Books");
@@ -29,7 +29,7 @@ async function lookupMetadata(context: CLIContext): Promise<void> {
   }
 
   // Parse arguments
-  let identifier = args[0];
+  let isbn = args[0];
   let providerName = "all";
 
   for (let i = 1; i < args.length; i++) {
@@ -39,13 +39,12 @@ async function lookupMetadata(context: CLIContext): Promise<void> {
     }
   }
 
-  // Determine identifier type
-  const isISBN = /^(?:\d{10}|\d{13})$/.test(identifier);
-  const isLCCN = /^\d{8,10}$/.test(identifier) && identifier.length >= 8;
-
-  if (!isISBN && !isLCCN) {
-    error("Invalid identifier format");
-    info("Expected ISBN-10 (10 digits), ISBN-13 (13 digits), or LCCN (8-10 digits)");
+  // Validate ISBN format (10 or 13 digits, allowing hyphens)
+  const normalizedISBN = isbn.replace(/[-\s]/g, "");
+  if (!/^(?:\d{10}|\d{13})$/.test(normalizedISBN)) {
+    error("Invalid ISBN format");
+    info("Expected ISBN-10 (10 digits) or ISBN-13 (13 digits)");
+    info("Hyphens and spaces are allowed (e.g., 978-0-13-468599-1)");
     process.exit(1);
   }
 
@@ -53,7 +52,7 @@ async function lookupMetadata(context: CLIContext): Promise<void> {
   let provider;
   switch (providerName) {
     case "all":
-      provider = createCompositeProvider();
+      provider = createBookMetadataService();
       break;
     case "google":
       provider = createGoogleBooksProvider({});
@@ -82,14 +81,9 @@ async function lookupMetadata(context: CLIContext): Promise<void> {
   }
 
   try {
-    info(`Looking up metadata for ${identifier} using ${providerName}...\n`);
+    info(`Looking up metadata for ${isbn} using ${providerName}...\n`);
 
-    let result;
-    if (isISBN) {
-      result = await provider.getByISBN(identifier);
-    } else {
-      result = await provider.getByLCCN(identifier);
-    }
+    const result = await provider.lookup(isbn);
 
     if (!result) {
       info("No metadata found.");
@@ -110,12 +104,12 @@ async function lookupMetadata(context: CLIContext): Promise<void> {
 export const metadataCommand: Command = {
   name: "metadata",
   description: "Lookup book metadata from external sources",
-  usage: "metadata lookup <isbn|lccn> [--provider <provider>]",
+  usage: "metadata lookup <isbn> [--provider <provider>]",
   handler: async (context: CLIContext) => {
     error("Please specify a subcommand");
     info("Usage: quailcomp metadata <subcommand>");
     info("\nSubcommands:");
-    info("  lookup           Lookup book metadata by ISBN or LCCN");
+    info("  lookup           Lookup book metadata by ISBN");
     process.exit(1);
   },
   subcommands: new Map([
@@ -123,8 +117,8 @@ export const metadataCommand: Command = {
       "lookup",
       {
         name: "lookup",
-        description: "Lookup book metadata by ISBN or LCCN",
-        usage: "metadata lookup <isbn|lccn> [--provider <provider>]",
+        description: "Lookup book metadata by ISBN",
+        usage: "metadata lookup <isbn> [--provider <provider>]",
         handler: lookupMetadata,
       },
     ],
