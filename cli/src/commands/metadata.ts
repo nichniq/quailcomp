@@ -56,19 +56,25 @@ async function lookupMetadata(context: CLIContext): Promise<void> {
       provider = createCompositeProvider();
       break;
     case "google":
-      provider = createGoogleBooksProvider();
+      provider = createGoogleBooksProvider({});
       break;
     case "openlibrary":
-      provider = createOpenLibraryProvider();
+      provider = createOpenLibraryProvider({});
       break;
     case "loc":
-      provider = createLibraryOfCongressProvider();
+      provider = createLibraryOfCongressProvider({});
       break;
-    case "hardcover":
-      provider = createHardcoverProvider();
+    case "hardcover": {
+      const apiKey = process.env.HARDCOVER_API_KEY;
+      if (!apiKey) {
+        error("HARDCOVER_API_KEY environment variable is required for Hardcover provider");
+        process.exit(1);
+      }
+      provider = createHardcoverProvider({ apiKey });
       break;
+    }
     case "worldcat":
-      provider = createWorldCatClassifyProvider();
+      provider = createWorldCatClassifyProvider({});
       break;
     default:
       error(`Unknown provider: ${providerName}`);
