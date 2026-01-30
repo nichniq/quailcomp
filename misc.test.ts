@@ -120,3 +120,16 @@ describe('Git Hooks', () => {
     expect(installed).toBe(template)
   })
 })
+
+describe('Code Coverage Infrastructure', () => {
+  test('coverage scripts exist', async () => {
+    expect(await Bun.file('scripts/merge-coverage.ts').exists()).toBe(true)
+    expect(await Bun.file('scripts/coverage-report.ts').exists()).toBe(true)
+  })
+
+  test('bunfig.toml has coverage config', async () => {
+    const config = await Bun.file('bunfig.toml').text()
+    expect(config).toContain('coverageThreshold')
+    expect(config).toContain('0.9')
+  })
+})

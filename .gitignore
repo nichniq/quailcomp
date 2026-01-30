@@ -14,3 +14,6 @@ bun.lockb
 
 # Domain type extraction cache
 domains/.domains-cache.json
+
+# Coverage
+coverage/

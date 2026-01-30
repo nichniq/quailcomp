@@ -7,6 +7,7 @@ Quailcomp is a personal data management system using event-sourced append-only s
 | Task | Command |
 |------|---------|
 | Run tests | `bun test` |
+| Coverage report | `bun run test:coverage` |
 | Watch mode | `bun test:watch` |
 | Run migrations | `bun run db:migrate` |
 | Lint code | `bun run lint` |
@@ -68,6 +69,7 @@ quailcomp/
 ## Development Rules
 
 - Run `bun test` after modifying code
+- Maintain 90% code coverage (enforced in CI)
 - Use Bun's SQL tagged templates (not raw strings)
 - Use `EntitiesClient` for mutable data, `EventsClient` for immutable facts
 - Tests must use unique type names (with timestamps)

@@ -1,0 +1,23 @@
+[test]
+# Coverage configuration
+coverage = false  # Don't enable by default (keep regular tests fast)
+coverageReporter = "text"
+coverageDir = "coverage"
+coverageThreshold = 0.9  # 90% threshold
+
+# Exclude patterns from coverage
+coveragePathIgnorePatterns = [
+  "**/node_modules/**",
+  "**/dist/**",
+  "**/*.test.ts",
+  "**/*.spec.ts",
+  "**/scripts/**",
+  "**/migrations/**",
+  "**/setup/**",
+  "**/teardown/**",
+  "**/__tests__/**",
+  "**/.bun/**",
+  "**/coverage/**",
+  "frontend/**",  # Vue coverage uses different approach
+  "domains/types/**",  # Auto-generated files
+]

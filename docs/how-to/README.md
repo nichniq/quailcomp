@@ -12,6 +12,7 @@ These guides answer "How do I...?" questions with step-by-step instructions. The
 
 - [Setup Development](setup-development.md) - Set up your local development environment
 - [Run Tests](run-tests.md) - Execute tests and understand test patterns
+- [Run Code Coverage](run-coverage.md) - Generate coverage reports and enforce thresholds
 - [Run Migrations](run-migrations.md) - Apply database schema migrations
 
 ### Database Operations

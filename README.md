@@ -1,5 +1,7 @@
 # Quailcomp
 
+[![codecov](https://codecov.io/gh/USERNAME/quailcomp/branch/main/graph/badge.svg?token=YOUR_TOKEN)](https://codecov.io/gh/USERNAME/quailcomp)
+
 A personal data management system using event-sourced append-only storage with domain-driven design.
 
 ## Overview
@@ -209,6 +211,7 @@ quailcomp/
 ```bash
 # Testing
 bun test                      # Run all tests with linting
+bun run test:coverage         # Run tests with coverage report
 bun test:unit                 # Run tests without linting
 bun test:watch                # Watch mode for data/client
 
