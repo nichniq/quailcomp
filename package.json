@@ -14,7 +14,7 @@
     "test:coverage:merge": "bun run scripts/merge-coverage.ts",
     "test:coverage:report": "bun run scripts/coverage-report.ts",
     "test:coverage:clean": "rm -rf coverage data/client/coverage server/coverage cli/coverage services/book-metadata/coverage",
-    "type-check": "bunx tsc --noEmit -p domains && bunx tsc --noEmit -p data/client && bunx tsc --noEmit -p services/book-metadata && bunx tsc --noEmit -p cli && bunx tsc --noEmit -p server && bunx tsc --noEmit",
+    "type-check": "bun run scripts/type-check.ts",
     "db:setup": "bun run --cwd data/client setup",
     "db:teardown": "bun run --cwd data/client teardown",
     "db:migrate": "bun run --cwd data/client migrate",
