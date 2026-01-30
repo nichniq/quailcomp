@@ -22,10 +22,6 @@ beforeAll(async () => {
   sql = getConnection();
 });
 
-afterAll(async () => {
-  await sql.end();
-});
-
 beforeEach(() => {
   // Reset metrics before each test
   metrics.reset();

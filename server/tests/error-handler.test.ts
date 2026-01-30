@@ -32,10 +32,6 @@ beforeAll(async () => {
   sql = getConnection();
 });
 
-afterAll(async () => {
-  await sql.end();
-});
-
 // Test helpers
 function createMockHandler(responseText: string = "success"): Handler {
   return async (ctx: RequestContext, req: Request) => {

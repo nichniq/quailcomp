@@ -22,10 +22,6 @@ beforeAll(async () => {
   sql = getConnection();
 });
 
-afterAll(async () => {
-  await sql.end();
-});
-
 // Console capture utilities
 let capturedLogs: Array<{ type: "log" | "warn" | "error"; message: string }> = [];
 let originalLog: typeof console.log;
