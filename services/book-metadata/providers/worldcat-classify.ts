@@ -9,9 +9,9 @@ import type {
   BookMetadataService,
   BookMetadata,
   WorldCatClassifyConfig,
-} from "./types";
-import { ServiceUnavailableError, TimeoutError } from "./types";
-import { normalizeISBN, createAbortController } from "./utils";
+} from "@/types";
+import { ServiceUnavailableError, TimeoutError } from "@/types";
+import { normalizeISBN, createAbortController } from "@/utils";
 import { XMLParser } from "fast-xml-parser";
 
 // =============================================================================

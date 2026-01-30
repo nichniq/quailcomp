@@ -51,12 +51,12 @@ export {
 // Provider Factories
 // =============================================================================
 
-export { createGoogleBooksProvider } from "./google-books";
-export { createOpenLibraryProvider } from "./open-library";
-export { createLibraryOfCongressProvider } from "./library-of-congress";
-export { createHardcoverProvider } from "./hardcover";
-export { createWorldCatClassifyProvider } from "./worldcat-classify";
-export { createCompositeProvider, createBookMetadataService } from "./composite";
+export { createGoogleBooksProvider } from "./providers/google-books";
+export { createOpenLibraryProvider } from "./providers/open-library";
+export { createLibraryOfCongressProvider } from "./providers/library-of-congress";
+export { createHardcoverProvider } from "./providers/hardcover";
+export { createWorldCatClassifyProvider } from "./providers/worldcat-classify";
+export { createCompositeProvider, createBookMetadataService } from "./providers/composite";
 
 // =============================================================================
 // Testing Utilities
@@ -66,7 +66,7 @@ export {
   createMockProvider,
   createFailingMockProvider,
   createEmptyMockProvider,
-} from "./mock";
+} from "./providers/mock";
 
 // =============================================================================
 // Utilities

@@ -46,10 +46,21 @@ Test composite provider behavior:
 Use mock provider for testing consumers:
 
 ```typescript
-import { mockProvider } from '../mock'
+import { createMockProvider } from '@quailcomp/book-metadata'
 
 // Test with predictable responses
-const result = await mockProvider.getByISBN('9780134685991')
+const mock = createMockProvider({
+  responses: new Map([
+    ['9780134685991', {
+      isbn: '9780134685991',
+      title: 'Test Book',
+      authors: ['Test Author'],
+      source: 'google-books',
+    }],
+  ]),
+})
+
+const result = await mock.lookup('9780134685991')
 ```
 
 ## Test Data

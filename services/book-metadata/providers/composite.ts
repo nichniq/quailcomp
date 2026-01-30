@@ -10,8 +10,8 @@ import type {
   BookMetadata,
   CompositeConfig,
   BookMetadataProvider,
-} from "./types";
-import { ServiceUnavailableError } from "./types";
+} from "@/types";
+import { ServiceUnavailableError } from "@/types";
 import { createGoogleBooksProvider } from "./google-books";
 import { createOpenLibraryProvider } from "./open-library";
 import { createLibraryOfCongressProvider } from "./library-of-congress";

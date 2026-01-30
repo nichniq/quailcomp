@@ -5,9 +5,9 @@
  * https://developers.google.com/books/docs/v1/reference/volumes
  */
 
-import type { BookMetadataService, BookMetadata, GoogleBooksConfig } from "./types";
-import { ServiceUnavailableError, TimeoutError } from "./types";
-import { normalizeISBN, createAbortController } from "./utils";
+import type { BookMetadataService, BookMetadata, GoogleBooksConfig } from "@/types";
+import { ServiceUnavailableError, TimeoutError } from "@/types";
+import { normalizeISBN, createAbortController } from "@/utils";
 
 // =============================================================================
 // Google Books API Response Types (internal)

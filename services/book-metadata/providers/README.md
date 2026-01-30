@@ -4,41 +4,42 @@ External API client implementations for book metadata lookup.
 
 ## Provider Files
 
-Located in the parent directory:
-
-- [`google-books.ts`](../google-books.ts) - Google Books API client
-- [`open-library.ts`](../open-library.ts) - Open Library API client
-- [`library-of-congress.ts`](../library-of-congress.ts) - Library of Congress API client
-- [`hardcover.ts`](../hardcover.ts) - Hardcover API client
-- [`worldcat-classify.ts`](../worldcat-classify.ts) - WorldCat Classify API client
-- [`composite.ts`](../composite.ts) - Composite provider with intelligent fallback
-- [`mock.ts`](../mock.ts) - Mock provider for testing
+- [`google-books.ts`](./google-books.ts) - Google Books API client
+- [`open-library.ts`](./open-library.ts) - Open Library API client
+- [`library-of-congress.ts`](./library-of-congress.ts) - Library of Congress API client
+- [`hardcover.ts`](./hardcover.ts) - Hardcover API client
+- [`worldcat-classify.ts`](./worldcat-classify.ts) - WorldCat Classify API client
+- [`composite.ts`](./composite.ts) - Composite provider with intelligent fallback
+- [`mock.ts`](./mock.ts) - Mock provider for testing
 
 ## Provider Interface
 
-Each provider implements a common interface:
+Each provider factory returns a service implementing:
 
 ```typescript
-interface MetadataProvider {
-  name: string
-  search(query: SearchQuery): Promise<BookMetadata[]>
-  getByISBN(isbn: string): Promise<BookMetadata | null>
-  getByTitle(title: string): Promise<BookMetadata[]>
+interface BookMetadataService {
+  provider: BookMetadataProvider
+  lookup(isbn: string): Promise<BookMetadata | null>
 }
 ```
 
 ## Usage
 
 ```typescript
-import { compositeProvider } from '../composite'
+import { createCompositeProvider } from './composite'
+import { createGoogleBooksProvider } from './google-books'
+import { createOpenLibraryProvider } from './open-library'
 
-// Search across all providers with fallback
-const results = await compositeProvider.search({
-  isbn: '9780134685991'
+// Create a composite provider with fallback
+const service = createCompositeProvider({
+  providers: [
+    createGoogleBooksProvider({ apiKey: 'your-key' }),
+    createOpenLibraryProvider(),
+  ]
 })
 
 // Try each provider until one succeeds
-const book = await compositeProvider.getByISBN('9780134685991')
+const book = await service.lookup('9780134685991')
 ```
 
 ## Composite Provider
@@ -52,8 +53,10 @@ The composite provider:
 
 ## Adding New Providers
 
-1. Create new file implementing the provider interface
-2. Add to composite provider's provider list
-3. Update tests in [`tests/`](../tests/)
+1. Create new file in this directory implementing `BookMetadataService`
+2. Import from `@/types` and `@/utils` using path aliases
+3. Export a `create*Provider` factory function
+4. Add to composite provider's default provider list if appropriate
+5. Add tests in [`../tests/`](../tests/)
 
 See [Services Architecture](../../../docs/explanation/services-architecture.md) for details.

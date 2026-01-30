@@ -5,9 +5,9 @@
  * https://docs.hardcover.app/api/getting-started/
  */
 
-import type { BookMetadataService, BookMetadata, HardcoverConfig } from "./types";
-import { ServiceUnavailableError, TimeoutError } from "./types";
-import { normalizeISBN, createAbortController } from "./utils";
+import type { BookMetadataService, BookMetadata, HardcoverConfig } from "@/types";
+import { ServiceUnavailableError, TimeoutError } from "@/types";
+import { normalizeISBN, createAbortController } from "@/utils";
 
 // =============================================================================
 // Hardcover GraphQL Response Types (internal)

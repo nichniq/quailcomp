@@ -9,9 +9,9 @@ import type {
   BookMetadataService,
   BookMetadata,
   LibraryOfCongressConfig,
-} from "./types";
-import { ServiceUnavailableError, TimeoutError } from "./types";
-import { normalizeISBN, createAbortController } from "./utils";
+} from "@/types";
+import { ServiceUnavailableError, TimeoutError } from "@/types";
+import { normalizeISBN, createAbortController } from "@/utils";
 
 // =============================================================================
 // Library of Congress API Response Types (internal)

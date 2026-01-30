@@ -8,9 +8,9 @@ import type {
   BookMetadataService,
   BookMetadata,
   BookMetadataProvider,
-} from "./types";
-import { ServiceUnavailableError } from "./types";
-import { normalizeISBN } from "./utils";
+} from "@/types";
+import { ServiceUnavailableError } from "@/types";
+import { normalizeISBN } from "@/utils";
 
 interface MockProviderConfig {
   /** Predefined responses by ISBN */

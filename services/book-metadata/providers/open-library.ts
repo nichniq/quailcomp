@@ -5,9 +5,9 @@
  * https://openlibrary.org/dev/docs/api/books
  */
 
-import type { BookMetadataService, BookMetadata, OpenLibraryConfig } from "./types";
-import { ServiceUnavailableError, TimeoutError } from "./types";
-import { normalizeISBN, createAbortController } from "./utils";
+import type { BookMetadataService, BookMetadata, OpenLibraryConfig } from "@/types";
+import { ServiceUnavailableError, TimeoutError } from "@/types";
+import { normalizeISBN, createAbortController } from "@/utils";
 
 // =============================================================================
 // OpenLibrary API Response Types (internal)
