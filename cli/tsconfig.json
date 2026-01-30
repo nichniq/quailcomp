@@ -12,7 +12,6 @@
     "resolveJsonModule": true,
     "isolatedModules": true,
     "outDir": "./dist",
-    "rootDir": "./src",
     "baseUrl": ".",
     "paths": {
       "@quailcomp/data": ["../data/client/src"],
@@ -21,6 +20,6 @@
       "@cli/*": ["./src/*"]
     }
   },
-  "include": ["src/**/*"],
+  "include": ["src/**/*", "../domains/types/**/*"],
   "exclude": ["node_modules", "dist"]
 }
