@@ -13,6 +13,7 @@ import { AuthError, type LoginRequest, type RegisterRequest } from "@domains/typ
 import type { Router } from "@/router";
 import { requireAuth } from "@/auth/middleware";
 import { AuthService } from "@/auth/service";
+import { analytics } from "@/analytics/service";
 
 /**
  * Register authentication routes
@@ -44,6 +45,15 @@ export function registerAuthRoutes(router: Router, sql: Sql): void {
     try {
       const result = await authService.register(body);
       ctx.log.info("User registered", { userId: result.user.userId });
+
+      // Record registration milestone
+      await analytics.recordUserMilestone({
+        user_id: result.user.userId,
+        milestone: "registration",
+        auth_method: "password",
+        request_id: ctx.requestId,
+      });
+
       return Response.json(result, { status: 201 });
     } catch (error) {
       if (error instanceof AuthError) {
@@ -83,6 +93,15 @@ export function registerAuthRoutes(router: Router, sql: Sql): void {
     try {
       const result = await authService.login(body);
       ctx.log.info("User logged in", { userId: result.user.userId });
+
+      // Record session started
+      await analytics.recordUserSessionStarted({
+        user_id: result.user.userId,
+        session_id: result.token.substring(0, 16), // Use first 16 chars of token as session ID
+        auth_method: "password",
+        request_id: ctx.requestId,
+      });
+
       return Response.json(result);
     } catch (error) {
       if (error instanceof AuthError) {

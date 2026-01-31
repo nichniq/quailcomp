@@ -131,6 +131,10 @@ The extraction ensures types stay synchronized with documentation while keeping 
 
 Manages physical books in the collection and their acquisition history. Tracks acquisition events (purchased, ordered, given, won, inherited) and references other domains like Locations, People, and Series.
 
+### Analytics (`/domains/analytics.md`)
+
+Observability and telemetry tracking for application behavior and performance. Records analytics events for HTTP requests, metadata lookups, user sessions, milestones, and feature usage. Uses 90-day retention policy.
+
 ## Future Domains
 
 ### Locations (`/domains/locations`)

@@ -13,6 +13,7 @@ import type { Sql } from "@quailcomp/data";
 import { createEntitiesClient } from "@quailcomp/data";
 
 import type { BookEntitySnapshot } from "@domains/types/books";
+import { analytics } from "@/analytics/service";
 import {
   createGoogleBooksProvider,
   createOpenLibraryProvider,
@@ -301,6 +302,21 @@ export function registerBookRoutes(router: Router, sql: Sql): void {
           error: r.error !== null,
           responseTime: r.responseTime,
         })),
+      });
+
+      // Record metadata lookup analytics
+      await analytics.recordMetadataLookup({
+        request_id: ctx.requestId,
+        identifier,
+        identifier_type: identifierType,
+        providers: results.map((r) => ({
+          name: r.provider,
+          success: r.data !== null,
+          duration_ms: r.responseTime,
+          error_message: r.error ?? undefined,
+        })),
+        results_count: results.filter((r) => r.data !== null).length,
+        user_id: ctx.user?.userId ?? null,
       });
 
       return Response.json({ results });
