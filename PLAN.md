@@ -2527,6 +2527,349 @@ git commit -m "Phase 2: Infrastructure & configuration improvements"
 
 ---
 
+## Phase 3: Testing & Quality Assurance (Week 4-6)
+
+**Goal**: Add comprehensive test coverage (E2E, frontend, integration)
+
+**Estimated Effort**: 2-3 weeks
+
+### 3.1: E2E Test Suite 🟡 MEDIUM
+
+**Files to Create:**
+- `server/tests/e2e/book-workflow.test.ts` (NEW)
+- `server/tests/e2e/auth-workflow.test.ts` (NEW)
+- `server/tests/e2e/authz-workflow.test.ts` (NEW)
+
+**Implementation:** (See REVIEW.md Section 2.3 for detailed examples)
+
+**Success Criteria:**
+- ✅ Complete user workflows tested end-to-end
+- ✅ Auth + Authz integration verified
+- ✅ Book CRUD lifecycle tested
+- ✅ Metadata lookup integration tested
+
+**Estimated Time**: 2-3 days
+
+---
+
+### 3.2: Frontend Testing 🟡 MEDIUM
+
+**Files to Create:**
+- `frontend/vitest.config.ts` (NEW)
+- `frontend/tests/stores/auth.test.ts` (NEW)
+- `frontend/tests/stores/books.test.ts` (NEW)
+- `frontend/tests/components/*.test.ts` (NEW - for key components)
+
+**Installation:**
+```bash
+cd frontend
+bun add -d vitest @vue/test-utils jsdom
+```
+
+**Implementation:** (See REVIEW.md Section 2.2 for detailed examples)
+
+**Success Criteria:**
+- ✅ Pinia stores tested
+- ✅ Key components tested
+- ✅ API client tested
+- ✅ Router guards tested
+
+**Estimated Time**: 1-2 days
+
+---
+
+### 3.3: Property-Based Testing 🟡 MEDIUM
+
+**Files to Create:**
+- `data/client/tests/properties.test.ts` (NEW)
+
+**Installation:**
+```bash
+cd data/client
+bun add -d fast-check
+```
+
+**Implementation:** (See REVIEW.md Section 10.2 for detailed examples)
+
+**Success Criteria:**
+- ✅ Entity update invariants tested
+- ✅ JSONB query correctness verified
+- ✅ Edge cases discovered and handled
+
+**Estimated Time**: 1-2 days
+
+---
+
+## Phase 3 Summary
+
+**Total Estimated Time**: 2-3 weeks
+
+**Deliverables:**
+1. ✅ E2E test suite covering critical workflows
+2. ✅ Frontend component and store tests
+3. ✅ Property-based tests for data clients
+
+**Verification:**
+```bash
+# Run all tests including new E2E
+bun run test:all
+
+# Check coverage
+bun run test:coverage:report
+
+# Commit Phase 3
+git add .
+git commit -m "Phase 3: Comprehensive test coverage"
+```
+
+---
+
+## Phase 4: Production Readiness (Week 7-10)
+
+**Goal**: Add deployment, observability, and production infrastructure
+
+**Estimated Effort**: 3-4 weeks
+
+### 4.1: Docker Support 🟡 MEDIUM
+
+**Files to Create:**
+- `Dockerfile` (NEW)
+- `docker-compose.yml` (NEW)
+- `.dockerignore` (NEW)
+- `docs/how-to/deploy-docker.md` (NEW)
+
+**Implementation:** (See REVIEW.md Section 12.1 for detailed Dockerfile)
+
+**Success Criteria:**
+- ✅ Multi-stage production Dockerfile
+- ✅ docker-compose for development
+- ✅ Health checks configured
+- ✅ Documentation complete
+
+**Estimated Time**: 2-3 hours
+
+---
+
+### 4.2: Observability Stack 🟡 MEDIUM
+
+**Files to Create:**
+- `server/src/utils/logger.ts` (NEW - structured logging)
+- `server/src/utils/metrics.ts` (NEW - Prometheus metrics)
+- `server/src/utils/sentry.ts` (NEW - error tracking)
+- `docs/how-to/deploy-production.md` (NEW)
+
+**Installation:**
+```bash
+cd server
+bun add pino @sentry/bun
+```
+
+**Implementation:** (See REVIEW.md Section 12.3 for detailed examples)
+
+**Success Criteria:**
+- ✅ Structured JSON logging (pino)
+- ✅ Metrics endpoint (Prometheus format)
+- ✅ Error tracking (Sentry)
+- ✅ Request/response logging
+
+**Estimated Time**: 3-4 hours
+
+---
+
+### 4.3: Deployment Documentation 🟡 MEDIUM
+
+**Files to Create:**
+- `docs/how-to/deploy-production.md` (NEW - comprehensive guide)
+- `.env.production.example` (NEW)
+
+**Implementation:** (See REVIEW.md Section 3.3 for template)
+
+**Content:**
+- Production prerequisites
+- Environment variables
+- Database setup
+- Migration process
+- Backup procedures
+- Monitoring setup
+- Security checklist
+
+**Success Criteria:**
+- ✅ Complete deployment guide
+- ✅ Production environment example
+- ✅ Backup/restore procedures
+- ✅ Rollback procedures
+
+**Estimated Time**: 2-3 hours
+
+---
+
+### 4.4: OpenAPI Specification 🟡 MEDIUM
+
+**Files to Create:**
+- `server/src/openapi.ts` (NEW)
+- `server/src/routes/docs.ts` (NEW - serve Swagger UI)
+
+**Installation:**
+```bash
+cd server
+bun add @asteasolutions/zod-to-openapi swagger-ui-express
+```
+
+**Implementation:** (See REVIEW.md Section 3.1 for detailed examples)
+
+**Success Criteria:**
+- ✅ OpenAPI 3.0 spec generated
+- ✅ Swagger UI served at /api/docs
+- ✅ All endpoints documented
+- ✅ Request/response schemas
+
+**Estimated Time**: 1-2 days
+
+---
+
+### 4.5: Security Hardening 🟡 MEDIUM
+
+**Files to Modify:**
+- `server/src/middleware/security-headers.ts` (NEW)
+- `server/src/middleware/https-redirect.ts` (NEW)
+- `server/src/auth/password.ts` (enhance validation)
+
+**Implementation:** (See REVIEW.md Section 7 for all security recommendations)
+
+**Tasks:**
+- HTTPS enforcement
+- HSTS headers
+- Secure cookie flags
+- Enhanced password validation
+- CORS configuration per environment
+
+**Success Criteria:**
+- ✅ HTTPS enforced in production
+- ✅ Security headers set
+- ✅ Password complexity requirements
+- ✅ CORS properly configured
+
+**Estimated Time**: 2-3 hours
+
+---
+
+## Phase 4 Summary
+
+**Total Estimated Time**: 3-4 weeks
+
+**Deliverables:**
+1. ✅ Docker support (Dockerfile + docker-compose)
+2. ✅ Observability (logging, metrics, error tracking)
+3. ✅ Production deployment documentation
+4. ✅ OpenAPI specification + Swagger UI
+5. ✅ Security hardening
+
+**Verification:**
+```bash
+# Test Docker build
+docker build -t quailcomp .
+
+# Test docker-compose
+docker-compose up -d
+
+# Verify health check
+curl http://localhost:3000/health
+
+# Check metrics endpoint
+curl http://localhost:3000/metrics
+
+# View API docs
+open http://localhost:3000/api/docs
+
+# Commit Phase 4
+git add .
+git commit -m "Phase 4: Production readiness & deployment"
+```
+
+---
+
+## Phase 5: Advanced Features (Week 11-16)
+
+**Goal**: Implement remaining domains and advanced capabilities
+
+**Estimated Effort**: 5-6 weeks (optional/future)
+
+### 5.1: Additional Domains
+
+**Domains to Implement:**
+- People (authors, contributors)
+- Series (book series tracking)
+- Locations (where books are stored physically)
+
+**Per Domain:**
+- Domain documentation (markdown)
+- Database schema (migration)
+- API endpoints
+- Authorization integration
+- Tests
+
+**Estimated Time**: 1-2 weeks per domain
+
+---
+
+### 5.2: Book Metadata Enhancements
+
+**Tasks:**
+- Rate limiting per provider
+- Response caching (Redis)
+- Circuit breaker pattern
+- Timeout configuration
+
+**See:** REVIEW.md Section 6 for detailed implementation
+
+**Estimated Time**: 1 week
+
+---
+
+### 5.3: Advanced Search
+
+**Features:**
+- Full-text search (PostgreSQL FTS)
+- Advanced filters (genre, publication date, rating)
+- Saved searches
+- Search history
+
+**Estimated Time**: 1-2 weeks
+
+---
+
+### 5.4: Bulk Operations
+
+**Features:**
+- Bulk import (CSV, XLSX, JSON)
+- Bulk export
+- Batch updates
+- Bulk delete with confirmation
+
+**Estimated Time**: 1 week
+
+---
+
+### 5.5: Real-time Features (Optional)
+
+**Features:**
+- WebSocket support
+- Real-time updates
+- Collaborative features
+- Live notifications
+
+**Estimated Time**: 2-3 weeks
+
+---
+
+## Phase 5 Summary
+
+**Total Estimated Time**: 5-6 weeks
+
+**Note:** Phase 5 is optional and can be prioritized based on user needs. The application is production-ready after Phase 4.
+
+---
+
 ## Implementation Details & Code Specifications
 
 ### Data Client Query Pattern
