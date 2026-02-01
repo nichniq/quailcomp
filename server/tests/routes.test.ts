@@ -195,7 +195,7 @@ describe("Books routes", () => {
     test("creates a new book", async () => {
       const bookData: BookEntitySnapshot = {
         title: "Test Book",
-        authors: ["Test Author"],
+        author: "Test Author",
         isbn13: "9780123456789",
       };
 
@@ -237,7 +237,7 @@ describe("Books routes", () => {
     test("requires authentication", async () => {
       const bookData: BookEntitySnapshot = {
         title: "Test Book",
-        authors: ["Test Author"],
+        author: "Test Author",
       };
 
       const request = new Request("http://localhost/books", {
@@ -305,7 +305,7 @@ describe("Books routes", () => {
     test("updates an existing book", async () => {
       const updatedData: BookEntitySnapshot = {
         title: "Updated Test Book",
-        authors: ["Updated Author"],
+        author: "Updated Author",
         isbn13: "9780123456789",
       };
 
@@ -321,7 +321,7 @@ describe("Books routes", () => {
       expect(response.status).toBe(200);
       const data = await response.json();
       expect(data.book.data.title).toBe("Updated Test Book");
-      expect(data.book.data.authors[0]).toBe("Updated Author");
+      expect(data.book.data.author).toBe("Updated Author");
     });
 
     test("returns 400 for invalid ID", async () => {
