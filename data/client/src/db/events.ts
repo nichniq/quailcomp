@@ -199,72 +199,18 @@ export class EventsClient {
     eventId: number,
     options: EventQueryOptions = {}
   ): Promise<EventEntry<T>[]> {
-    const { includeVoided = true, limit, offset } = options;
+    // Note: includeVoided defaults to true for history (to see all versions)
+    const { includeVoided = true } = options;
+    const fragments = this.buildQueryFragments({ ...options, includeVoided });
 
-    let rows;
-    if (includeVoided) {
-      if (limit && offset) {
-        rows = await this.sql`
-          SELECT * FROM events
-          WHERE event_id = ${eventId}
-          ORDER BY entered_at ASC
-          LIMIT ${limit} OFFSET ${offset}
-        `;
-      } else if (limit) {
-        rows = await this.sql`
-          SELECT * FROM events
-          WHERE event_id = ${eventId}
-          ORDER BY entered_at ASC
-          LIMIT ${limit}
-        `;
-      } else if (offset) {
-        rows = await this.sql`
-          SELECT * FROM events
-          WHERE event_id = ${eventId}
-          ORDER BY entered_at ASC
-          OFFSET ${offset}
-        `;
-      } else {
-        rows = await this.sql`
-          SELECT * FROM events
-          WHERE event_id = ${eventId}
-          ORDER BY entered_at ASC
-        `;
-      }
-    } else {
-      if (limit && offset) {
-        rows = await this.sql`
-          SELECT * FROM events
-          WHERE event_id = ${eventId}
-          AND voided_at IS NULL
-          ORDER BY entered_at ASC
-          LIMIT ${limit} OFFSET ${offset}
-        `;
-      } else if (limit) {
-        rows = await this.sql`
-          SELECT * FROM events
-          WHERE event_id = ${eventId}
-          AND voided_at IS NULL
-          ORDER BY entered_at ASC
-          LIMIT ${limit}
-        `;
-      } else if (offset) {
-        rows = await this.sql`
-          SELECT * FROM events
-          WHERE event_id = ${eventId}
-          AND voided_at IS NULL
-          ORDER BY entered_at ASC
-          OFFSET ${offset}
-        `;
-      } else {
-        rows = await this.sql`
-          SELECT * FROM events
-          WHERE event_id = ${eventId}
-          AND voided_at IS NULL
-          ORDER BY entered_at ASC
-        `;
-      }
-    }
+    const rows = await this.sql`
+      SELECT * FROM events
+      WHERE event_id = ${eventId}
+      ${fragments.whereClause}
+      ORDER BY entered_at ASC
+      ${fragments.limitClause}
+      ${fragments.offsetClause}
+    `;
 
     return rows.map((row: any) => this.mapRow<T>(row));
   }
@@ -277,81 +223,21 @@ export class EventsClient {
     eventType: string,
     options: EventQueryOptions = {}
   ): Promise<EventEntry<T>[]> {
-    const { includeVoided = false, limit, offset } = options;
+    const { includeVoided = false } = options;
+    const fragments = this.buildQueryFragments(options);
 
-    let rows;
-    if (includeVoided) {
-      if (limit && offset) {
-        rows = await this.sql`
-          SELECT * FROM (
-            SELECT DISTINCT ON (event_id) *
-            FROM events
-            WHERE event_type = ${eventType}
-            ORDER BY event_id, entered_at DESC
-          ) latest
-          ORDER BY occurred_at DESC
-          LIMIT ${limit} OFFSET ${offset}
-        `;
-      } else if (limit) {
-        rows = await this.sql`
-          SELECT * FROM (
-            SELECT DISTINCT ON (event_id) *
-            FROM events
-            WHERE event_type = ${eventType}
-            ORDER BY event_id, entered_at DESC
-          ) latest
-          ORDER BY occurred_at DESC
-          LIMIT ${limit}
-        `;
-      } else {
-        rows = await this.sql`
-          SELECT * FROM (
-            SELECT DISTINCT ON (event_id) *
-            FROM events
-            WHERE event_type = ${eventType}
-            ORDER BY event_id, entered_at DESC
-          ) latest
-          ORDER BY occurred_at DESC
-        `;
-      }
-    } else {
-      if (limit && offset) {
-        rows = await this.sql`
-          SELECT * FROM (
-            SELECT DISTINCT ON (event_id) *
-            FROM events
-            WHERE event_type = ${eventType}
-            ORDER BY event_id, entered_at DESC
-          ) latest
-          WHERE voided_at IS NULL
-          ORDER BY occurred_at DESC
-          LIMIT ${limit} OFFSET ${offset}
-        `;
-      } else if (limit) {
-        rows = await this.sql`
-          SELECT * FROM (
-            SELECT DISTINCT ON (event_id) *
-            FROM events
-            WHERE event_type = ${eventType}
-            ORDER BY event_id, entered_at DESC
-          ) latest
-          WHERE voided_at IS NULL
-          ORDER BY occurred_at DESC
-          LIMIT ${limit}
-        `;
-      } else {
-        rows = await this.sql`
-          SELECT * FROM (
-            SELECT DISTINCT ON (event_id) *
-            FROM events
-            WHERE event_type = ${eventType}
-            ORDER BY event_id, entered_at DESC
-          ) latest
-          WHERE voided_at IS NULL
-          ORDER BY occurred_at DESC
-        `;
-      }
-    }
+    const rows = await this.sql`
+      SELECT * FROM (
+        SELECT DISTINCT ON (event_id) *
+        FROM events
+        WHERE event_type = ${eventType}
+        ORDER BY event_id, entered_at DESC
+      ) latest
+      ${includeVoided ? this.sql`` : this.sql`WHERE voided_at IS NULL`}
+      ORDER BY occurred_at DESC
+      ${fragments.limitClause}
+      ${fragments.offsetClause}
+    `;
 
     return rows.map((row: any) => this.mapRow<T>(row));
   }
@@ -365,81 +251,21 @@ export class EventsClient {
     end: Date,
     options: EventQueryOptions = {}
   ): Promise<EventEntry<T>[]> {
-    const { includeVoided = false, limit, offset } = options;
+    const { includeVoided = false } = options;
+    const fragments = this.buildQueryFragments(options);
 
-    let rows;
-    if (includeVoided) {
-      if (limit && offset) {
-        rows = await this.sql`
-          SELECT * FROM (
-            SELECT DISTINCT ON (event_id) *
-            FROM events
-            WHERE occurred_at BETWEEN ${start} AND ${end}
-            ORDER BY event_id, entered_at DESC
-          ) latest
-          ORDER BY occurred_at DESC
-          LIMIT ${limit} OFFSET ${offset}
-        `;
-      } else if (limit) {
-        rows = await this.sql`
-          SELECT * FROM (
-            SELECT DISTINCT ON (event_id) *
-            FROM events
-            WHERE occurred_at BETWEEN ${start} AND ${end}
-            ORDER BY event_id, entered_at DESC
-          ) latest
-          ORDER BY occurred_at DESC
-          LIMIT ${limit}
-        `;
-      } else {
-        rows = await this.sql`
-          SELECT * FROM (
-            SELECT DISTINCT ON (event_id) *
-            FROM events
-            WHERE occurred_at BETWEEN ${start} AND ${end}
-            ORDER BY event_id, entered_at DESC
-          ) latest
-          ORDER BY occurred_at DESC
-        `;
-      }
-    } else {
-      if (limit && offset) {
-        rows = await this.sql`
-          SELECT * FROM (
-            SELECT DISTINCT ON (event_id) *
-            FROM events
-            WHERE occurred_at BETWEEN ${start} AND ${end}
-            ORDER BY event_id, entered_at DESC
-          ) latest
-          WHERE voided_at IS NULL
-          ORDER BY occurred_at DESC
-          LIMIT ${limit} OFFSET ${offset}
-        `;
-      } else if (limit) {
-        rows = await this.sql`
-          SELECT * FROM (
-            SELECT DISTINCT ON (event_id) *
-            FROM events
-            WHERE occurred_at BETWEEN ${start} AND ${end}
-            ORDER BY event_id, entered_at DESC
-          ) latest
-          WHERE voided_at IS NULL
-          ORDER BY occurred_at DESC
-          LIMIT ${limit}
-        `;
-      } else {
-        rows = await this.sql`
-          SELECT * FROM (
-            SELECT DISTINCT ON (event_id) *
-            FROM events
-            WHERE occurred_at BETWEEN ${start} AND ${end}
-            ORDER BY event_id, entered_at DESC
-          ) latest
-          WHERE voided_at IS NULL
-          ORDER BY occurred_at DESC
-        `;
-      }
-    }
+    const rows = await this.sql`
+      SELECT * FROM (
+        SELECT DISTINCT ON (event_id) *
+        FROM events
+        WHERE occurred_at BETWEEN ${start} AND ${end}
+        ORDER BY event_id, entered_at DESC
+      ) latest
+      ${includeVoided ? this.sql`` : this.sql`WHERE voided_at IS NULL`}
+      ORDER BY occurred_at DESC
+      ${fragments.limitClause}
+      ${fragments.offsetClause}
+    `;
 
     return rows.map((row: any) => this.mapRow<T>(row));
   }
@@ -501,87 +327,22 @@ export class EventsClient {
     dataQuery: Record<string, unknown>,
     options: EventQueryOptions = {}
   ): Promise<EventEntry<T>[]> {
-    const { includeVoided = false, limit, offset } = options;
+    const { includeVoided = false } = options;
+    const fragments = this.buildQueryFragments(options);
 
-    let rows;
-    if (includeVoided) {
-      if (limit && offset) {
-        rows = await this.sql`
-          SELECT * FROM (
-            SELECT DISTINCT ON (event_id) *
-            FROM events
-            WHERE event_type = ${eventType}
-            ORDER BY event_id, entered_at DESC
-          ) latest
-          WHERE data @> ${dataQuery}
-          ORDER BY occurred_at DESC
-          LIMIT ${limit} OFFSET ${offset}
-        `;
-      } else if (limit) {
-        rows = await this.sql`
-          SELECT * FROM (
-            SELECT DISTINCT ON (event_id) *
-            FROM events
-            WHERE event_type = ${eventType}
-            ORDER BY event_id, entered_at DESC
-          ) latest
-          WHERE data @> ${dataQuery}
-          ORDER BY occurred_at DESC
-          LIMIT ${limit}
-        `;
-      } else {
-        rows = await this.sql`
-          SELECT * FROM (
-            SELECT DISTINCT ON (event_id) *
-            FROM events
-            WHERE event_type = ${eventType}
-            ORDER BY event_id, entered_at DESC
-          ) latest
-          WHERE data @> ${dataQuery}
-          ORDER BY occurred_at DESC
-        `;
-      }
-    } else {
-      if (limit && offset) {
-        rows = await this.sql`
-          SELECT * FROM (
-            SELECT DISTINCT ON (event_id) *
-            FROM events
-            WHERE event_type = ${eventType}
-            ORDER BY event_id, entered_at DESC
-          ) latest
-          WHERE data @> ${dataQuery}
-          AND voided_at IS NULL
-          ORDER BY occurred_at DESC
-          LIMIT ${limit} OFFSET ${offset}
-        `;
-      } else if (limit) {
-        rows = await this.sql`
-          SELECT * FROM (
-            SELECT DISTINCT ON (event_id) *
-            FROM events
-            WHERE event_type = ${eventType}
-            ORDER BY event_id, entered_at DESC
-          ) latest
-          WHERE data @> ${dataQuery}
-          AND voided_at IS NULL
-          ORDER BY occurred_at DESC
-          LIMIT ${limit}
-        `;
-      } else {
-        rows = await this.sql`
-          SELECT * FROM (
-            SELECT DISTINCT ON (event_id) *
-            FROM events
-            WHERE event_type = ${eventType}
-            ORDER BY event_id, entered_at DESC
-          ) latest
-          WHERE data @> ${dataQuery}
-          AND voided_at IS NULL
-          ORDER BY occurred_at DESC
-        `;
-      }
-    }
+    const rows = await this.sql`
+      SELECT * FROM (
+        SELECT DISTINCT ON (event_id) *
+        FROM events
+        WHERE event_type = ${eventType}
+        ORDER BY event_id, entered_at DESC
+      ) latest
+      WHERE data @> ${dataQuery}
+        ${includeVoided ? this.sql`` : this.sql`AND voided_at IS NULL`}
+      ORDER BY occurred_at DESC
+      ${fragments.limitClause}
+      ${fragments.offsetClause}
+    `;
 
     return rows.map((row: any) => this.mapRow<T>(row));
   }
@@ -596,82 +357,22 @@ export class EventsClient {
     entityId: string | number,
     options: EventQueryOptions = {}
   ): Promise<EventEntry<T>[]> {
-    const { includeVoided = false, limit, offset } = options;
+    const { includeVoided = false } = options;
+    const fragments = this.buildQueryFragments(options);
     const dataQuery = { [entityIdField]: entityId };
 
-    let rows;
-    if (includeVoided) {
-      if (limit && offset) {
-        rows = await this.sql`
-          SELECT * FROM (
-            SELECT DISTINCT ON (event_id) *
-            FROM events
-            ORDER BY event_id, entered_at DESC
-          ) latest
-          WHERE data @> ${dataQuery}
-          ORDER BY occurred_at DESC
-          LIMIT ${limit} OFFSET ${offset}
-        `;
-      } else if (limit) {
-        rows = await this.sql`
-          SELECT * FROM (
-            SELECT DISTINCT ON (event_id) *
-            FROM events
-            ORDER BY event_id, entered_at DESC
-          ) latest
-          WHERE data @> ${dataQuery}
-          ORDER BY occurred_at DESC
-          LIMIT ${limit}
-        `;
-      } else {
-        rows = await this.sql`
-          SELECT * FROM (
-            SELECT DISTINCT ON (event_id) *
-            FROM events
-            ORDER BY event_id, entered_at DESC
-          ) latest
-          WHERE data @> ${dataQuery}
-          ORDER BY occurred_at DESC
-        `;
-      }
-    } else {
-      if (limit && offset) {
-        rows = await this.sql`
-          SELECT * FROM (
-            SELECT DISTINCT ON (event_id) *
-            FROM events
-            ORDER BY event_id, entered_at DESC
-          ) latest
-          WHERE data @> ${dataQuery}
-          AND voided_at IS NULL
-          ORDER BY occurred_at DESC
-          LIMIT ${limit} OFFSET ${offset}
-        `;
-      } else if (limit) {
-        rows = await this.sql`
-          SELECT * FROM (
-            SELECT DISTINCT ON (event_id) *
-            FROM events
-            ORDER BY event_id, entered_at DESC
-          ) latest
-          WHERE data @> ${dataQuery}
-          AND voided_at IS NULL
-          ORDER BY occurred_at DESC
-          LIMIT ${limit}
-        `;
-      } else {
-        rows = await this.sql`
-          SELECT * FROM (
-            SELECT DISTINCT ON (event_id) *
-            FROM events
-            ORDER BY event_id, entered_at DESC
-          ) latest
-          WHERE data @> ${dataQuery}
-          AND voided_at IS NULL
-          ORDER BY occurred_at DESC
-        `;
-      }
-    }
+    const rows = await this.sql`
+      SELECT * FROM (
+        SELECT DISTINCT ON (event_id) *
+        FROM events
+        ORDER BY event_id, entered_at DESC
+      ) latest
+      WHERE data @> ${dataQuery}
+        ${includeVoided ? this.sql`` : this.sql`AND voided_at IS NULL`}
+      ORDER BY occurred_at DESC
+      ${fragments.limitClause}
+      ${fragments.offsetClause}
+    `;
 
     return rows.map((row: any) => this.mapRow<T>(row));
   }
@@ -708,6 +409,26 @@ export class EventsClient {
       data,
       eventId: Number(row.event_id),
       voidedAt: row.voided_at,
+    };
+  }
+
+  /**
+   * Build dynamic SQL fragments for filtering and pagination.
+   * Uses Bun SQL template literals for safe composition.
+   */
+  private buildQueryFragments(options: EventQueryOptions) {
+    const { includeVoided = false, limit, offset } = options;
+
+    return {
+      whereClause: includeVoided
+        ? this.sql``
+        : this.sql`AND voided_at IS NULL`,
+      limitClause: limit
+        ? this.sql`LIMIT ${limit}`
+        : this.sql``,
+      offsetClause: offset
+        ? this.sql`OFFSET ${offset}`
+        : this.sql``,
     };
   }
 }

@@ -182,3 +182,61 @@ Choose the approach that fits your needs.
 ### Colocation
 
 Client code lives near the schema it depends on (`data/client/` and `data/postgres/` are siblings). When you change the schema, you update the client in the same commit, keeping them in sync.
+
+### Query Builder Pattern
+
+Both `EntitiesClient` and `EventsClient` use a dynamic query builder pattern to avoid code duplication:
+
+**Before (v0.1):**
+
+- Each query method had 8 conditional variants for `includeDeleted/includeVoided` × `limit` × `offset` combinations
+- ~655 lines of duplicated SQL query code across 8 methods
+- Difficult to maintain and error-prone
+
+**After (v0.2):**
+
+- Single `buildQueryFragments()` helper method returns SQL fragments
+- Dynamic SQL composition using Bun's tagged template literals
+- Reduced code by ~500 lines while maintaining identical functionality
+- Type-safe and SQL injection-proof
+
+Example from `entities.ts`:
+
+```typescript
+// Helper method generates SQL fragments based on options
+private buildQueryFragments(options: QueryOptions) {
+  const { includeDeleted = false, limit, offset } = options;
+
+  return {
+    whereClause: includeDeleted
+      ? this.sql``
+      : this.sql`AND deleted_at IS NULL`,
+    limitClause: limit ? this.sql`LIMIT ${limit}` : this.sql``,
+    offsetClause: offset ? this.sql`OFFSET ${offset}` : this.sql``,
+  };
+}
+
+// Methods use fragments for dynamic composition
+async getHistory<T>(entityId: number, options: QueryOptions = {}) {
+  const { includeDeleted = true } = options;
+  const fragments = this.buildQueryFragments({ ...options, includeDeleted });
+
+  const rows = await this.sql`
+    SELECT * FROM entities
+    WHERE entity_id = ${entityId}
+    ${fragments.whereClause}
+    ORDER BY entered_at ASC
+    ${fragments.limitClause}
+    ${fragments.offsetClause}
+  `;
+
+  return rows.map(row => this.mapRow<T>(row));
+}
+```
+
+**Benefits:**
+
+- **DRY (Don't Repeat Yourself)**: Single source of truth for query fragments
+- **Type-safe**: Bun SQL template literals prevent SQL injection
+- **Maintainable**: Changes to query logic only need to be made once
+- **Testable**: All existing tests pass without modification (v0.2 is 100% backward compatible)

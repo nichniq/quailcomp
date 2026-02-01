@@ -190,72 +190,18 @@ export class EntitiesClient {
     entityId: number,
     options: QueryOptions = {}
   ): Promise<Entry<T>[]> {
-    const { includeDeleted = true, limit, offset } = options;
+    // Note: includeDeleted defaults to true for history (to see all versions)
+    const { includeDeleted = true } = options;
+    const fragments = this.buildQueryFragments({ ...options, includeDeleted });
 
-    let rows;
-    if (includeDeleted) {
-      if (limit && offset) {
-        rows = await this.sql`
-          SELECT * FROM entities
-          WHERE entity_id = ${entityId}
-          ORDER BY entered_at ASC
-          LIMIT ${limit} OFFSET ${offset}
-        `;
-      } else if (limit) {
-        rows = await this.sql`
-          SELECT * FROM entities
-          WHERE entity_id = ${entityId}
-          ORDER BY entered_at ASC
-          LIMIT ${limit}
-        `;
-      } else if (offset) {
-        rows = await this.sql`
-          SELECT * FROM entities
-          WHERE entity_id = ${entityId}
-          ORDER BY entered_at ASC
-          OFFSET ${offset}
-        `;
-      } else {
-        rows = await this.sql`
-          SELECT * FROM entities
-          WHERE entity_id = ${entityId}
-          ORDER BY entered_at ASC
-        `;
-      }
-    } else {
-      if (limit && offset) {
-        rows = await this.sql`
-          SELECT * FROM entities
-          WHERE entity_id = ${entityId}
-          AND deleted_at IS NULL
-          ORDER BY entered_at ASC
-          LIMIT ${limit} OFFSET ${offset}
-        `;
-      } else if (limit) {
-        rows = await this.sql`
-          SELECT * FROM entities
-          WHERE entity_id = ${entityId}
-          AND deleted_at IS NULL
-          ORDER BY entered_at ASC
-          LIMIT ${limit}
-        `;
-      } else if (offset) {
-        rows = await this.sql`
-          SELECT * FROM entities
-          WHERE entity_id = ${entityId}
-          AND deleted_at IS NULL
-          ORDER BY entered_at ASC
-          OFFSET ${offset}
-        `;
-      } else {
-        rows = await this.sql`
-          SELECT * FROM entities
-          WHERE entity_id = ${entityId}
-          AND deleted_at IS NULL
-          ORDER BY entered_at ASC
-        `;
-      }
-    }
+    const rows = await this.sql`
+      SELECT * FROM entities
+      WHERE entity_id = ${entityId}
+      ${fragments.whereClause}
+      ORDER BY entered_at ASC
+      ${fragments.limitClause}
+      ${fragments.offsetClause}
+    `;
 
     return rows.map((row: any) => this.mapRow<T>(row));
   }
@@ -267,75 +213,21 @@ export class EntitiesClient {
     type: string,
     options: QueryOptions = {}
   ): Promise<Entry<T>[]> {
-    const { includeDeleted = false, limit, offset } = options;
+    const { includeDeleted = false } = options;
+    const fragments = this.buildQueryFragments(options);
 
-    // First get latest entry per entity, then filter by deleted_at on the latest
-    let rows;
-    if (includeDeleted) {
-      if (limit && offset) {
-        rows = await this.sql`
-          SELECT * FROM (
-            SELECT DISTINCT ON (entity_id) *
-            FROM entities
-            WHERE type = ${type}
-            ORDER BY entity_id, entered_at DESC
-          ) latest
-          LIMIT ${limit} OFFSET ${offset}
-        `;
-      } else if (limit) {
-        rows = await this.sql`
-          SELECT * FROM (
-            SELECT DISTINCT ON (entity_id) *
-            FROM entities
-            WHERE type = ${type}
-            ORDER BY entity_id, entered_at DESC
-          ) latest
-          LIMIT ${limit}
-        `;
-      } else {
-        rows = await this.sql`
-          SELECT DISTINCT ON (entity_id) *
-          FROM entities
-          WHERE type = ${type}
-          ORDER BY entity_id, entered_at DESC
-        `;
-      }
-    } else {
-      // Get latest per entity, then filter those where latest is not deleted
-      if (limit && offset) {
-        rows = await this.sql`
-          SELECT * FROM (
-            SELECT DISTINCT ON (entity_id) *
-            FROM entities
-            WHERE type = ${type}
-            ORDER BY entity_id, entered_at DESC
-          ) latest
-          WHERE deleted_at IS NULL
-          LIMIT ${limit} OFFSET ${offset}
-        `;
-      } else if (limit) {
-        rows = await this.sql`
-          SELECT * FROM (
-            SELECT DISTINCT ON (entity_id) *
-            FROM entities
-            WHERE type = ${type}
-            ORDER BY entity_id, entered_at DESC
-          ) latest
-          WHERE deleted_at IS NULL
-          LIMIT ${limit}
-        `;
-      } else {
-        rows = await this.sql`
-          SELECT * FROM (
-            SELECT DISTINCT ON (entity_id) *
-            FROM entities
-            WHERE type = ${type}
-            ORDER BY entity_id, entered_at DESC
-          ) latest
-          WHERE deleted_at IS NULL
-        `;
-      }
-    }
+    const rows = await this.sql`
+      SELECT * FROM (
+        SELECT DISTINCT ON (entity_id) *
+        FROM entities
+        WHERE type = ${type}
+        ORDER BY entity_id, entered_at DESC
+      ) latest
+      ${includeDeleted ? this.sql`` : this.sql`WHERE deleted_at IS NULL`}
+      ORDER BY entered_at DESC
+      ${fragments.limitClause}
+      ${fragments.offsetClause}
+    `;
 
     return rows.map((row: any) => this.mapRow<T>(row));
   }
@@ -398,83 +290,23 @@ export class EntitiesClient {
     dataQuery: Record<string, unknown>,
     options: QueryOptions = {}
   ): Promise<Entry<T>[]> {
-    const { includeDeleted = false, limit, offset } = options;
+    const { includeDeleted = false } = options;
+    const fragments = this.buildQueryFragments(options);
     // Pass object directly - Bun SQL handles JSONB conversion automatically
 
-    // First get latest per entity, then filter by data content and deleted status
-    let rows;
-    if (includeDeleted) {
-      if (limit && offset) {
-        rows = await this.sql`
-          SELECT * FROM (
-            SELECT DISTINCT ON (entity_id) *
-            FROM entities
-            WHERE type = ${type}
-            ORDER BY entity_id, entered_at DESC
-          ) latest
-          WHERE data @> ${dataQuery}
-          LIMIT ${limit} OFFSET ${offset}
-        `;
-      } else if (limit) {
-        rows = await this.sql`
-          SELECT * FROM (
-            SELECT DISTINCT ON (entity_id) *
-            FROM entities
-            WHERE type = ${type}
-            ORDER BY entity_id, entered_at DESC
-          ) latest
-          WHERE data @> ${dataQuery}
-          LIMIT ${limit}
-        `;
-      } else {
-        rows = await this.sql`
-          SELECT * FROM (
-            SELECT DISTINCT ON (entity_id) *
-            FROM entities
-            WHERE type = ${type}
-            ORDER BY entity_id, entered_at DESC
-          ) latest
-          WHERE data @> ${dataQuery}
-        `;
-      }
-    } else {
-      if (limit && offset) {
-        rows = await this.sql`
-          SELECT * FROM (
-            SELECT DISTINCT ON (entity_id) *
-            FROM entities
-            WHERE type = ${type}
-            ORDER BY entity_id, entered_at DESC
-          ) latest
-          WHERE data @> ${dataQuery}
-          AND deleted_at IS NULL
-          LIMIT ${limit} OFFSET ${offset}
-        `;
-      } else if (limit) {
-        rows = await this.sql`
-          SELECT * FROM (
-            SELECT DISTINCT ON (entity_id) *
-            FROM entities
-            WHERE type = ${type}
-            ORDER BY entity_id, entered_at DESC
-          ) latest
-          WHERE data @> ${dataQuery}
-          AND deleted_at IS NULL
-          LIMIT ${limit}
-        `;
-      } else {
-        rows = await this.sql`
-          SELECT * FROM (
-            SELECT DISTINCT ON (entity_id) *
-            FROM entities
-            WHERE type = ${type}
-            ORDER BY entity_id, entered_at DESC
-          ) latest
-          WHERE data @> ${dataQuery}
-          AND deleted_at IS NULL
-        `;
-      }
-    }
+    const rows = await this.sql`
+      SELECT * FROM (
+        SELECT DISTINCT ON (entity_id) *
+        FROM entities
+        WHERE type = ${type}
+        ORDER BY entity_id, entered_at DESC
+      ) latest
+      WHERE data @> ${dataQuery}
+        ${includeDeleted ? this.sql`` : this.sql`AND deleted_at IS NULL`}
+      ORDER BY entered_at DESC
+      ${fragments.limitClause}
+      ${fragments.offsetClause}
+    `;
 
     return rows.map((row: any) => this.mapRow<T>(row));
   }
@@ -510,6 +342,26 @@ export class EntitiesClient {
       data,
       entityId: Number(row.entity_id),
       deletedAt: row.deleted_at,
+    };
+  }
+
+  /**
+   * Build dynamic SQL fragments for filtering and pagination.
+   * Uses Bun SQL template literals for safe composition.
+   */
+  private buildQueryFragments(options: QueryOptions) {
+    const { includeDeleted = false, limit, offset } = options;
+
+    return {
+      whereClause: includeDeleted
+        ? this.sql``
+        : this.sql`AND deleted_at IS NULL`,
+      limitClause: limit
+        ? this.sql`LIMIT ${limit}`
+        : this.sql``,
+      offsetClause: offset
+        ? this.sql`OFFSET ${offset}`
+        : this.sql``,
     };
   }
 }
