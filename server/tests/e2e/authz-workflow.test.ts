@@ -114,7 +114,7 @@ describe("E2E Authorization Workflow", () => {
 
     expect(response.status).toBe(403);
     const error = await response.json();
-    expect(error.error).toContain("Forbidden");
+    expect(error.error).toBe("Access denied");
   });
 
   test("user without write access cannot update book", async () => {
@@ -523,7 +523,7 @@ describe("E2E Authorization Workflow", () => {
     });
     expect(response.status).toBe(200);
 
-    const accessors = await response.json();
+    const { accessors } = await response.json();
     expect(accessors.length).toBe(3); // owner, reader, writer
     expect(accessors.some((a: any) => a.userId === owner.userId && a.accessLevel === "owner")).toBe(true);
     expect(accessors.some((a: any) => a.userId === reader.userId && a.accessLevel === "read")).toBe(true);
@@ -564,7 +564,7 @@ describe("E2E Authorization Workflow", () => {
     const user1Response = await fetch(`${baseUrl}/books`, {
       headers: { Authorization: `Bearer ${user1.token}` },
     });
-    const user1Books = await user1Response.json();
+    const { books: user1Books } = await user1Response.json();
     expect(user1Books.some((b: any) => b.entityId === book1Id)).toBe(true);
     expect(user1Books.some((b: any) => b.entityId === book2Id)).toBe(false);
 
@@ -572,7 +572,7 @@ describe("E2E Authorization Workflow", () => {
     const user2Response = await fetch(`${baseUrl}/books`, {
       headers: { Authorization: `Bearer ${user2.token}` },
     });
-    const user2Books = await user2Response.json();
+    const { books: user2Books } = await user2Response.json();
     expect(user2Books.some((b: any) => b.entityId === book2Id)).toBe(true);
     expect(user2Books.some((b: any) => b.entityId === book1Id)).toBe(false);
   });

@@ -225,7 +225,7 @@ describe("E2E Authentication Workflow", () => {
 
     expect(response.status).toBe(200);
 
-    const user = await response.json();
+    const { user } = await response.json();
     expect(user.email).toBe(email);
     expect(user.username).toBe(username);
     expect(user.userId).toBeGreaterThan(0);

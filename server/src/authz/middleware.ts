@@ -9,6 +9,7 @@ import type { AccessLevel } from "@domains/types/authorization";
 import type { RequestContext } from "@/context";
 import type { Middleware } from "@/middleware/types";
 import { AuthorizationService } from "@/authz/service";
+import { createEntitiesClient } from "@quailcomp/data";
 
 /**
  * Function that extracts entity ID from request context
@@ -44,6 +45,22 @@ export function requireAccess(
     }
 
     const entityId = await getEntityId(ctx, req);
+
+    // If entity ID is invalid (NaN), let the route handler deal with it
+    if (isNaN(entityId)) {
+      return next(ctx, req);
+    }
+
+    // Check if entity exists first - return 404 if not
+    const entities = createEntitiesClient(ctx.sql);
+    const entity = await entities.getById(entityId);
+    if (!entity) {
+      return Response.json(
+        { error: "Not found", code: "NOT_FOUND" },
+        { status: 404 }
+      );
+    }
+
     const authzService = new AuthorizationService(ctx.sql);
 
     const hasAccess = await authzService.checkAccess(

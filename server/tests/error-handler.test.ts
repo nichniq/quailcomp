@@ -332,16 +332,17 @@ describe("cors middleware", () => {
     );
   });
 
-  test("defaultCors allows all origins", async () => {
+  test("defaultCors allows configured origins", async () => {
     const request = new Request("http://localhost/test", {
-      headers: { Origin: "https://anywhere.com" },
+      headers: { Origin: "http://localhost:5173" },
     });
     const ctx = createContext(request, sql);
     const middleware = defaultCors(createMockHandler());
 
     const response = await middleware(ctx, request);
 
-    expect(response.headers.get("Access-Control-Allow-Origin")).toBe("*");
+    expect(response.headers.get("Access-Control-Allow-Origin")).toBe("http://localhost:5173");
+    expect(response.headers.get("Access-Control-Allow-Credentials")).toBe("true");
   });
 });
 

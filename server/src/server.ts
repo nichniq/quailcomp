@@ -18,6 +18,7 @@ import { createRouter, type Router } from "@/router";
 import { healthHandler, metricsHandler } from "@/routes/health";
 import { registerAuthRoutes } from "@/auth/routes";
 import { registerBookRoutes } from "@/routes/books";
+import { registerEntityRoutes } from "@/routes/entities";
 
 export interface ServerConfig {
   port?: number;
@@ -43,6 +44,9 @@ function registerRoutes(router: Router, sql: Sql): void {
 
   // Book routes
   registerBookRoutes(router, sql);
+
+  // Entity access routes
+  registerEntityRoutes(router, sql);
 }
 
 /**

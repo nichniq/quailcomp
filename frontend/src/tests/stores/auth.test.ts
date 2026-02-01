@@ -23,6 +23,8 @@ describe('Auth Store', () => {
     setActivePinia(createPinia());
     localStorage.clear();
     vi.clearAllMocks();
+    // Default mock for getMe to prevent unhandled rejections when store auto-fetches
+    (authApi.getMe as any).mockResolvedValue({ data: null, error: null });
   });
 
   describe('initial state', () => {

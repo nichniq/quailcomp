@@ -26,20 +26,45 @@ import {
 
 import type { Router } from "@/router";
 import { requireAuth } from "@/auth/middleware";
+import { requireRead, requireWrite, requireOwner } from "@/authz/middleware";
+import { AuthorizationService } from "@/authz/service";
 
 const BOOK_TYPE = "book";
+
+/**
+ * Helper to extract entity ID from route params
+ */
+const getEntityIdFromParams = (ctx: { params: { id: string } }) =>
+  parseInt(ctx.params.id, 10);
 
 /**
  * Register book routes
  */
 export function registerBookRoutes(router: Router, sql: Sql): void {
   const entities = createEntitiesClient(sql);
+  const authzService = new AuthorizationService(sql);
 
-  // GET /books - List all books
+  // GET /books - List books the user has access to
   router.get(
     "/books",
     async (ctx) => {
-      const books = await entities.getByType<BookEntitySnapshot>(BOOK_TYPE);
+      if (!ctx.user) {
+        return Response.json(
+          { error: "Authentication required" },
+          { status: 401 }
+        );
+      }
+
+      // Get all entity IDs the user has access to
+      const accessibleEntities = await authzService.listAccessibleEntities(
+        ctx.user.userId
+      );
+      const accessibleIds = new Set(accessibleEntities.map((e) => e.entityId));
+
+      // Get all books and filter by access
+      const allBooks = await entities.getByType<BookEntitySnapshot>(BOOK_TYPE);
+      const books = allBooks.filter((book) => accessibleIds.has(book.entityId));
+
       ctx.log.info("Books retrieved", { count: books.length });
       return Response.json({ books });
     },
@@ -71,13 +96,20 @@ export function registerBookRoutes(router: Router, sql: Sql): void {
       ctx.log.info("Book retrieved", { entityId });
       return Response.json({ book });
     },
-    [requireAuth]
+    [requireAuth, requireRead(getEntityIdFromParams)]
   );
 
   // POST /books - Create new book
   router.post(
     "/books",
     async (ctx, req) => {
+      if (!ctx.user) {
+        return Response.json(
+          { error: "Authentication required" },
+          { status: 401 }
+        );
+      }
+
       let body: BookEntitySnapshot;
 
       try {
@@ -93,6 +125,9 @@ export function registerBookRoutes(router: Router, sql: Sql): void {
         type: BOOK_TYPE,
         data: body,
       });
+
+      // Grant owner access to the creator
+      await authzService.grantOwnerOnCreate(entry.entityId, ctx.user.userId);
 
       ctx.log.info("Book created", { entityId: entry.entityId });
       return Response.json({ book: entry }, { status: 201 });
@@ -122,10 +157,10 @@ export function registerBookRoutes(router: Router, sql: Sql): void {
         );
       }
 
-      let body: BookEntitySnapshot;
+      let body: Partial<BookEntitySnapshot>;
 
       try {
-        body = (await req.json()) as BookEntitySnapshot;
+        body = (await req.json()) as Partial<BookEntitySnapshot>;
       } catch {
         return Response.json(
           { error: "Invalid JSON body", code: "INVALID_BODY" },
@@ -133,16 +168,22 @@ export function registerBookRoutes(router: Router, sql: Sql): void {
         );
       }
 
+      // Merge partial update with existing data
+      const updatedData: BookEntitySnapshot = {
+        ...existing.data,
+        ...body,
+      };
+
       const entry = await entities.update<BookEntitySnapshot>({
         entityId,
         type: BOOK_TYPE,
-        data: body,
+        data: updatedData,
       });
 
       ctx.log.info("Book updated", { entityId });
       return Response.json({ book: entry });
     },
-    [requireAuth]
+    [requireAuth, requireWrite(getEntityIdFromParams)]
   );
 
   // DELETE /books/:id - Soft delete book
@@ -167,16 +208,16 @@ export function registerBookRoutes(router: Router, sql: Sql): void {
         );
       }
 
-      await entities.delete({
+      const deleted = await entities.delete({
         entityId,
         type: BOOK_TYPE,
         data: existing.data,
       });
 
       ctx.log.info("Book deleted", { entityId });
-      return Response.json({ success: true });
+      return Response.json({ book: deleted });
     },
-    [requireAuth]
+    [requireAuth, requireOwner(getEntityIdFromParams)]
   );
 
   // POST /books/metadata/lookup - Look up book metadata

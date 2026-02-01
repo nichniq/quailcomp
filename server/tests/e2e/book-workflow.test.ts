@@ -289,7 +289,7 @@ describe("E2E Book Workflow", () => {
         isbn: `978000107${timestamp}`,
       }),
     });
-    const book1 = await book1Response.json();
+    const { book: book1 } = await book1Response.json();
 
     const book2Response = await fetch(`${baseUrl}/books`, {
       method: "POST",
@@ -302,7 +302,7 @@ describe("E2E Book Workflow", () => {
         isbn: `978000108${timestamp}`,
       }),
     });
-    const book2 = await book2Response.json();
+    const { book: book2 } = await book2Response.json();
 
     // List books
     const listResponse = await fetch(`${baseUrl}/books`, {
@@ -393,21 +393,21 @@ describe("E2E Book Workflow", () => {
         "Content-Type": "application/json",
         Authorization: `Bearer ${token}`,
       },
-      body: JSON.stringify({ isbn }),
+      body: JSON.stringify({ identifier: isbn, identifierType: "isbn" }),
     });
 
     expect(response.status).toBe(200);
 
-    const metadata = await response.json();
+    const { results } = await response.json();
     // Should return results from at least one provider
-    expect(Object.keys(metadata).length).toBeGreaterThan(0);
+    expect(results.length).toBeGreaterThan(0);
 
     // Check if we got data from any provider
-    const hasResults = Object.values(metadata).some((result: any) => result !== null);
+    const hasResults = results.some((result: any) => result.data !== null);
     // Note: This might fail if all APIs are down, but that's expected
     if (hasResults) {
-      const firstResult = Object.values(metadata).find((r: any) => r !== null) as any;
-      expect(firstResult.title).toBeDefined();
+      const firstResult = results.find((r: any) => r.data !== null);
+      expect(firstResult.data.title).toBeDefined();
     }
   });
 
@@ -435,16 +435,15 @@ describe("E2E Book Workflow", () => {
         "Content-Type": "application/json",
         Authorization: `Bearer ${token}`,
       },
-      body: JSON.stringify({ isbn: "invalid-isbn" }),
+      body: JSON.stringify({ identifier: "invalid-isbn", identifierType: "isbn" }),
     });
 
-    // Should still return 200, but with no results
-    expect(response.status).toBe(200);
+    // Should return 400 for invalid ISBN format
+    expect(response.status).toBe(400);
 
-    const metadata = await response.json();
-    // All providers should return null for invalid ISBN
-    const allNull = Object.values(metadata).every((result) => result === null);
-    expect(allNull).toBe(true);
+    const { error, code } = await response.json();
+    expect(error).toBe("Invalid ISBN format");
+    expect(code).toBe("INVALID_ISBN");
   });
 
   test("book history tracking via event sourcing", async () => {

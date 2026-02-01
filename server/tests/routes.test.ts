@@ -288,7 +288,7 @@ describe("Books routes", () => {
 
       expect(response.status).toBe(404);
       const data = await response.json();
-      expect(data.error).toBe("Book not found");
+      expect(data.error).toBe("Not found");
       expect(data.code).toBe("NOT_FOUND");
     });
 
@@ -391,17 +391,17 @@ describe("Books routes", () => {
       const response = await callRoute("DELETE", `/books/${testBookId}`, ctx, request);
 
       expect(response.status).toBe(200);
-      const data = await response.json();
-      expect(data.success).toBe(true);
+      const { book } = await response.json();
+      expect(book.deletedAt).not.toBeNull();
 
       // Verify book is soft deleted (deleted_at is set in the latest entry)
-      const [book] = await sql`
+      const [dbBook] = await sql`
         SELECT deleted_at FROM entities
         WHERE entity_id = ${testBookId}
         ORDER BY entered_at DESC
         LIMIT 1
       `;
-      expect(book.deleted_at).not.toBeNull();
+      expect(dbBook.deleted_at).not.toBeNull();
     });
 
     test("returns 400 for invalid ID", async () => {
