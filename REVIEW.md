@@ -1,3 +1,5 @@
+<!-- markdownlint-disable -->
+
 # Quailcomp Codebase Review
 
 **Review Date:** 2026-01-30

@@ -1,3 +1,5 @@
+<!-- markdownlint-disable -->
+
 # Quailcomp Implementation Plan
 
 **Based on**: [REVIEW.md](REVIEW.md) comprehensive codebase review
