@@ -17,6 +17,7 @@
     "migrate": "bun run scripts/run-migrations.ts"
   },
   "devDependencies": {
-    "@types/bun": "latest"
+    "@types/bun": "latest",
+    "fast-check": "^4.5.3"
   }
 }

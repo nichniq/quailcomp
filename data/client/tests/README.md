@@ -7,6 +7,7 @@ Integration tests for database clients.
 - [`entities.test.ts`](entities.test.ts) - Tests for `EntitiesClient` (CRUD operations)
 - [`events.test.ts`](events.test.ts) - Tests for `EventsClient` (append-only events)
 - [`types.test.ts`](types.test.ts) - Tests for core type definitions
+- [`properties.test.ts`](properties.test.ts) - Property-based tests using fast-check to verify invariants
 
 ## Running Tests
 
