@@ -131,7 +131,6 @@ describe("Books routes", () => {
     const token = await signToken({
       user_id: Number(testUserId),
       email: `test-books-${testTimestamp}@example.com`,
-      username: null,
       credential_id: 1,
       auth_method: "password",
     });
