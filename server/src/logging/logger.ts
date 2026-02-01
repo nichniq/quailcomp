@@ -105,10 +105,19 @@ class ConsoleLogger implements Logger {
 }
 
 /**
- * Create a new logger instance
+ * Create a new console logger instance (legacy, for testing)
  */
-export function createLogger(options?: LoggerOptions): Logger {
+export function createConsoleLogger(options?: LoggerOptions): Logger {
   const level =
     options?.level ?? (process.env.LOG_LEVEL as LogLevel) ?? "info";
   return new ConsoleLogger({ ...options, level });
+}
+
+/**
+ * Create a new logger instance (uses Pino in production)
+ */
+export function createLogger(options?: LoggerOptions): Logger {
+  // Use Pino logger by default
+  const { createPinoLogger } = require("./pino-logger");
+  return createPinoLogger(options);
 }

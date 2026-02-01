@@ -33,6 +33,14 @@ Server configuration is validated using [Zod](https://zod.dev) schemas. Invalid 
 | `ANALYTICS_ENABLED` | Enable analytics tracking | `true` | `true`, `false` |
 | `ANALYTICS_RETENTION_DAYS` | Days to retain analytics data | `90` | `90`, `30`, `180` |
 
+## Observability
+
+| Variable | Description | Default | Example |
+|----------|-------------|---------|---------|
+| `SENTRY_DSN` | Sentry project DSN for error tracking | (none) | `https://...@sentry.io/...` |
+| `SENTRY_ENABLED` | Enable Sentry error tracking | `false` | `true`, `false` |
+| `PROMETHEUS_ENABLED` | Enable Prometheus metrics endpoint | `true` | `true`, `false` |
+
 
 ## Book Metadata Providers
 

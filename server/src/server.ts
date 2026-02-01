@@ -13,11 +13,16 @@ import { createContext } from "@/context";
 import { compose } from "@/middleware/compose";
 import { defaultCors } from "@/middleware/cors";
 import { errorHandler } from "@/middleware/error-handler";
+import { requestIdMiddleware } from "@/middleware/request-id";
 import type { Handler, Middleware } from "@/middleware/types";
 import { requestLogger } from "@/logging/request-logger";
 import { requestMetrics } from "@/metrics/request-metrics";
 import { createRouter, type Router } from "@/router";
-import { healthHandler, metricsHandler } from "@/routes/health";
+import {
+  healthHandler,
+  metricsHandler,
+  metricsJsonHandler,
+} from "@/routes/health";
 import { registerAuthRoutes } from "@/auth/routes";
 import { registerBookRoutes } from "@/routes/books";
 import { registerEntityRoutes } from "@/routes/entities";
@@ -40,6 +45,7 @@ function registerRoutes(router: Router, sql: Sql): void {
   // Health and metrics
   router.get("/health", healthHandler);
   router.get("/metrics", metricsHandler);
+  router.get("/metrics/json", metricsJsonHandler);
 
   // Authentication routes
   registerAuthRoutes(router, sql);
@@ -67,6 +73,7 @@ export function createServer(config: ServerConfig = {}): ServerInstance {
   // Global middleware stack (applied to all requests)
   const globalMiddleware = compose(
     errorHandler,
+    requestIdMiddleware,
     requestLogger,
     requestMetrics,
     defaultCors

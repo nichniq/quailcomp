@@ -39,6 +39,11 @@ const envSchema = z.object({
   // Analytics
   ANALYTICS_ENABLED: z.coerce.boolean().default(true),
   ANALYTICS_RETENTION_DAYS: z.coerce.number().int().positive().default(90),
+
+  // Observability
+  SENTRY_DSN: z.string().url().optional(),
+  SENTRY_ENABLED: z.coerce.boolean().default(false),
+  PROMETHEUS_ENABLED: z.coerce.boolean().default(true),
 });
 
 /**

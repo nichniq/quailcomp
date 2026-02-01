@@ -4,6 +4,7 @@
 
 import type { Handler } from "@/middleware/types";
 import { metrics } from "@/metrics/collector";
+import { prometheusMetricsHandler } from "@/metrics/prometheus";
 
 /**
  * GET /health - Basic health check
@@ -35,9 +36,16 @@ export const healthHandler: Handler = async (ctx) => {
 };
 
 /**
- * GET /metrics - Current metrics snapshot
+ * GET /metrics - Prometheus metrics (text format)
  */
 export const metricsHandler: Handler = async () => {
+  return prometheusMetricsHandler();
+};
+
+/**
+ * GET /metrics/json - Current metrics snapshot (JSON format)
+ */
+export const metricsJsonHandler: Handler = async () => {
   const snapshot = metrics.snapshot();
   return Response.json(snapshot);
 };

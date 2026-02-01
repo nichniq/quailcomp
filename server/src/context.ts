@@ -54,7 +54,9 @@ function generateRequestId(): string {
  * Create a new request context for an incoming request
  */
 export function createContext(req: Request, sql: Sql): RequestContext {
-  const requestId = generateRequestId();
+  // Extract or generate request ID
+  const requestId =
+    req.headers.get("x-request-id") ?? generateRequestId();
 
   return {
     requestId,
