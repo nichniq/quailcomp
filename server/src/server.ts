@@ -6,6 +6,7 @@
 
 import { getConnection, type Sql } from "@quailcomp/data";
 
+import { env } from "@/config";
 import { createContext } from "@/context";
 import { compose } from "@/middleware/compose";
 import { defaultCors } from "@/middleware/cors";
@@ -48,8 +49,8 @@ function registerRoutes(router: Router, sql: Sql): void {
  * Create and start the HTTP server
  */
 export function createServer(config: ServerConfig = {}): ServerInstance {
-  const port = config.port ?? Number(process.env.PORT) ?? 3000;
-  const hostname = config.hostname ?? "0.0.0.0";
+  const port = config.port ?? env.PORT;
+  const hostname = config.hostname ?? env.HOST;
 
   const router = createRouter();
   const sql = getConnection();

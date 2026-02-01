@@ -4,6 +4,7 @@
  * Handles Cross-Origin Resource Sharing headers.
  */
 
+import { env } from "@/config";
 import type { Middleware } from "@/middleware/types";
 
 export interface CorsOptions {
@@ -133,6 +134,9 @@ export function cors(options: CorsOptions = {}): Middleware {
 }
 
 /**
- * Default CORS middleware (allows all origins)
+ * Default CORS middleware (configured from environment)
  */
-export const defaultCors = cors();
+export const defaultCors = cors({
+  origin: env.CORS_ORIGINS,
+  credentials: true,
+});

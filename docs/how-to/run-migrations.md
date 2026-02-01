@@ -7,6 +7,8 @@ This guide covers creating and running database migrations in Quailcomp.
 | Command | Description |
 |---------|-------------|
 | `bun run db:migrate` | Run pending migrations on development database |
+| `bun run scripts/rollback-migration.ts 003` | Rollback a specific migration |
+| `bun run scripts/rollback-migration.ts all` | Rollback all migrations |
 | `./data/postgres/migrations/run.sh` | Run migrations directly |
 | `./data/postgres/migrations/verify.sh` | Verify migration status |
 
@@ -187,6 +189,57 @@ Run setup first:
 cd data/postgres/setup
 ./run.sh
 ```
+
+## Rolling Back Migrations
+
+Down migrations allow you to undo schema changes. Each migration has a corresponding `*_down.sql` file.
+
+### Rollback a Specific Migration
+
+```bash
+# Rollback migration 003
+bun run scripts/rollback-migration.ts 003
+```
+
+### Rollback All Migrations
+
+```bash
+# Rollback all migrations in reverse order
+bun run scripts/rollback-migration.ts all
+```
+
+### Warning: Data Loss
+
+**Rolling back migrations will DELETE DATA:**
+
+- Migration 001 down: Deletes all entities and events
+- Migration 002 down: Deletes all users and permissions
+- Migration 003 down: Only removes indexes (safe)
+
+Always backup your database before rolling back:
+
+```bash
+pg_dump quailcomp > backup.sql
+```
+
+### Creating Down Migrations
+
+When creating a new migration, also create a down migration:
+
+```bash
+# Create up migration
+touch data/postgres/migrations/004_add_feature.sql
+
+# Create down migration
+touch data/postgres/migrations/004_add_feature_down.sql
+```
+
+Down migrations should:
+
+- Reverse all changes from the up migration
+- Drop tables/indexes in reverse order
+- Handle dependencies (CASCADE where needed)
+- Document any data loss warnings
 
 ## Related
 

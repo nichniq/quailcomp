@@ -2,50 +2,37 @@
 
 This document lists all environment variables used by Quailcomp.
 
-## Database
+## Configuration Validation
 
-### Required
+Server configuration is validated using [Zod](https://zod.dev) schemas. Invalid configuration will cause the server to fail on startup with a clear error message. See [server/src/config.ts](../../server/src/config.ts:1) for the validation schema.
 
-| Variable | Description | Default | Example |
-|----------|-------------|---------|---------|
-| `DB_HOST` | Database host | `localhost` | `localhost` |
-| `DB_PORT` | Database port | `5432` | `5432` |
-| `DB_NAME` | Database name | `quailcomp` | `quailcomp` |
-| `DB_USER` | Database user | `quailcomp_app` | `quailcomp_app` |
-| `DB_PASSWORD` | Database password | (none) | `your_password` |
+## Server (Required)
 
-### Optional
+| Variable | Description | Default | Validation |
+|----------|-------------|---------|------------|
+| `DATABASE_URL` | PostgreSQL connection URL | (none) | Must be valid PostgreSQL URL |
+| `JWT_SECRET` | Secret key for JWT tokens | (none) | Minimum 32 characters |
+| `NODE_ENV` | Runtime environment | `development` | `development`, `production`, or `test` |
 
-| Variable | Description | Default | Example |
-|----------|-------------|---------|---------|
-| `DB_TEST_NAME` | Test database name | `quailcomp_test` | `quailcomp_test` |
-| `DB_SUPERUSER` | Superuser for setup scripts | `$USER` | `postgres` |
-
-### PostgreSQL Standard Variables
-
-The database scripts also support standard PostgreSQL environment variables:
-
-| Variable | Maps To | Example |
-|----------|---------|---------|
-| `PGHOST` | `DB_HOST` | `localhost` |
-| `PGPORT` | `DB_PORT` | `5432` |
-| `PGDATABASE` | `DB_NAME` | `quailcomp` |
-| `PGUSER` | `DB_USER` | `quailcomp_app` |
-| `PGPASSWORD` | `DB_PASSWORD` | `your_password` |
-
-## Authentication
-
-| Variable | Description | Required | Example |
-|----------|-------------|----------|---------|
-| `JWT_SECRET` | Secret key for JWT tokens | Yes (server) | `your_secret_key_here` |
-
-## Server
+## Server (Optional)
 
 | Variable | Description | Default | Example |
 |----------|-------------|---------|---------|
 | `PORT` | Server port | `3000` | `3000` |
-| `HOSTNAME` | Server hostname | `0.0.0.0` | `localhost` |
-| `LOG_LEVEL` | Logging level | `info` | `debug`, `info`, `warn`, `error` |
+| `HOST` | Server hostname | `0.0.0.0` | `0.0.0.0` |
+| `JWT_EXPIRES_IN` | JWT token expiration | `7d` | `7d`, `24h`, `30m` |
+| `JWT_SECRET_OLD` | Previous JWT secret for rotation | (none) | 32+ character string |
+| `CORS_ORIGINS` | Allowed CORS origins (comma-separated) | `http://localhost:5173` | `http://localhost:5173,http://localhost:3000` |
+| `RATE_LIMIT_ENABLED` | Enable rate limiting | `true` | `true`, `false` |
+| `LOG_LEVEL` | Logging level | `info` | `error`, `warn`, `info`, `debug` |
+
+## Analytics
+
+| Variable | Description | Default | Example |
+|----------|-------------|---------|---------|
+| `ANALYTICS_ENABLED` | Enable analytics tracking | `true` | `true`, `false` |
+| `ANALYTICS_RETENTION_DAYS` | Days to retain analytics data | `90` | `90`, `30`, `180` |
+
 
 ## Book Metadata Providers
 
@@ -58,28 +45,29 @@ The database scripts also support standard PostgreSQL environment variables:
 
 ## Environment File
 
-Create a `.env` file in the project root:
+Copy `.env.example` to `.env` and fill in your values:
 
 ```bash
-# Database
-DB_HOST=localhost
-DB_PORT=5432
-DB_NAME=quailcomp
-DB_USER=quailcomp_app
-DB_PASSWORD=your_password
-
-# Authentication
-JWT_SECRET=your_jwt_secret_key
-
-# Server
-PORT=3000
-HOSTNAME=0.0.0.0
-LOG_LEVEL=info
-
-# Book Metadata (optional)
-GOOGLE_BOOKS_API_KEY=your_google_books_key
-HARDCOVER_API_KEY=your_hardcover_key
+cp .env.example .env
 ```
+
+The `.env.example` file contains all available configuration options with documentation. See [.env.example](../../.env.example:1) for the complete template.
+
+## Database Setup Scripts
+
+The database setup scripts (separate from the server) use different environment variables:
+
+| Variable | Description | Default | Example |
+|----------|-------------|---------|---------|
+| `DB_HOST` | Database host | `localhost` | `localhost` |
+| `DB_PORT` | Database port | `5432` | `5432` |
+| `DB_NAME` | Database name | `quailcomp` | `quailcomp` |
+| `DB_USER` | Database user | `quailcomp_app` | `quailcomp_app` |
+| `DB_PASSWORD` | Database password | (none) | `your_password` |
+| `DB_TEST_NAME` | Test database name | `quailcomp_test` | `quailcomp_test` |
+| `DB_SUPERUSER` | Superuser for setup scripts | `$USER` | `postgres` |
+
+These also support standard PostgreSQL environment variables (`PGHOST`, `PGPORT`, `PGDATABASE`, `PGUSER`, `PGPASSWORD`).
 
 ## Per-Directory .env Files
 

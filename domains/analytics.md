@@ -4,7 +4,7 @@
 
 Analytics events capture facts about how the system is being used, track performance metrics, and provide insights into user behavior. Unlike domain events (which record business facts like "book acquired"), analytics events record observability data like HTTP requests, error rates, and user interactions.
 
-All analytics events use the `analytics.*` prefix in their event_type and are stored in the same `events` table as domain events, following the event-sourcing pattern with 90-day retention.
+All analytics events use the `analytics.*` prefix in their event_type and are stored in the same `events` table as domain events, following the event-sourcing pattern. See [Retention Policy](#retention-policy) below for cleanup details.
 
 ## HTTP Request Analytics
 
@@ -274,6 +274,14 @@ Analytics events are voided (soft-deleted) after 90 days to manage storage growt
 - 10,000 requests/day = 10MB/day ≈ 300MB/month
 - With 90-day retention: ~900MB steady state for HTTP analytics
 - Total analytics storage (all types): ~1-2GB
+
+**Automated cleanup:**
+
+Retention is configurable via `ANALYTICS_RETENTION_DAYS` (default: 90). Schedule automatic cleanup:
+
+- See [How to Schedule Analytics Cleanup](../docs/how-to/schedule-analytics-cleanup.md)
+- Run manually: `bun run scripts/cleanup-analytics.ts`
+- Test first: `bun run scripts/cleanup-analytics.ts --dry-run`
 
 ## Query Patterns
 
