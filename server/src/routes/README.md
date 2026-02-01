@@ -5,7 +5,8 @@ HTTP route handlers for RESTful API endpoints.
 ## Files
 
 - [`books.ts`](books.ts) - Book management endpoints (CRUD operations)
-- [`health.ts`](health.ts) - Health check endpoint
+- [`entities.ts`](entities.ts) - Entity access management endpoints
+- [`health.ts`](health.ts) - Health check and metrics endpoints
 
 ## Structure
 
@@ -46,10 +47,12 @@ PUT    /api/books/:id   - Update book
 DELETE /api/books/:id   - Delete book
 ```
 
-### Health
+### Health & Metrics
 
 ```
-GET /health            - Health check
+GET /health            - Health check (database connectivity)
+GET /metrics           - Prometheus metrics (text format)
+GET /metrics/json      - Metrics snapshot (JSON format)
 ```
 
 ## Authentication & Authorization

@@ -4,7 +4,8 @@ Structured logging for HTTP requests and application events.
 
 ## Files
 
-- [`logger.ts`](logger.ts) - Core logger implementation with structured output
+- [`logger.ts`](logger.ts) - Core logger interface and console logger implementation
+- [`pino-logger.ts`](pino-logger.ts) - Pino logger adapter (production, with field redaction)
 - [`request-logger.ts`](request-logger.ts) - HTTP request/response logging middleware
 - [`index.ts`](index.ts) - Public API exports
 
@@ -31,19 +32,31 @@ logger.debug('Processing request', { userId: user.id })
 
 ## Output Format
 
-Logs are structured as JSON for easy parsing and aggregation:
+In **development**, logs are pretty-printed with colors for readability:
+
+```
+[23:02:28.193] INFO: Request started
+    requestId: "ml4cj1wg-4ljs1gu"
+    method: "GET"
+    path: "/health"
+```
+
+In **production**, logs are structured as JSON for easy parsing and aggregation:
 
 ```json
 {
-  "level": "info",
-  "timestamp": "2026-01-28T12:00:00Z",
-  "message": "Request completed",
+  "level": 30,
+  "time": "2026-01-28T12:00:00.000Z",
+  "msg": "Request completed",
+  "requestId": "ml4cj1wg-4ljs1gu",
   "method": "GET",
   "path": "/api/books",
   "status": 200,
-  "duration": 45
+  "durationMs": 45
 }
 ```
+
+**Sensitive fields** (passwords, tokens, secrets, API keys) are automatically redacted in logs.
 
 ## Request Logging
 

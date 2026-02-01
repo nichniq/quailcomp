@@ -12,8 +12,9 @@ Comprehensive test suite for the Quailcomp server application.
 | `logging.test.ts` | 23 | Logger, request logging middleware |
 | `metrics.test.ts` | 25 | Metrics collector, request metrics middleware |
 | `routes.test.ts` | 25 | Books CRUD, health/metrics endpoints, authentication flows |
+| `observability.test.ts` | 5 | Prometheus metrics, request ID tracking, JSON metrics |
 
-**Total:** 162 server tests
+**Total:** 167 server tests
 
 ## What's Tested
 
@@ -36,6 +37,7 @@ Comprehensive test suite for the Quailcomp server application.
 
 - **Logging**: Structured JSON logging, log levels, child loggers, request lifecycle
 - **Metrics**: Counters, histograms, request tracking, latency measurement
+- **Observability**: Prometheus text format, request ID tracking, metrics endpoints
 
 ### API Routes
 

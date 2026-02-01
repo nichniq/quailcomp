@@ -40,19 +40,18 @@ bun run db:teardown
 ```
 server/
 ├── src/
-│   ├── db/
-│   │   ├── config.ts      # Database configuration
-│   │   ├── connection.ts  # Connection management
-│   │   ├── entities.ts    # Entities table client
-│   │   └── index.ts       # Module exports
-│   └── types/
-│       └── entities.ts    # TypeScript typing approaches
-├── tests/
-│   ├── entities.test.ts   # Comprehensive entity tests
-│   └── types.test.ts      # Type system tests
-├── scripts/
-│   ├── setup-test-db.ts   # Create test database
-│   └── teardown-test-db.ts # Drop test database
+│   ├── auth/              # Authentication & authorization
+│   ├── config.ts          # Environment configuration
+│   ├── context.ts         # Request context
+│   ├── index.ts           # Server entry point
+│   ├── logging/           # Structured logging (Pino)
+│   ├── metrics/           # Metrics collection (Prometheus)
+│   ├── middleware/        # HTTP middleware
+│   ├── observability/     # Error tracking (Sentry)
+│   ├── router.ts          # HTTP router
+│   ├── routes/            # API route handlers
+│   └── server.ts          # Server setup
+├── tests/                 # Test suite (167 tests)
 ├── package.json
 └── tsconfig.json
 ```

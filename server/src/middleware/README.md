@@ -6,7 +6,8 @@ HTTP middleware for request processing pipeline.
 
 - [`compose.ts`](compose.ts) - Middleware composition utilities
 - [`cors.ts`](cors.ts) - Cross-Origin Resource Sharing (CORS) configuration
-- [`error-handler.ts`](error-handler.ts) - Global error handling middleware
+- [`error-handler.ts`](error-handler.ts) - Global error handling with Sentry integration
+- [`request-id.ts`](request-id.ts) - Request ID tracking and echoing
 - [`types.ts`](types.ts) - Middleware type definitions
 - [`index.ts`](index.ts) - Public API exports
 
@@ -46,7 +47,7 @@ app.use(cors({
 
 ### Error Handler
 
-Catches and formats errors consistently:
+Catches and formats errors consistently, with Sentry integration:
 
 ```typescript
 app.use(errorHandler())
@@ -54,6 +55,18 @@ app.use(errorHandler())
 // Errors thrown anywhere in the pipeline are handled
 throw new Error('Something went wrong')
 // Returns: { error: 'Something went wrong' } with appropriate status
+// Unexpected errors are also captured in Sentry with full context
+```
+
+### Request ID
+
+Echoes request ID in response headers for distributed tracing:
+
+```typescript
+app.use(requestIdMiddleware)
+
+// Request ID is extracted from X-Request-Id header or generated
+// Response includes: x-request-id: ml4cj1wg-4ljs1gu
 ```
 
 ### Compose
@@ -68,10 +81,11 @@ const stack = compose([middleware1, middleware2, middleware3])
 
 Middleware executes in the order it's registered:
 
-1. CORS (must be early for preflight requests)
-2. Request logging
-3. Request metrics
-4. Authentication
-5. Authorization
-6. Route handlers
-7. Error handler (must be last to catch all errors)
+1. Error handler (wraps everything to catch errors)
+2. Request ID (generate/extract early for logging)
+3. Request logging
+4. Request metrics
+5. CORS (before route handlers)
+6. Authentication
+7. Authorization
+8. Route handlers
