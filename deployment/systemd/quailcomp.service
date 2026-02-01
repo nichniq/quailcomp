@@ -1,0 +1,43 @@
+[Unit]
+Description=Quailcomp Event-Sourced Book Tracking Application
+Documentation=https://github.com/yourusername/quailcomp
+After=network.target postgresql.service
+Wants=postgresql.service
+
+[Service]
+Type=simple
+User=quailcomp
+Group=quailcomp
+WorkingDirectory=/opt/quailcomp
+
+# Environment
+Environment="NODE_ENV=production"
+Environment="PORT=3000"
+EnvironmentFile=/opt/quailcomp/.env
+
+# Start the server using Bun
+ExecStart=/usr/local/bin/bun run server/src/index.ts
+
+# Restart policy
+Restart=on-failure
+RestartSec=10s
+
+# Resource limits
+LimitNOFILE=65536
+MemoryMax=512M
+CPUQuota=200%
+
+# Security hardening
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/opt/quailcomp/logs
+
+# Logging
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=quailcomp
+
+[Install]
+WantedBy=multi-user.target

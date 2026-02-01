@@ -5,8 +5,10 @@
  */
 
 import { getConnection, type Sql } from "@quailcomp/data";
+import * as path from "node:path";
+import { file } from "bun";
 
-import { env } from "@/config";
+import { env, isProduction } from "@/config";
 import { createContext } from "@/context";
 import { compose } from "@/middleware/compose";
 import { defaultCors } from "@/middleware/cors";
@@ -79,6 +81,25 @@ export function createServer(config: ServerConfig = {}): ServerInstance {
       const match = router.match(req.method, url.pathname);
 
       if (!match) {
+        // In production, serve static files from frontend/dist/
+        if (isProduction && !url.pathname.startsWith("/api/")) {
+          const staticFilePath = url.pathname === "/"
+            ? "frontend/dist/index.html"
+            : `frontend/dist${url.pathname}`;
+
+          const staticFile = file(path.join(process.cwd(), staticFilePath));
+
+          if (await staticFile.exists()) {
+            return new Response(staticFile);
+          }
+
+          // SPA fallback: serve index.html for all non-API routes
+          const indexFile = file(path.join(process.cwd(), "frontend/dist/index.html"));
+          if (await indexFile.exists()) {
+            return new Response(indexFile);
+          }
+        }
+
         return Response.json({ error: "Not found" }, { status: 404 });
       }
 

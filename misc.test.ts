@@ -133,3 +133,179 @@ describe('Code Coverage Infrastructure', () => {
     expect(config).toContain('0.9')
   })
 })
+
+describe('Deployment Infrastructure', () => {
+  test('systemd service file exists and has correct structure', async () => {
+    const servicePath = 'deployment/systemd/quailcomp.service'
+    const serviceFile = Bun.file(servicePath)
+
+    expect(await serviceFile.exists()).toBe(true)
+
+    const content = await serviceFile.text()
+
+    // Check for required systemd sections
+    expect(content).toContain('[Unit]')
+    expect(content).toContain('[Service]')
+    expect(content).toContain('[Install]')
+
+    // Check for essential service configuration
+    expect(content).toContain('Type=simple')
+    expect(content).toContain('User=quailcomp')
+    expect(content).toContain('Group=quailcomp')
+    expect(content).toContain('WorkingDirectory=/opt/quailcomp')
+
+    // Check for restart policy
+    expect(content).toContain('Restart=on-failure')
+
+    // Check for security hardening
+    expect(content).toContain('NoNewPrivileges=true')
+    expect(content).toContain('PrivateTmp=true')
+
+    // Check for resource limits
+    expect(content).toContain('MemoryMax=')
+    expect(content).toContain('CPUQuota=')
+
+    // Check for proper dependencies
+    expect(content).toContain('After=network.target postgresql.service')
+    expect(content).toContain('Wants=postgresql.service')
+  })
+
+  test('logrotate configuration exists and is valid', async () => {
+    const logrotateFile = Bun.file('deployment/systemd/logrotate.conf')
+
+    expect(await logrotateFile.exists()).toBe(true)
+
+    const content = await logrotateFile.text()
+
+    // Check for log path
+    expect(content).toContain('/opt/quailcomp/logs/*.log')
+
+    // Check for rotation settings
+    expect(content).toContain('daily')
+    expect(content).toContain('rotate 14')
+    expect(content).toContain('compress')
+
+    // Check for safety options
+    expect(content).toContain('missingok')
+    expect(content).toContain('notifempty')
+  })
+
+  test('installation script exists and is executable', async () => {
+    const installScript = 'deployment/install.sh'
+    const file = Bun.file(installScript)
+
+    expect(await file.exists()).toBe(true)
+
+    // Check if executable
+    const stat = await $`stat -f "%Lp" ${installScript}`.text()
+    const permissions = stat.trim()
+    expect(permissions).toMatch(/[1-9]/) // Has execute permission
+
+    const content = await file.text()
+
+    // Check for bash shebang
+    expect(content).toMatch(/^#!\/usr\/bin\/env bash/)
+
+    // Check for essential functions
+    expect(content).toContain('check_prerequisites')
+    expect(content).toContain('create_service_user')
+    expect(content).toContain('install_dependencies')
+    expect(content).toContain('build_frontend')
+    expect(content).toContain('install_systemd_service')
+
+    // Check for error handling
+    expect(content).toContain('set -euo pipefail')
+  })
+
+  test('deployment README exists and covers key topics', async () => {
+    const readme = Bun.file('deployment/README.md')
+
+    expect(await readme.exists()).toBe(true)
+
+    const content = await readme.text()
+
+    // Check for essential sections
+    expect(content).toContain('# Quailcomp Deployment Guide')
+    expect(content).toContain('## Prerequisites')
+    expect(content).toContain('## Installation')
+    expect(content).toContain('## Service Management')
+    expect(content).toContain('## Troubleshooting')
+
+    // Check for systemd commands
+    expect(content).toContain('systemctl start quailcomp')
+    expect(content).toContain('systemctl stop quailcomp')
+    expect(content).toContain('systemctl status quailcomp')
+
+    // Check for Nginx configuration
+    expect(content).toContain('Nginx')
+
+    // Check for SSL/HTTPS setup
+    expect(content).toContain('SSL')
+    expect(content).toContain('Let\'s Encrypt')
+  })
+})
+
+describe('Graceful Shutdown', () => {
+  test('test script exists and is executable', async () => {
+    const scriptPath = 'scripts/test-shutdown.sh'
+    const file = Bun.file(scriptPath)
+
+    expect(await file.exists()).toBe(true)
+
+    // Check if executable
+    const stat = await $`stat -f "%Lp" ${scriptPath}`.text()
+    const permissions = stat.trim()
+    expect(permissions).toMatch(/[1-9]/) // Has execute permission
+
+    const content = await file.text()
+    expect(content).toContain('#!/bin/bash')
+    expect(content).toContain('graceful shutdown')
+  })
+
+  test('server index.ts has signal handlers', async () => {
+    const indexFile = await Bun.file('server/src/index.ts').text()
+
+    // Check for signal handlers
+    expect(indexFile).toContain('process.on("SIGTERM"')
+    expect(indexFile).toContain('process.on("SIGINT"')
+    expect(indexFile).toContain('gracefulShutdown')
+
+    // Check for error handlers
+    expect(indexFile).toContain('process.on("uncaughtException"')
+    expect(indexFile).toContain('process.on("unhandledRejection"')
+  })
+})
+
+describe('Static File Serving', () => {
+  test('test script exists and is executable', async () => {
+    const scriptPath = 'scripts/test-static-files.sh'
+    const file = Bun.file(scriptPath)
+
+    expect(await file.exists()).toBe(true)
+
+    // Check if executable
+    const stat = await $`stat -f "%Lp" ${scriptPath}`.text()
+    const permissions = stat.trim()
+    expect(permissions).toMatch(/[1-9]/) // Has execute permission
+
+    const content = await file.text()
+    expect(content).toContain('#!/bin/bash')
+    expect(content).toContain('static file serving')
+  })
+
+  test('server.ts has static file serving in production', async () => {
+    const serverFile = await Bun.file('server/src/server.ts').text()
+
+    // Check for production mode check
+    expect(serverFile).toContain('isProduction')
+
+    // Check for frontend/dist serving
+    expect(serverFile).toContain('frontend/dist')
+
+    // Check for SPA fallback
+    expect(serverFile).toContain('index.html')
+
+    // Check for non-API route filtering
+    expect(serverFile).toContain('/api/')
+  })
+})
