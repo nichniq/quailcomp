@@ -15,9 +15,14 @@ These guides answer "How do I...?" questions with step-by-step instructions. The
 - [Run Code Coverage](run-coverage.md) - Generate coverage reports and enforce thresholds
 - [Run Migrations](run-migrations.md) - Apply database schema migrations
 
+### Production Deployment
+
+- [Deploy to Production](deploy-production.md) - Complete production deployment guide for VPS/dedicated servers
+- [Backup and Restore (Production)](backup-restore-production.md) - Production backup strategies and disaster recovery
+
 ### Database Operations
 
-- [Backup and Restore Database](backup-restore-database.md) - Database backup and recovery procedures
+- [Backup and Restore Database](backup-restore-database.md) - Development database backup and recovery procedures
 
 ### Version Control
 

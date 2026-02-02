@@ -1,6 +1,8 @@
 # Quailcomp Deployment Guide
 
-This guide covers deploying Quailcomp to a Linux server using systemd for process management.
+This guide provides a quick reference for deploying Quailcomp to a Linux server using systemd for process management.
+
+**For comprehensive production deployment instructions, see [docs/how-to/deploy-production.md](../docs/how-to/deploy-production.md)**
 
 ## Overview
 
@@ -404,20 +406,20 @@ Configure to monitor: `https://yourdomain.com/health`
 
 ## Backup and Restore
 
-See [deployment/backup.sh](./backup.sh) for automated backup script.
+**For comprehensive backup and restore procedures, see [docs/how-to/backup-restore-production.md](../docs/how-to/backup-restore-production.md)**
 
-Manual backup:
+Quick backup:
 
 ```bash
-# Backup database
-sudo -u postgres pg_dump quailcomp | gzip > quailcomp-$(date +%Y%m%d-%H%M%S).sql.gz
+# Run automated backup script
+sudo -u quailcomp /opt/quailcomp/deployment/backup.sh
 ```
 
-Manual restore:
+Quick restore:
 
 ```bash
-# Restore database
-gunzip < quailcomp-20260201-120000.sql.gz | sudo -u postgres psql quailcomp
+# Restore from latest backup
+gunzip < /var/backups/quailcomp/quailcomp-YYYYMMDD-HHMMSS.sql.gz | sudo -u postgres psql quailcomp
 ```
 
 ## Security Checklist
@@ -472,8 +474,21 @@ For issues and questions:
 - GitHub Issues: <https://github.com/yourusername/quailcomp/issues>
 - Documentation: [docs/](../docs/)
 
+## Deployment Scripts
+
+This directory contains production deployment utilities:
+
+- [install.sh](./install.sh) - Application installation script
+- [backup.sh](./backup.sh) - Automated database backup with retention
+- [healthcheck.sh](./healthcheck.sh) - Health check script for monitoring
+- [nginx/quailcomp.conf](./nginx/quailcomp.conf) - Nginx reverse proxy configuration
+- [systemd/quailcomp.service](./systemd/quailcomp.service) - Systemd service unit
+- [systemd/logrotate.conf](./systemd/logrotate.conf) - Log rotation configuration
+
 ## Related Documentation
 
-- [Development Setup](../docs/how-to/setup-development.md)
-- [Database Roles](../docs/explanation/database-roles.md)
-- [Environment Variables](../docs/reference/environment-variables.md)
+- **[Production Deployment Guide](../docs/how-to/deploy-production.md)** - Complete deployment instructions
+- **[Backup and Restore Guide](../docs/how-to/backup-restore-production.md)** - Backup procedures
+- [Development Setup](../docs/how-to/setup-development.md) - Local development setup
+- [Database Roles](../docs/explanation/database-roles.md) - Database user permissions
+- [Environment Variables](../docs/reference/environment-variables.md) - Configuration reference
