@@ -6,27 +6,43 @@ This guide covers running tests in the Quailcomp project.
 
 | Command | Description |
 |---------|-------------|
-| `bun test` | Run all tests with linting |
-| `bun test:unit` | Run tests without linting |
-| `bun test:watch` | Watch mode for data/client |
+| `bun run test` | Run all tests with linting (recommended) |
+| `bun run test:unit` | Run tests without linting |
+| `bun run test:watch` | Watch mode for data/client |
+
+**Important**: Always use `bun run test` (the npm script), not `bun test` directly. See [Frontend Tests](#frontend-tests) below for why.
 
 ## Running Tests
 
 ### All Tests
 
 ```bash
-bun test
+bun run test
 ```
 
 This runs the full test suite including linting. Use this after making code changes to verify everything works.
 
+**Note**: Use `bun run test` (the npm script), not `bun test` directly. The direct `bun test` command will attempt to run ALL `.test.ts` files with Bun's native test runner, including frontend tests that are written for Vitest and will fail.
+
 ### Unit Tests Only
 
 ```bash
-bun test:unit
+bun run test:unit
 ```
 
 Skips linting for faster feedback during development.
+
+### Frontend Tests
+
+Frontend tests use Vitest (not Bun's test runner) and must be run via the npm script:
+
+```bash
+bun run test:frontend
+```
+
+This delegates to `bunx vitest run` which properly loads the Vitest configuration, mocks (like `localStorage`), and test environment.
+
+**Why this matters**: Bun's `test` command discovers and runs ALL `*.test.ts` files using Bun's native test runner. Frontend tests are written for Vitest and use Vitest APIs (`vi.stubGlobal`, etc.) that don't exist in Bun's runner. Running `bun test` directly will cause frontend tests to fail with errors like `localStorage is not defined`.
 
 ### Watch Mode
 

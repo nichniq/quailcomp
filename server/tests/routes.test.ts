@@ -89,11 +89,10 @@ describe("metricsHandler", () => {
     const response = await metricsHandler(ctx, request);
 
     expect(response.status).toBe(200);
-    const data = await response.json();
-    expect(data.timestamp).toBeDefined();
-    expect(data.counters).toBeDefined();
-    expect(data.histograms).toBeDefined();
-    expect(Array.isArray(data.counters)).toBe(true);
+    // The /metrics endpoint returns Prometheus format (plain text), not JSON
+    const text = await response.text();
+    expect(text).toContain("test_metric");
+    expect(response.headers.get("Content-Type")).toContain("text/plain");
   });
 });
 
@@ -108,13 +107,13 @@ describe("Books routes", () => {
   const testTimestamp = Date.now();
 
   beforeAll(async () => {
-    // Create test user
+    // Create test user in users table (required for FK constraints)
     const [user] = await sql`
-      INSERT INTO entities (entity_id, type, data)
-      VALUES (nextval('entity_id_seq'), 'user', ${{ email: `test-books-${testTimestamp}@example.com` }})
-      RETURNING entity_id
+      INSERT INTO users (email, username)
+      VALUES (${`test-books-${testTimestamp}@example.com`}, ${`test_books_${testTimestamp}`})
+      RETURNING user_id
     `;
-    testUserId = user.entity_id;
+    testUserId = BigInt(user.user_id);
 
     // Setup router with book routes
     router = new Router();
@@ -122,8 +121,8 @@ describe("Books routes", () => {
   });
 
   afterAll(async () => {
-    // Clean up test user and books
-    await sql`DELETE FROM entities WHERE entity_id = ${testUserId}`;
+    // Clean up test user (will cascade delete entity_access entries)
+    await sql`DELETE FROM users WHERE user_id = ${testUserId}`;
   });
 
   // Helper to create authenticated request with JWT token

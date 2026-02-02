@@ -126,8 +126,8 @@ export function createWebSocketHandler(sql: Sql) {
 
             // Check if user has read access to this entity
             const hasAccess = await authzService.checkAccess(
-              data.entityId,
               ws.data.userId,
+              data.entityId,
               "read"
             );
 

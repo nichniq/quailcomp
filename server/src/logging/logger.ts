@@ -114,10 +114,15 @@ export function createConsoleLogger(options?: LoggerOptions): Logger {
 }
 
 /**
- * Create a new logger instance (uses Pino in production)
+ * Create a new logger instance (uses Pino in production, ConsoleLogger in tests)
  */
 export function createLogger(options?: LoggerOptions): Logger {
-  // Use Pino logger by default
+  // Use ConsoleLogger in test environment for simpler JSON output
+  if (process.env.NODE_ENV === 'test') {
+    return new ConsoleLogger(options);
+  }
+
+  // Use Pino logger in production/development
   const { createPinoLogger } = require("./pino-logger");
   return createPinoLogger(options);
 }

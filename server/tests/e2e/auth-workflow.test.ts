@@ -91,7 +91,7 @@ describe("E2E Authentication Workflow", () => {
     expect(response.status).toBe(400);
 
     const error = await response.json();
-    expect(error.error).toContain("at least 8 characters");
+    expect(error.error).toContain("at least 12 characters");
   });
 
   test("registration with invalid email fails", async () => {

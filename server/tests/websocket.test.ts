@@ -46,7 +46,8 @@ describe("WebSocket", () => {
 
   afterAll(async () => {
     server.stop();
-    await sql.end();
+    // Note: Don't close the shared sql connection here as it's used by other tests
+    // The connection is a singleton from getConnection() and closing it will break other tests
   });
 
   describe("Connection and Authentication", () => {

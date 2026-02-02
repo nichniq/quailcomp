@@ -672,8 +672,8 @@ export function registerBookRoutes(router: Router, sql: Sql): void {
 
         // Check write access
         const hasAccess = await authzService.checkAccess(
-          update.entity_id,
           ctx.user.userId,
+          update.entity_id,
           "write"
         );
 

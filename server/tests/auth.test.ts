@@ -197,7 +197,7 @@ describe("AuthService", () => {
 
   test("register creates new user with password credential", async () => {
     const email = `test-register-${testTimestamp}@example.com`;
-    const password = "securePassword123";
+    const password = "SecurePass123!";
 
     const result = await authService.register({
       email,
@@ -219,7 +219,7 @@ describe("AuthService", () => {
 
   test("register without username succeeds", async () => {
     const email = `no-username-${testTimestamp}@example.com`;
-    const password = "securePassword456";
+    const password = "SecurePass456!";
 
     const result = await authService.register({
       email,
@@ -243,7 +243,7 @@ describe("AuthService", () => {
 
   test("register with duplicate username fails", async () => {
     const username = `duplicate_user_${testTimestamp}`;
-    const password = "password789";
+    const password = "Password789!";
 
     await authService.register({
       email: `first-${testTimestamp}@example.com`,
@@ -275,12 +275,12 @@ describe("AuthService", () => {
         email: `weak-pwd-${testTimestamp}@example.com`,
         password: "short",
       })
-    ).rejects.toThrow("at least 8 characters");
+    ).rejects.toThrow("at least 12 characters");
   });
 
   test("login with correct email and password succeeds", async () => {
     const email = `login-test-${testTimestamp}@example.com`;
-    const password = "loginPassword123";
+    const password = "LoginPass123!";
 
     const registered = await authService.register({ email, password });
 
@@ -301,7 +301,7 @@ describe("AuthService", () => {
   test("login with username succeeds", async () => {
     const email = `username-login-${testTimestamp}@example.com`;
     const username = `login_user_${testTimestamp}`;
-    const password = "usernamePassword123";
+    const password = "UserPass123!";
 
     await authService.register({ email, password, username });
 
@@ -316,7 +316,7 @@ describe("AuthService", () => {
 
   test("login with incorrect password fails", async () => {
     const email = `wrong-pwd-${testTimestamp}@example.com`;
-    const password = "correctPassword123";
+    const password = "CorrectPass123!";
 
     await authService.register({ email, password });
 
