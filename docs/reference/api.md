@@ -507,6 +507,635 @@ If some updates fail (e.g., due to permissions or non-existent books):
 - Updates are applied sequentially, not in a transaction
 - Failed updates don't prevent other updates from succeeding
 
+### People
+
+All people endpoints require authentication. Authorization is enforced per person entity.
+
+#### GET /people
+
+List all people the authenticated user has access to.
+
+**Response (200):**
+
+```json
+{
+  "people": [
+    {
+      "entity_id": 1,
+      "data": {
+        "name": "Jane Doe",
+        "email": "jane@example.com",
+        "relationships": ["gift_giver", "author"]
+      },
+      "entered_at": "2024-02-01T10:30:00Z"
+    }
+  ]
+}
+```
+
+#### GET /people/:id
+
+Get a single person by ID.
+
+**Parameters:**
+
+- `id` (path): Entity ID of the person
+
+**Authorization:** Requires read access to the person
+
+**Response (200):**
+
+```json
+{
+  "person": {
+    "entity_id": 1,
+    "data": {
+      "name": "Jane Doe",
+      "email": "jane@example.com",
+      "phone": "+1-555-0123",
+      "notes": "Author friend from college",
+      "relationships": ["gift_giver", "author"]
+    },
+    "entered_at": "2024-02-01T10:30:00Z"
+  }
+}
+```
+
+**Response (403):**
+
+```json
+{
+  "error": "Forbidden - no read access to this person"
+}
+```
+
+**Response (404):**
+
+```json
+{
+  "error": "Person not found"
+}
+```
+
+#### POST /people
+
+Create a new person. The creator is automatically granted owner access.
+
+**Request:**
+
+```json
+{
+  "name": "Jane Doe",
+  "email": "jane@example.com",
+  "phone": "+1-555-0123",
+  "notes": "Author friend from college",
+  "relationships": ["gift_giver", "author"]
+}
+```
+
+**Required Fields:**
+
+- `name`: Person's full name
+
+**Optional Fields:**
+
+- `email`: Email address
+- `phone`: Phone number
+- `notes`: Additional notes
+- `relationships`: Array of relationship types
+
+**Relationship Types:**
+
+- `author` - Book author
+- `contributor` - Book contributor
+- `gift_giver` - Gave books as gifts
+- `borrower` - Borrowed books
+- `other` - Other relationship
+
+**Response (201):**
+
+```json
+{
+  "person": {
+    "entity_id": 1,
+    "data": {
+      "name": "Jane Doe",
+      "email": "jane@example.com",
+      "phone": "+1-555-0123",
+      "notes": "Author friend from college",
+      "relationships": ["gift_giver", "author"]
+    },
+    "entered_at": "2024-02-01T10:30:00Z"
+  }
+}
+```
+
+**Response (400):**
+
+```json
+{
+  "error": "Validation error",
+  "details": ["name is required"]
+}
+```
+
+#### PUT /people/:id
+
+Update an existing person.
+
+**Authorization:** Requires write access to the person
+
+**Request:**
+
+```json
+{
+  "email": "jane.doe@example.com",
+  "notes": "Updated contact information"
+}
+```
+
+**Notes:**
+
+- Partial update - only provided fields are modified
+- All fields from POST are valid for updates
+
+**Response (200):**
+
+```json
+{
+  "person": {
+    "entity_id": 1,
+    "data": {
+      "name": "Jane Doe",
+      "email": "jane.doe@example.com",
+      "phone": "+1-555-0123",
+      "notes": "Updated contact information",
+      "relationships": ["gift_giver", "author"]
+    },
+    "entered_at": "2024-02-01T10:35:00Z"
+  }
+}
+```
+
+**Response (403):**
+
+```json
+{
+  "error": "Forbidden - no write access to this person"
+}
+```
+
+#### DELETE /people/:id
+
+Soft delete a person. The person data is preserved but marked as deleted.
+
+**Authorization:** Requires owner access to the person
+
+**Response (204):**
+
+No content - deletion successful
+
+**Response (403):**
+
+```json
+{
+  "error": "Forbidden - only owner can delete"
+}
+```
+
+#### GET /people/:id/books
+
+List all books associated with this person (as gift-giver, borrower, etc.).
+
+**Authorization:** Requires read access to the person
+
+**Response (200):**
+
+```json
+{
+  "books": [
+    {
+      "entity_id": 42,
+      "data": {
+        "title": "The Hobbit",
+        "author": "J.R.R. Tolkien",
+        "acquisition": {
+          "type": "given",
+          "person_id": 1,
+          "date": "2024-01-15"
+        }
+      },
+      "relationship": "gift_giver",
+      "entered_at": "2024-01-16T10:00:00Z"
+    }
+  ],
+  "count": 1
+}
+```
+
+### Series
+
+All series endpoints require authentication. Authorization is enforced per series entity.
+
+#### GET /series
+
+List all series the authenticated user has access to.
+
+**Response (200):**
+
+```json
+{
+  "series": [
+    {
+      "entity_id": 1,
+      "data": {
+        "name": "The Lord of the Rings",
+        "total_volumes": 3,
+        "notes": "Classic fantasy trilogy"
+      },
+      "entered_at": "2024-02-01T10:30:00Z"
+    }
+  ]
+}
+```
+
+#### GET /series/:id
+
+Get a single series by ID.
+
+**Parameters:**
+
+- `id` (path): Entity ID of the series
+
+**Authorization:** Requires read access to the series
+
+**Response (200):**
+
+```json
+{
+  "series": {
+    "entity_id": 1,
+    "data": {
+      "name": "The Lord of the Rings",
+      "total_volumes": 3,
+      "notes": "Classic fantasy trilogy"
+    },
+    "entered_at": "2024-02-01T10:30:00Z"
+  }
+}
+```
+
+**Response (403):**
+
+```json
+{
+  "error": "Forbidden - no read access to this series"
+}
+```
+
+**Response (404):**
+
+```json
+{
+  "error": "Series not found"
+}
+```
+
+#### POST /series
+
+Create a new series. The creator is automatically granted owner access.
+
+**Request:**
+
+```json
+{
+  "name": "The Lord of the Rings",
+  "total_volumes": 3,
+  "notes": "Classic fantasy trilogy"
+}
+```
+
+**Required Fields:**
+
+- `name`: Series name
+
+**Optional Fields:**
+
+- `total_volumes`: Expected total number of volumes
+- `notes`: Additional notes about the series
+
+**Response (201):**
+
+```json
+{
+  "series": {
+    "entity_id": 1,
+    "data": {
+      "name": "The Lord of the Rings",
+      "total_volumes": 3,
+      "notes": "Classic fantasy trilogy"
+    },
+    "entered_at": "2024-02-01T10:30:00Z"
+  }
+}
+```
+
+**Response (400):**
+
+```json
+{
+  "error": "Validation error",
+  "details": ["name is required"]
+}
+```
+
+#### PUT /series/:id
+
+Update an existing series.
+
+**Authorization:** Requires write access to the series
+
+**Request:**
+
+```json
+{
+  "total_volumes": 4,
+  "notes": "Including The Silmarillion"
+}
+```
+
+**Notes:**
+
+- Partial update - only provided fields are modified
+- All fields from POST are valid for updates
+
+**Response (200):**
+
+```json
+{
+  "series": {
+    "entity_id": 1,
+    "data": {
+      "name": "The Lord of the Rings",
+      "total_volumes": 4,
+      "notes": "Including The Silmarillion"
+    },
+    "entered_at": "2024-02-01T10:35:00Z"
+  }
+}
+```
+
+**Response (403):**
+
+```json
+{
+  "error": "Forbidden - no write access to this series"
+}
+```
+
+#### DELETE /series/:id
+
+Soft delete a series. The series data is preserved but marked as deleted.
+
+**Authorization:** Requires owner access to the series
+
+**Response (204):**
+
+No content - deletion successful
+
+**Response (403):**
+
+```json
+{
+  "error": "Forbidden - only owner can delete"
+}
+```
+
+#### GET /series/:id/books
+
+List all books in this series, ordered by volume number.
+
+**Authorization:** Requires read access to the series
+
+**Response (200):**
+
+```json
+{
+  "books": [
+    {
+      "entity_id": 10,
+      "data": {
+        "title": "The Fellowship of the Ring",
+        "author": "J.R.R. Tolkien",
+        "series_id": 1,
+        "volume_number": 1
+      },
+      "entered_at": "2024-01-10T10:00:00Z"
+    },
+    {
+      "entity_id": 11,
+      "data": {
+        "title": "The Two Towers",
+        "author": "J.R.R. Tolkien",
+        "series_id": 1,
+        "volume_number": 2
+      },
+      "entered_at": "2024-01-10T10:05:00Z"
+    },
+    {
+      "entity_id": 12,
+      "data": {
+        "title": "The Return of the King",
+        "author": "J.R.R. Tolkien",
+        "series_id": 1,
+        "volume_number": 3
+      },
+      "entered_at": "2024-01-10T10:10:00Z"
+    }
+  ],
+  "count": 3
+}
+```
+
+**Notes:**
+
+- Books are automatically sorted by `volume_number` if present
+- Books without `volume_number` appear at the end
+
+### WebSocket Real-time Updates
+
+The WebSocket endpoint provides real-time notifications for entity changes.
+
+#### WS /ws
+
+Establish a WebSocket connection for real-time entity updates.
+
+**Authentication:** JWT token required via query parameter
+
+**Connection:**
+
+```javascript
+const token = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...';
+const ws = new WebSocket(`ws://localhost:3000/ws?token=${token}`);
+```
+
+**Client → Server Messages:**
+
+Subscribe to entity updates:
+
+```json
+{
+  "type": "subscribe",
+  "entityId": "123"
+}
+```
+
+Unsubscribe from entity updates:
+
+```json
+{
+  "type": "unsubscribe",
+  "entityId": "123"
+}
+```
+
+Ping (keepalive):
+
+```json
+{
+  "type": "ping"
+}
+```
+
+**Server → Client Messages:**
+
+Pong response:
+
+```json
+{
+  "type": "pong",
+  "timestamp": "2024-02-01T10:30:00Z"
+}
+```
+
+Entity created:
+
+```json
+{
+  "type": "entity.created",
+  "entityId": 123,
+  "entityType": "book",
+  "data": {
+    "title": "New Book",
+    "author": "Author Name"
+  },
+  "timestamp": "2024-02-01T10:30:00Z"
+}
+```
+
+Entity updated:
+
+```json
+{
+  "type": "entity.updated",
+  "entityId": 123,
+  "entityType": "book",
+  "data": {
+    "title": "Updated Title",
+    "author": "Author Name",
+    "note": "Added note"
+  },
+  "timestamp": "2024-02-01T10:31:00Z"
+}
+```
+
+Entity deleted:
+
+```json
+{
+  "type": "entity.deleted",
+  "entityId": 123,
+  "entityType": "book",
+  "timestamp": "2024-02-01T10:32:00Z"
+}
+```
+
+**Authorization:**
+
+- JWT token is validated on connection
+- Subscription requests check read access to the entity
+- Clients only receive updates for entities they have access to
+- Invalid subscriptions are silently ignored
+
+**Example Usage:**
+
+```javascript
+const ws = new WebSocket(`ws://localhost:3000/ws?token=${authToken}`);
+
+ws.onopen = () => {
+  console.log('WebSocket connected');
+
+  // Subscribe to book updates
+  ws.send(JSON.stringify({
+    type: 'subscribe',
+    entityId: '123'
+  }));
+};
+
+ws.onmessage = (event) => {
+  const message = JSON.parse(event.data);
+
+  switch (message.type) {
+    case 'pong':
+      console.log('Pong received');
+      break;
+
+    case 'entity.created':
+      console.log('Entity created:', message.entityId, message.data);
+      break;
+
+    case 'entity.updated':
+      console.log('Entity updated:', message.entityId, message.data);
+      // Update UI with new data
+      break;
+
+    case 'entity.deleted':
+      console.log('Entity deleted:', message.entityId);
+      // Remove from UI
+      break;
+  }
+};
+
+ws.onerror = (error) => {
+  console.error('WebSocket error:', error);
+};
+
+ws.onclose = () => {
+  console.log('WebSocket disconnected');
+  // Implement reconnection logic
+};
+
+// Unsubscribe when done
+ws.send(JSON.stringify({
+  type: 'unsubscribe',
+  entityId: '123'
+}));
+```
+
+**Connection Management:**
+
+- Keep-alive pings recommended every 30 seconds
+- Server may close idle connections after 5 minutes
+- Implement exponential backoff for reconnection
+- Resubscribe to entities after reconnection
+
+**Security Notes:**
+
+- JWT token must be valid and not expired
+- Token is checked on initial connection only
+- If token expires, connection will be closed
+- Refresh token and reconnect as needed
+
 ### Monitoring
 
 These endpoints do not require authentication.

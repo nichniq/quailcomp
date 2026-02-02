@@ -35,6 +35,14 @@ Quailcomp is a sophisticated TypeScript application that demonstrates production
 - **Vue 3 Frontend** - Modern SPA with Pinia state management
 - **RESTful API** - Bun HTTP server with middleware composition
 
+### Phase 5 Advanced Features
+
+- **People Management** - Track authors, gift-givers, and borrowers with full CRUD API and relationship tracking
+- **Series Tracking** - Organize books into series with volume ordering and comprehensive series management
+- **Bulk Operations** - Import/export books in CSV, JSON, or XLSX formats with batch update support
+- **Real-time Updates** - WebSocket support for live entity updates with authorization-aware event broadcasting
+- **Batch Processing** - Update multiple books in a single API call with per-entity authorization checks
+
 ## Quick Start
 
 See [Development Setup](docs/how-to/setup-development.md) for complete instructions.
@@ -122,6 +130,8 @@ Each domain is a bounded context documented in `/domains/*.md`:
 - **Authentication** - User identity with multiple authentication methods
 - **Authorization** - Resource-level permissions (owner/write/read)
 - **Books** - Physical book collection and acquisition history
+- **People** - Authors, gift-givers, borrowers, and other contacts
+- **Series** - Book series and collections with volume ordering
 
 Domains reference each other by ID only (loose coupling).
 
@@ -188,10 +198,14 @@ quailcomp/
 │   ├── authentication.md     # Auth domain with types
 │   ├── authorization.md      # Authz domain with types
 │   ├── books.md              # Books domain with types
+│   ├── people.md             # People domain with types
+│   ├── series.md             # Series domain with types
 │   ├── types/                # Auto-generated TypeScript
 │   │   ├── authentication.ts
 │   │   ├── authorization.ts
-│   │   └── books.ts
+│   │   ├── books.ts
+│   │   ├── people.ts
+│   │   └── series.ts
 │   ├── scripts/
 │   │   └── extract-types.ts  # Type extraction script
 │   └── README.md             # Domain philosophy

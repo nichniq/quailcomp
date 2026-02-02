@@ -24,6 +24,10 @@ These guides answer "How do I...?" questions with step-by-step instructions. The
 
 - [Backup and Restore Database](backup-restore-database.md) - Development database backup and recovery procedures
 
+### Data Operations
+
+- [Import and Export Data](import-export-data.md) - Bulk import/export books in CSV, JSON, or XLSX formats
+
 ### Version Control
 
 - [Commit Changes](commit-changes.md) - Follow the project's commit protocol

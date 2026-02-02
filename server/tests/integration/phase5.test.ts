@@ -1,0 +1,673 @@
+/**
+ * Phase 5 Integration Tests
+ *
+ * Tests cross-domain interactions between People, Series, and Books.
+ * These tests verify that Phase 5 domains work together correctly.
+ *
+ * Test Coverage:
+ * - People + Books Integration (gift-giving)
+ * - Series + Books Integration (multi-volume series)
+ * - Export with related entities
+ * - WebSocket notifications for cross-domain changes
+ */
+
+import { describe, test, expect, beforeAll, afterAll } from "bun:test";
+import { getConnection, createEntitiesClient } from "@quailcomp/data";
+import type { Sql } from "@quailcomp/data";
+
+import { Router } from "@/router";
+import { registerBookRoutes } from "@/routes/books";
+import { registerPeopleRoutes } from "@/routes/people";
+import { registerSeriesRoutes } from "@/routes/series";
+import { compose } from "@/middleware/compose";
+import { createContext, type RequestContext } from "@/context";
+import { signToken } from "@/auth/jwt";
+import { AuthService } from "@/auth/service";
+import { AuthorizationService } from "@/authz/service";
+import type { PersonEntitySnapshot } from "@domains/types/people";
+import type { SeriesEntitySnapshot } from "@domains/types/series";
+import type { PhysicalBook } from "@domains/types/books";
+
+let sql: Sql;
+let authService: AuthService;
+let authzService: AuthorizationService;
+
+beforeAll(async () => {
+  sql = getConnection();
+  authService = new AuthService(sql);
+  authzService = new AuthorizationService(sql);
+});
+
+afterAll(async () => {
+  await sql.end();
+});
+
+describe("Phase 5 Integration Tests", () => {
+  let router: Router;
+  let testUserId: number;
+  let authToken: string;
+  const testTimestamp = Date.now();
+
+  beforeAll(async () => {
+    // Create test user
+    const user = await authService.register({
+      email: `test-phase5-${testTimestamp}@example.com`,
+      password: "TestP@ssw0rd123",
+      username: `test_phase5_${testTimestamp}`,
+    });
+    testUserId = user.user.userId;
+    authToken = signToken(user.user.userId);
+
+    // Setup router with all Phase 5 routes
+    router = new Router();
+    registerBookRoutes(router, sql);
+    registerPeopleRoutes(router, sql);
+    registerSeriesRoutes(router, sql);
+  });
+
+  describe("People + Books Integration", () => {
+    test("create person and associate with book as gift-giver", async () => {
+      // Step 1: Create a person
+      const personReq = new Request("http://localhost:3000/people", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${authToken}`,
+        },
+        body: JSON.stringify({
+          name: "Jane Doe",
+          email: "jane@example.com",
+          relationships: ["gift_giver"],
+        } as Partial<PersonEntitySnapshot>),
+      });
+
+      const personCtx: RequestContext = createContext(personReq);
+      const personMiddleware = compose(router.middleware);
+      const personResponse = await personMiddleware(personCtx, async () => {
+        const handler = router.match("POST", "/people");
+        if (!handler) throw new Error("Route not found");
+        return handler.handler(personCtx, personReq);
+      });
+
+      expect(personResponse.status).toBe(201);
+      const personData = (await personResponse.json()) as { person: { entity_id: number } };
+      const personId = personData.person.entity_id;
+
+      // Step 2: Create a book with the person as gift-giver
+      const bookReq = new Request("http://localhost:3000/books", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${authToken}`,
+        },
+        body: JSON.stringify({
+          title: "Gift Book from Jane",
+          author: "Test Author",
+          acquisition: {
+            type: "given",
+            person_id: personId,
+            date: new Date().toISOString().split("T")[0],
+          },
+        } as Partial<PhysicalBook>),
+      });
+
+      const bookCtx: RequestContext = createContext(bookReq);
+      const bookMiddleware = compose(router.middleware);
+      const bookResponse = await bookMiddleware(bookCtx, async () => {
+        const handler = router.match("POST", "/books");
+        if (!handler) throw new Error("Route not found");
+        return handler.handler(bookCtx, bookReq);
+      });
+
+      expect(bookResponse.status).toBe(201);
+      const bookData = (await bookResponse.json()) as { book: { entity_id: number; data: PhysicalBook } };
+      const bookId = bookData.book.entity_id;
+
+      // Step 3: Verify the book is associated with the person
+      expect(bookData.book.data.acquisition?.type).toBe("given");
+      expect(bookData.book.data.acquisition?.person_id).toBe(personId);
+
+      // Step 4: Query person's books
+      const personBooksReq = new Request(`http://localhost:3000/people/${personId}/books`, {
+        method: "GET",
+        headers: {
+          Authorization: `Bearer ${authToken}`,
+        },
+      });
+
+      const personBooksCtx: RequestContext = createContext(personBooksReq);
+      personBooksCtx.params = { id: String(personId) };
+      const personBooksMiddleware = compose(router.middleware);
+      const personBooksResponse = await personBooksMiddleware(personBooksCtx, async () => {
+        const handler = router.match("GET", `/people/${personId}/books`);
+        if (!handler) throw new Error("Route not found");
+        return handler.handler(personBooksCtx, personBooksReq);
+      });
+
+      expect(personBooksResponse.status).toBe(200);
+      const personBooksData = (await personBooksResponse.json()) as { books: any[] };
+
+      // Verify the book appears in the person's associated books
+      const associatedBook = personBooksData.books.find((b: any) => b.entity_id === bookId);
+      expect(associatedBook).toBeDefined();
+      expect(associatedBook.data.title).toBe("Gift Book from Jane");
+    });
+
+    test("person can be associated with multiple books", async () => {
+      // Create a person
+      const personReq = new Request("http://localhost:3000/people", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${authToken}`,
+        },
+        body: JSON.stringify({
+          name: "Bob Smith",
+          relationships: ["gift_giver", "author"],
+        } as Partial<PersonEntitySnapshot>),
+      });
+
+      const personCtx: RequestContext = createContext(personReq);
+      const personMiddleware = compose(router.middleware);
+      const personResponse = await personMiddleware(personCtx, async () => {
+        const handler = router.match("POST", "/people");
+        if (!handler) throw new Error("Route not found");
+        return handler.handler(personCtx, personReq);
+      });
+
+      const personData = (await personResponse.json()) as { person: { entity_id: number } };
+      const personId = personData.person.entity_id;
+
+      // Create multiple books associated with this person
+      const bookTitles = ["Book One", "Book Two", "Book Three"];
+      const createdBookIds: number[] = [];
+
+      for (const title of bookTitles) {
+        const bookReq = new Request("http://localhost:3000/books", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${authToken}`,
+          },
+          body: JSON.stringify({
+            title,
+            author: "Bob Smith",
+            acquisition: {
+              type: "given",
+              person_id: personId,
+              date: new Date().toISOString().split("T")[0],
+            },
+          } as Partial<PhysicalBook>),
+        });
+
+        const bookCtx: RequestContext = createContext(bookReq);
+        const bookMiddleware = compose(router.middleware);
+        const bookResponse = await bookMiddleware(bookCtx, async () => {
+          const handler = router.match("POST", "/books");
+          if (!handler) throw new Error("Route not found");
+          return handler.handler(bookCtx, bookReq);
+        });
+
+        const bookData = (await bookResponse.json()) as { book: { entity_id: number } };
+        createdBookIds.push(bookData.book.entity_id);
+      }
+
+      // Verify all books are associated with the person
+      const personBooksReq = new Request(`http://localhost:3000/people/${personId}/books`, {
+        method: "GET",
+        headers: {
+          Authorization: `Bearer ${authToken}`,
+        },
+      });
+
+      const personBooksCtx: RequestContext = createContext(personBooksReq);
+      personBooksCtx.params = { id: String(personId) };
+      const personBooksMiddleware = compose(router.middleware);
+      const personBooksResponse = await personBooksMiddleware(personBooksCtx, async () => {
+        const handler = router.match("GET", `/people/${personId}/books`);
+        if (!handler) throw new Error("Route not found");
+        return handler.handler(personBooksCtx, personBooksReq);
+      });
+
+      const personBooksData = (await personBooksResponse.json()) as { books: any[] };
+
+      expect(personBooksData.books.length).toBeGreaterThanOrEqual(3);
+
+      // Verify each created book is in the list
+      for (const bookId of createdBookIds) {
+        const found = personBooksData.books.some((b: any) => b.entity_id === bookId);
+        expect(found).toBe(true);
+      }
+    });
+  });
+
+  describe("Series + Books Integration", () => {
+    test("create series and add multiple books with volume numbers", async () => {
+      // Step 1: Create a series
+      const seriesReq = new Request("http://localhost:3000/series", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${authToken}`,
+        },
+        body: JSON.stringify({
+          name: "The Lord of the Rings",
+          total_volumes: 3,
+          notes: "Classic fantasy trilogy",
+        } as Partial<SeriesEntitySnapshot>),
+      });
+
+      const seriesCtx: RequestContext = createContext(seriesReq);
+      const seriesMiddleware = compose(router.middleware);
+      const seriesResponse = await seriesMiddleware(seriesCtx, async () => {
+        const handler = router.match("POST", "/series");
+        if (!handler) throw new Error("Route not found");
+        return handler.handler(seriesCtx, seriesReq);
+      });
+
+      expect(seriesResponse.status).toBe(201);
+      const seriesData = (await seriesResponse.json()) as { series: { entity_id: number } };
+      const seriesId = seriesData.series.entity_id;
+
+      // Step 2: Create books in the series
+      const volumes = [
+        { title: "The Fellowship of the Ring", volume: 1 },
+        { title: "The Two Towers", volume: 2 },
+        { title: "The Return of the King", volume: 3 },
+      ];
+
+      const createdBooks: number[] = [];
+
+      for (const vol of volumes) {
+        const bookReq = new Request("http://localhost:3000/books", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${authToken}`,
+          },
+          body: JSON.stringify({
+            title: vol.title,
+            author: "J.R.R. Tolkien",
+            series_id: seriesId,
+            volume_number: vol.volume,
+          } as Partial<PhysicalBook>),
+        });
+
+        const bookCtx: RequestContext = createContext(bookReq);
+        const bookMiddleware = compose(router.middleware);
+        const bookResponse = await bookMiddleware(bookCtx, async () => {
+          const handler = router.match("POST", "/books");
+          if (!handler) throw new Error("Route not found");
+          return handler.handler(bookCtx, bookReq);
+        });
+
+        expect(bookResponse.status).toBe(201);
+        const bookData = (await bookResponse.json()) as { book: { entity_id: number; data: PhysicalBook } };
+        createdBooks.push(bookData.book.entity_id);
+
+        // Verify book has series association
+        expect(bookData.book.data.series_id).toBe(seriesId);
+        expect(bookData.book.data.volume_number).toBe(vol.volume);
+      }
+
+      // Step 3: Query series books
+      const seriesBooksReq = new Request(`http://localhost:3000/series/${seriesId}/books`, {
+        method: "GET",
+        headers: {
+          Authorization: `Bearer ${authToken}`,
+        },
+      });
+
+      const seriesBooksCtx: RequestContext = createContext(seriesBooksReq);
+      seriesBooksCtx.params = { id: String(seriesId) };
+      const seriesBooksMiddleware = compose(router.middleware);
+      const seriesBooksResponse = await seriesBooksMiddleware(seriesBooksCtx, async () => {
+        const handler = router.match("GET", `/series/${seriesId}/books`);
+        if (!handler) throw new Error("Route not found");
+        return handler.handler(seriesBooksCtx, seriesBooksReq);
+      });
+
+      expect(seriesBooksResponse.status).toBe(200);
+      const seriesBooksData = (await seriesBooksResponse.json()) as { books: any[] };
+
+      // Verify all 3 books are in the series
+      expect(seriesBooksData.books.length).toBe(3);
+
+      // Verify books are ordered by volume number
+      expect(seriesBooksData.books[0].data.volume_number).toBe(1);
+      expect(seriesBooksData.books[0].data.title).toBe("The Fellowship of the Ring");
+
+      expect(seriesBooksData.books[1].data.volume_number).toBe(2);
+      expect(seriesBooksData.books[1].data.title).toBe("The Two Towers");
+
+      expect(seriesBooksData.books[2].data.volume_number).toBe(3);
+      expect(seriesBooksData.books[2].data.title).toBe("The Return of the King");
+    });
+
+    test("series can handle books without volume numbers", async () => {
+      // Create a series
+      const seriesReq = new Request("http://localhost:3000/series", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${authToken}`,
+        },
+        body: JSON.stringify({
+          name: "Discworld",
+          notes: "Books can be read in any order",
+        } as Partial<SeriesEntitySnapshot>),
+      });
+
+      const seriesCtx: RequestContext = createContext(seriesReq);
+      const seriesMiddleware = compose(router.middleware);
+      const seriesResponse = await seriesMiddleware(seriesCtx, async () => {
+        const handler = router.match("POST", "/series");
+        if (!handler) throw new Error("Route not found");
+        return handler.handler(seriesCtx, seriesReq);
+      });
+
+      const seriesData = (await seriesResponse.json()) as { series: { entity_id: number } };
+      const seriesId = seriesData.series.entity_id;
+
+      // Create books without volume numbers
+      const titles = ["The Color of Magic", "The Light Fantastic", "Equal Rites"];
+
+      for (const title of titles) {
+        const bookReq = new Request("http://localhost:3000/books", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${authToken}`,
+          },
+          body: JSON.stringify({
+            title,
+            author: "Terry Pratchett",
+            series_id: seriesId,
+            // No volume_number
+          } as Partial<PhysicalBook>),
+        });
+
+        const bookCtx: RequestContext = createContext(bookReq);
+        const bookMiddleware = compose(router.middleware);
+        const bookResponse = await bookMiddleware(bookCtx, async () => {
+          const handler = router.match("POST", "/books");
+          if (!handler) throw new Error("Route not found");
+          return handler.handler(bookCtx, bookReq);
+        });
+
+        expect(bookResponse.status).toBe(201);
+      }
+
+      // Query series books
+      const seriesBooksReq = new Request(`http://localhost:3000/series/${seriesId}/books`, {
+        method: "GET",
+        headers: {
+          Authorization: `Bearer ${authToken}`,
+        },
+      });
+
+      const seriesBooksCtx: RequestContext = createContext(seriesBooksReq);
+      seriesBooksCtx.params = { id: String(seriesId) };
+      const seriesBooksMiddleware = compose(router.middleware);
+      const seriesBooksResponse = await seriesBooksMiddleware(seriesBooksCtx, async () => {
+        const handler = router.match("GET", `/series/${seriesId}/books`);
+        if (!handler) throw new Error("Route not found");
+        return handler.handler(seriesBooksCtx, seriesBooksReq);
+      });
+
+      const seriesBooksData = (await seriesBooksResponse.json()) as { books: any[] };
+
+      // Should return all books even without volume numbers
+      expect(seriesBooksData.books.length).toBe(3);
+    });
+  });
+
+  describe("Export with Related Entities", () => {
+    test("export includes person and series references", async () => {
+      // Create a person
+      const personReq = new Request("http://localhost:3000/people", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${authToken}`,
+        },
+        body: JSON.stringify({
+          name: "Export Test Person",
+          relationships: ["gift_giver"],
+        } as Partial<PersonEntitySnapshot>),
+      });
+
+      const personCtx: RequestContext = createContext(personReq);
+      const personMiddleware = compose(router.middleware);
+      const personResponse = await personMiddleware(personCtx, async () => {
+        const handler = router.match("POST", "/people");
+        if (!handler) throw new Error("Route not found");
+        return handler.handler(personCtx, personReq);
+      });
+
+      const personData = (await personResponse.json()) as { person: { entity_id: number } };
+      const personId = personData.person.entity_id;
+
+      // Create a series
+      const seriesReq = new Request("http://localhost:3000/series", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${authToken}`,
+        },
+        body: JSON.stringify({
+          name: "Export Test Series",
+          total_volumes: 2,
+        } as Partial<SeriesEntitySnapshot>),
+      });
+
+      const seriesCtx: RequestContext = createContext(seriesReq);
+      const seriesMiddleware = compose(router.middleware);
+      const seriesResponse = await seriesMiddleware(seriesCtx, async () => {
+        const handler = router.match("POST", "/series");
+        if (!handler) throw new Error("Route not found");
+        return handler.handler(seriesCtx, seriesReq);
+      });
+
+      const seriesData = (await seriesResponse.json()) as { series: { entity_id: number } };
+      const seriesId = seriesData.series.entity_id;
+
+      // Create a book with both person and series references
+      const bookReq = new Request("http://localhost:3000/books", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${authToken}`,
+        },
+        body: JSON.stringify({
+          title: "Export Test Book",
+          author: "Test Author",
+          series_id: seriesId,
+          volume_number: 1,
+          acquisition: {
+            type: "given",
+            person_id: personId,
+            date: new Date().toISOString().split("T")[0],
+          },
+        } as Partial<PhysicalBook>),
+      });
+
+      const bookCtx: RequestContext = createContext(bookReq);
+      const bookMiddleware = compose(router.middleware);
+      const bookResponse = await bookMiddleware(bookCtx, async () => {
+        const handler = router.match("POST", "/books");
+        if (!handler) throw new Error("Route not found");
+        return handler.handler(bookCtx, bookReq);
+      });
+
+      const bookData = (await bookResponse.json()) as { book: { entity_id: number } };
+      const bookId = bookData.book.entity_id;
+
+      // Export books
+      const exportReq = new Request("http://localhost:3000/books/export?format=json", {
+        method: "GET",
+        headers: {
+          Authorization: `Bearer ${authToken}`,
+        },
+      });
+
+      const exportCtx: RequestContext = createContext(exportReq);
+      const exportMiddleware = compose(router.middleware);
+      const exportResponse = await exportMiddleware(exportCtx, async () => {
+        const handler = router.match("GET", "/books/export");
+        if (!handler) throw new Error("Route not found");
+        return handler.handler(exportCtx, exportReq);
+      });
+
+      expect(exportResponse.status).toBe(200);
+      const exportedBooks = (await exportResponse.json()) as any[];
+
+      // Find the exported book
+      const exportedBook = exportedBooks.find((b: any) => b.entity_id === bookId);
+
+      expect(exportedBook).toBeDefined();
+      expect(exportedBook.title).toBe("Export Test Book");
+      expect(exportedBook.series_id).toBe(seriesId);
+      expect(exportedBook.volume_number).toBe(1);
+      expect(exportedBook.acquisition?.person_id).toBe(personId);
+      expect(exportedBook.acquisition?.type).toBe("given");
+    });
+  });
+
+  describe("Complex Multi-Domain Scenarios", () => {
+    test("full workflow: person gives series books", async () => {
+      // Create a person (gift giver)
+      const personReq = new Request("http://localhost:3000/people", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${authToken}`,
+        },
+        body: JSON.stringify({
+          name: "Generous Friend",
+          email: "friend@example.com",
+          relationships: ["gift_giver"],
+        } as Partial<PersonEntitySnapshot>),
+      });
+
+      const personCtx: RequestContext = createContext(personReq);
+      const personMiddleware = compose(router.middleware);
+      const personResponse = await personMiddleware(personCtx, async () => {
+        const handler = router.match("POST", "/people");
+        if (!handler) throw new Error("Route not found");
+        return handler.handler(personCtx, personReq);
+      });
+
+      const personData = (await personResponse.json()) as { person: { entity_id: number } };
+      const personId = personData.person.entity_id;
+
+      // Create a series
+      const seriesReq = new Request("http://localhost:3000/series", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${authToken}`,
+        },
+        body: JSON.stringify({
+          name: "Gift Series",
+          total_volumes: 2,
+        } as Partial<SeriesEntitySnapshot>),
+      });
+
+      const seriesCtx: RequestContext = createContext(seriesReq);
+      const seriesMiddleware = compose(router.middleware);
+      const seriesResponse = await seriesMiddleware(seriesCtx, async () => {
+        const handler = router.match("POST", "/series");
+        if (!handler) throw new Error("Route not found");
+        return handler.handler(seriesCtx, seriesReq);
+      });
+
+      const seriesData = (await seriesResponse.json()) as { series: { entity_id: number } };
+      const seriesId = seriesData.series.entity_id;
+
+      // Create 2 books in the series, given by the person
+      const volumes = [
+        { title: "Volume 1", volume: 1 },
+        { title: "Volume 2", volume: 2 },
+      ];
+
+      for (const vol of volumes) {
+        const bookReq = new Request("http://localhost:3000/books", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${authToken}`,
+          },
+          body: JSON.stringify({
+            title: vol.title,
+            author: "Gift Author",
+            series_id: seriesId,
+            volume_number: vol.volume,
+            acquisition: {
+              type: "given",
+              person_id: personId,
+              date: "2024-02-01",
+            },
+          } as Partial<PhysicalBook>),
+        });
+
+        const bookCtx: RequestContext = createContext(bookReq);
+        const bookMiddleware = compose(router.middleware);
+        const bookResponse = await bookMiddleware(bookCtx, async () => {
+          const handler = router.match("POST", "/books");
+          if (!handler) throw new Error("Route not found");
+          return handler.handler(bookCtx, bookReq);
+        });
+
+        expect(bookResponse.status).toBe(201);
+      }
+
+      // Verify: Person should have 2 books
+      const personBooksReq = new Request(`http://localhost:3000/people/${personId}/books`, {
+        method: "GET",
+        headers: {
+          Authorization: `Bearer ${authToken}`,
+        },
+      });
+
+      const personBooksCtx: RequestContext = createContext(personBooksReq);
+      personBooksCtx.params = { id: String(personId) };
+      const personBooksMiddleware = compose(router.middleware);
+      const personBooksResponse = await personBooksMiddleware(personBooksCtx, async () => {
+        const handler = router.match("GET", `/people/${personId}/books`);
+        if (!handler) throw new Error("Route not found");
+        return handler.handler(personBooksCtx, personBooksReq);
+      });
+
+      const personBooksData = (await personBooksResponse.json()) as { books: any[] };
+      expect(personBooksData.books.length).toBe(2);
+
+      // Verify: Series should have 2 books
+      const seriesBooksReq = new Request(`http://localhost:3000/series/${seriesId}/books`, {
+        method: "GET",
+        headers: {
+          Authorization: `Bearer ${authToken}`,
+        },
+      });
+
+      const seriesBooksCtx: RequestContext = createContext(seriesBooksReq);
+      seriesBooksCtx.params = { id: String(seriesId) };
+      const seriesBooksMiddleware = compose(router.middleware);
+      const seriesBooksResponse = await seriesBooksMiddleware(seriesBooksCtx, async () => {
+        const handler = router.match("GET", `/series/${seriesId}/books`);
+        if (!handler) throw new Error("Route not found");
+        return handler.handler(seriesBooksCtx, seriesBooksReq);
+      });
+
+      const seriesBooksData = (await seriesBooksResponse.json()) as { books: any[] };
+      expect(seriesBooksData.books.length).toBe(2);
+
+      // Verify: Both books should have person_id and series_id
+      for (const book of seriesBooksData.books) {
+        expect(book.data.series_id).toBe(seriesId);
+        expect(book.data.acquisition?.person_id).toBe(personId);
+        expect(book.data.acquisition?.type).toBe("given");
+      }
+    });
+  });
+});

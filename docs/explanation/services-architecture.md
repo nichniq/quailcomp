@@ -174,6 +174,194 @@ const service = createBookMetadataService({
 const book = await service.lookup('978-0134685991')
 ```
 
+## WebSocket Real-time Updates
+
+The WebSocket system provides real-time entity update notifications to connected clients.
+
+**Location:** `server/src/websocket/`
+
+### Architecture
+
+```
+Client                    Server                    Database
+  |                         |                           |
+  |-- WS Connect /ws ------>|                           |
+  |    (with JWT token)     |                           |
+  |                         |-- Authenticate ---------->|
+  |<-- Connection OK -------|                           |
+  |                         |                           |
+  |-- Subscribe entity ---->|                           |
+  |                         |-- Check access ---------->|
+  |<-- Subscribed ----------|                           |
+  |                         |                           |
+  |                         |<-- Entity updated --------|
+  |                         |   (via route handler)     |
+  |<-- Broadcast update ----|                           |
+```
+
+### Components
+
+**WebSocket Server** (`server/src/websocket/server.ts`)
+
+- Handles WS connections at `/ws` endpoint
+- Authenticates via JWT token (query parameter)
+- Manages client subscriptions
+- Broadcasts entity events
+
+**Subscription Management**
+
+- Clients subscribe to specific entity IDs
+- Authorization checked on subscription (requires read access)
+- Clients only receive updates for accessible entities
+- Automatic cleanup on disconnect
+
+**Event Broadcasting**
+
+- Route handlers call `broadcastUpdate()` after mutations
+- Events: `entity.created`, `entity.updated`, `entity.deleted`
+- Only sent to authorized subscribers
+- Includes entity type and full data
+
+### Usage
+
+**Server-side broadcasting:**
+
+```typescript
+import { broadcastUpdate } from '@/websocket/server'
+
+// After creating an entity
+const entry = await entities.create({ type: 'book', data: bookData })
+await authzService.grantOwnerOnCreate(entry.entityId, userId)
+
+// Broadcast to subscribers
+broadcastUpdate(entry.entityId, {
+  type: 'entity.created',
+  entityId: entry.entityId,
+  entityType: 'book',
+  data: entry.data
+})
+```
+
+**Client-side subscription:**
+
+```javascript
+const ws = new WebSocket(`ws://localhost:3000/ws?token=${authToken}`)
+
+ws.onopen = () => {
+  // Subscribe to entity updates
+  ws.send(JSON.stringify({
+    type: 'subscribe',
+    entityId: '123'
+  }))
+}
+
+ws.onmessage = (event) => {
+  const message = JSON.parse(event.data)
+
+  if (message.type === 'entity.updated') {
+    // Update UI with new data
+    console.log('Entity updated:', message.entityId, message.data)
+  }
+}
+```
+
+### Security
+
+- JWT authentication required for WebSocket connection
+- Token validated on initial connection
+- Authorization enforced per subscription (read access required)
+- Invalid subscriptions silently ignored
+- Expired tokens cause connection termination
+
+### Design Decisions
+
+**Why JWT via query parameter?**
+
+- WebSocket API doesn't support custom headers in browsers
+- Query parameter is standard approach for WS authentication
+- Token is only transmitted once during connection upgrade
+
+**Why not send all updates?**
+
+- Authorization must be respected (user privacy)
+- Reduces bandwidth (only relevant updates)
+- Client explicitly opts in via subscription
+
+**Why no collaborative editing?**
+
+- Operational Transform or CRDT adds significant complexity
+- Last-write-wins is sufficient for most use cases
+- Can be added later if needed
+
+## Phase 5 Domain Relationships
+
+Phase 5 introduced new domains that reference the Books domain.
+
+### People Domain
+
+Tracks authors, gift-givers, borrowers, and other contacts.
+
+**Location:** `domains/people.md`
+
+**References to People from Books:**
+
+- `acquisition.person_id` - Who gave the book (when type is "given")
+- `lending.person_id` - Who borrowed the book (future)
+
+**Query Pattern:**
+
+```typescript
+// Get all books given by a person
+const books = await sql`
+  SELECT * FROM entities
+  WHERE type = 'book'
+    AND deleted_at IS NULL
+    AND data->'acquisition'->>'person_id' = ${personId}
+`
+```
+
+### Series Domain
+
+Groups related books (trilogies, multi-volume works, etc.).
+
+**Location:** `domains/series.md`
+
+**References to Series from Books:**
+
+- `series_id` - Which series this book belongs to
+- `volume_number` - Position in the series (optional)
+
+**Query Pattern:**
+
+```typescript
+// Get all books in a series, ordered by volume
+const books = await sql`
+  SELECT * FROM entities
+  WHERE type = 'book'
+    AND deleted_at IS NULL
+    AND (data->>'series_id')::int = ${seriesId}
+  ORDER BY (data->>'volume_number')::int NULLS LAST
+`
+```
+
+### Domain Interactions
+
+```
+Person
+  └─> Books (as gift-giver)
+  └─> Books (as borrower)
+
+Series
+  └─> Books (as series member)
+
+Book
+  ├─> Person (gift-giver via acquisition.person_id)
+  ├─> Person (borrower via lending.person_id)
+  └─> Series (belongs to via series_id)
+```
+
+**Key Design Principle:** Domains reference each other by ID only (loose coupling). The Books domain doesn't import Person or Series types - it just stores their entity IDs as numbers.
+
 ## When to Create a Service
 
 Create a service when you need to:
