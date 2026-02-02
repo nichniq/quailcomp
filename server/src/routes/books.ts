@@ -33,6 +33,7 @@ import { requireRead, requireWrite, requireOwner } from "@/authz/middleware";
 import { AuthorizationService } from "@/authz/service";
 import { parseCSV, parseJSON, parseXLSX } from "@/utils/import-parsers";
 import { exportCSV, exportJSON, exportXLSX } from "@/utils/export-formatters";
+import { broadcastUpdate } from "@/websocket/server";
 
 const BOOK_TYPE = "book";
 
@@ -134,6 +135,15 @@ export function registerBookRoutes(router: Router, sql: Sql): void {
       // Grant owner access to the creator
       await authzService.grantOwnerOnCreate(entry.entityId, ctx.user.userId);
 
+      // Broadcast creation to subscribers
+      broadcastUpdate({
+        type: "entity.created",
+        entityId: entry.entityId,
+        entityType: BOOK_TYPE,
+        data: entry,
+        timestamp: new Date().toISOString(),
+      });
+
       ctx.log.info("Book created", { entityId: entry.entityId });
       return Response.json({ book: entry }, { status: 201 });
     },
@@ -185,6 +195,15 @@ export function registerBookRoutes(router: Router, sql: Sql): void {
         data: updatedData,
       });
 
+      // Broadcast update to subscribers
+      broadcastUpdate({
+        type: "entity.updated",
+        entityId: entry.entityId,
+        entityType: BOOK_TYPE,
+        data: entry,
+        timestamp: new Date().toISOString(),
+      });
+
       ctx.log.info("Book updated", { entityId });
       return Response.json({ book: entry });
     },
@@ -217,6 +236,14 @@ export function registerBookRoutes(router: Router, sql: Sql): void {
         entityId,
         type: BOOK_TYPE,
         data: existing.data,
+      });
+
+      // Broadcast deletion to subscribers
+      broadcastUpdate({
+        type: "entity.deleted",
+        entityId: deleted.entityId,
+        entityType: BOOK_TYPE,
+        timestamp: new Date().toISOString(),
       });
 
       ctx.log.info("Book deleted", { entityId });

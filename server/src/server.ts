@@ -31,6 +31,7 @@ import { registerPeopleRoutes } from "@/routes/people";
 import { registerSeriesRoutes } from "@/routes/series";
 import { registerEntityRoutes } from "@/routes/entities";
 import { openAPIHandler, swaggerUIHandler } from "@/routes/api-docs";
+import { createWebSocketHandler } from "@/websocket/server";
 
 export interface ServerConfig {
   port?: number;
@@ -100,8 +101,24 @@ export function createServer(config: ServerConfig = {}): ServerInstance {
     port,
     hostname,
 
-    async fetch(req: Request): Promise<Response> {
+    async fetch(req: Request, server): Promise<Response | undefined> {
       const url = new URL(req.url);
+
+      // Upgrade WebSocket connections
+      if (url.pathname === "/ws") {
+        const upgraded = server.upgrade(req, {
+          data: {
+            userId: 0,
+            subscriptions: new Set<number>(),
+            authenticated: false,
+          },
+        });
+        if (upgraded) {
+          return undefined;
+        }
+        return Response.json({ error: "WebSocket upgrade failed" }, { status: 400 });
+      }
+
       const match = router.match(req.method, url.pathname);
 
       if (!match) {
@@ -139,6 +156,9 @@ export function createServer(config: ServerConfig = {}): ServerInstance {
 
       return handler(ctx, req);
     },
+
+    // WebSocket handler
+    websocket: createWebSocketHandler(sql),
   });
 
   return {

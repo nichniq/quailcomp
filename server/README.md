@@ -51,7 +51,9 @@ server/
 │   ├── openapi/           # OpenAPI 3.0 specification
 │   ├── router.ts          # HTTP router
 │   ├── routes/            # API route handlers
-│   └── server.ts          # Server setup
+│   ├── server.ts          # Server setup
+│   ├── utils/             # Import/export utilities
+│   └── websocket/         # WebSocket real-time updates
 ├── tests/                 # Test suite (167 tests)
 ├── package.json
 └── tsconfig.json
@@ -172,6 +174,103 @@ const activeUsers = await entities.findByData("user", { status: "active" });
 const darkTheme = await entities.findByData("user", {
   preferences: { theme: "dark" },
 });
+```
+
+## WebSocket Real-Time Updates
+
+The server provides WebSocket support for real-time updates when entities are created, updated, or deleted.
+
+### Connecting to WebSocket
+
+Connect to the WebSocket endpoint at `/ws`:
+
+```typescript
+const ws = new WebSocket('ws://localhost:3000/ws');
+
+// Authenticate with JWT token
+ws.onopen = () => {
+  ws.send(JSON.stringify({
+    type: 'authenticate',
+    token: 'your-jwt-token'
+  }));
+};
+
+ws.onmessage = (event) => {
+  const data = JSON.parse(event.data);
+  console.log('Received:', data);
+};
+```
+
+### Subscribing to Updates
+
+After authentication, subscribe to entities you want to receive updates for:
+
+```typescript
+// Subscribe to a specific entity
+ws.send(JSON.stringify({
+  type: 'subscribe',
+  entityId: 123
+}));
+
+// Unsubscribe from an entity
+ws.send(JSON.stringify({
+  type: 'unsubscribe',
+  entityId: 123
+}));
+```
+
+### Receiving Updates
+
+When a subscribed entity is modified, you'll receive update messages:
+
+```typescript
+// Entity created
+{
+  type: 'entity.created',
+  entityId: 123,
+  entityType: 'book',
+  data: { /* entity data */ },
+  timestamp: '2026-02-02T10:30:00.000Z'
+}
+
+// Entity updated
+{
+  type: 'entity.updated',
+  entityId: 123,
+  entityType: 'book',
+  data: { /* updated entity data */ },
+  timestamp: '2026-02-02T10:31:00.000Z'
+}
+
+// Entity deleted
+{
+  type: 'entity.deleted',
+  entityId: 123,
+  entityType: 'book',
+  timestamp: '2026-02-02T10:32:00.000Z'
+}
+```
+
+### Authorization
+
+WebSocket subscriptions enforce the same authorization rules as HTTP endpoints:
+
+- You must be authenticated to subscribe
+- You can only subscribe to entities you have read access to
+- Attempts to subscribe to inaccessible entities will be rejected
+
+### Ping/Pong
+
+Keep connections alive with ping/pong:
+
+```typescript
+// Send ping
+ws.send(JSON.stringify({ type: 'ping' }));
+
+// Receive pong
+{
+  type: 'pong'
+}
 ```
 
 ## TypeScript Typing Approaches
