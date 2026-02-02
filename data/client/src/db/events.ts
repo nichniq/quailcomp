@@ -11,6 +11,7 @@
  */
 
 import type { Sql } from "./connection";
+import { parseDatabaseError } from "@/errors";
 
 // =============================================================================
 // Core Types
@@ -86,12 +87,16 @@ export class EventsClient {
    * Returns the created entry including the new event_id
    */
   async record<T>(input: RecordEventInput<T>): Promise<EventEntry<T>> {
-    const rows = await this.sql`
-      INSERT INTO events (event_id, event_type, occurred_at, data)
-      VALUES (nextval('event_id_seq'), ${input.eventType}, ${input.occurredAt}, ${input.data})
-      RETURNING *
-    `;
-    return this.mapRow<T>(rows[0]);
+    try {
+      const rows = await this.sql`
+        INSERT INTO events (event_id, event_type, occurred_at, data)
+        VALUES (nextval('event_id_seq'), ${input.eventType}, ${input.occurredAt}, ${input.data})
+        RETURNING *
+      `;
+      return this.mapRow<T>(rows[0]);
+    } catch (error) {
+      throw parseDatabaseError(error, `record event (type: ${input.eventType})`);
+    }
   }
 
   /**

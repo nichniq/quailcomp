@@ -7,3 +7,6 @@
 
 // Database client
 export * from "./db";
+
+// Error types
+export * from "./errors";

@@ -7,6 +7,7 @@
  */
 
 import type { Sql } from "./connection";
+import { parseDatabaseError } from "@/errors";
 
 // =============================================================================
 // Core Types
@@ -78,13 +79,17 @@ export class EntitiesClient {
    * Returns the created entry including the new entity_id
    */
   async create<T>(input: CreateEntityInput<T>): Promise<Entry<T>> {
-    // Pass object directly - Bun SQL handles JSONB conversion
-    const rows = await this.sql`
-      INSERT INTO entities (entity_id, type, data)
-      VALUES (nextval('entity_id_seq'), ${input.type}, ${input.data})
-      RETURNING *
-    `;
-    return this.mapRow<T>(rows[0]);
+    try {
+      // Pass object directly - Bun SQL handles JSONB conversion
+      const rows = await this.sql`
+        INSERT INTO entities (entity_id, type, data)
+        VALUES (nextval('entity_id_seq'), ${input.type}, ${input.data})
+        RETURNING *
+      `;
+      return this.mapRow<T>(rows[0]);
+    } catch (error) {
+      throw parseDatabaseError(error, `create entity (type: ${input.type})`);
+    }
   }
 
   /**
@@ -93,18 +98,22 @@ export class EntitiesClient {
   async createMany<T>(inputs: CreateEntityInput<T>[]): Promise<Entry<T>[]> {
     if (inputs.length === 0) return [];
 
-    return await this.sql.begin(async (tx) => {
-      const entries: Entry<T>[] = [];
-      for (const input of inputs) {
-        const rows = await tx`
-          INSERT INTO entities (entity_id, type, data)
+    try {
+      return await this.sql.begin(async (tx) => {
+        const entries: Entry<T>[] = [];
+        for (const input of inputs) {
+          const rows = await tx`
+            INSERT INTO entities (entity_id, type, data)
           VALUES (nextval('entity_id_seq'), ${input.type}, ${input.data})
           RETURNING *
         `;
-        entries.push(this.mapRow<T>(rows[0]));
-      }
-      return entries;
-    });
+          entries.push(this.mapRow<T>(rows[0]));
+        }
+        return entries;
+      });
+    } catch (error) {
+      throw parseDatabaseError(error, `create multiple entities (count: ${inputs.length})`);
+    }
   }
 
   // ---------------------------------------------------------------------------
@@ -116,12 +125,16 @@ export class EntitiesClient {
    * The latest entry represents the current state of the entity
    */
   async update<T>(input: UpdateEntityInput<T>): Promise<Entry<T>> {
-    const rows = await this.sql`
-      INSERT INTO entities (entity_id, type, data)
-      VALUES (${input.entityId}, ${input.type}, ${input.data})
-      RETURNING *
-    `;
-    return this.mapRow<T>(rows[0]);
+    try {
+      const rows = await this.sql`
+        INSERT INTO entities (entity_id, type, data)
+        VALUES (${input.entityId}, ${input.type}, ${input.data})
+        RETURNING *
+      `;
+      return this.mapRow<T>(rows[0]);
+    } catch (error) {
+      throw parseDatabaseError(error, `update entity (id: ${input.entityId}, type: ${input.type})`);
+    }
   }
 
   // ---------------------------------------------------------------------------
@@ -133,12 +146,16 @@ export class EntitiesClient {
    * The entity data is preserved for audit purposes
    */
   async delete<T>(input: DeleteEntityInput<T>): Promise<Entry<T>> {
-    const rows = await this.sql`
-      INSERT INTO entities (entity_id, type, data, deleted_at)
-      VALUES (${input.entityId}, ${input.type}, ${input.data}, NOW())
-      RETURNING *
-    `;
-    return this.mapRow<T>(rows[0]);
+    try {
+      const rows = await this.sql`
+        INSERT INTO entities (entity_id, type, data, deleted_at)
+        VALUES (${input.entityId}, ${input.type}, ${input.data}, NOW())
+        RETURNING *
+      `;
+      return this.mapRow<T>(rows[0]);
+    } catch (error) {
+      throw parseDatabaseError(error, `delete entity (id: ${input.entityId}, type: ${input.type})`);
+    }
   }
 
   /**
@@ -160,26 +177,30 @@ export class EntitiesClient {
     entityId: number,
     options: QueryOptions = {}
   ): Promise<Entry<T> | null> {
-    const { includeDeleted = false } = options;
+    try {
+      const { includeDeleted = false } = options;
 
-    // Always get the latest entry first
-    const rows = await this.sql`
-      SELECT * FROM entities
-      WHERE entity_id = ${entityId}
-      ORDER BY entered_at DESC
-      LIMIT 1
-    `;
+      // Always get the latest entry first
+      const rows = await this.sql`
+        SELECT * FROM entities
+        WHERE entity_id = ${entityId}
+        ORDER BY entered_at DESC
+        LIMIT 1
+      `;
 
-    if (!rows[0]) return null;
+      if (!rows[0]) return null;
 
-    const entry = this.mapRow<T>(rows[0]);
+      const entry = this.mapRow<T>(rows[0]);
 
-    // If not including deleted, return null if the latest entry is deleted
-    if (!includeDeleted && entry.deletedAt !== null) {
-      return null;
+      // If not including deleted, return null if the latest entry is deleted
+      if (!includeDeleted && entry.deletedAt !== null) {
+        return null;
+      }
+
+      return entry;
+    } catch (error) {
+      throw parseDatabaseError(error, `get entity by id (id: ${entityId})`);
     }
-
-    return entry;
   }
 
   /**

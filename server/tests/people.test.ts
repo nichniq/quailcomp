@@ -21,6 +21,7 @@ import { createContext, type RequestContext } from "@/context";
 import type { PersonEntitySnapshot } from "@domains/types/people";
 import { signToken } from "@/auth/jwt";
 import { AuthService } from "@/auth/service";
+import { errorHandler } from "@/middleware/error-handler";
 
 let sql: Sql;
 
@@ -92,12 +93,14 @@ describe("People Routes", () => {
     ctx.params = match.params;
 
     // Apply middleware if present
+    let handler = match.route.handler;
     if (match.route.middleware && match.route.middleware.length > 0) {
-      const handler = compose(...match.route.middleware)(match.route.handler);
-      return handler(ctx, request);
+      handler = compose(...match.route.middleware)(handler);
     }
 
-    return match.route.handler(ctx, request);
+    // Wrap with error handler middleware
+    const wrappedHandler = errorHandler(() => handler(ctx, request));
+    return wrappedHandler(ctx, request);
   }
 
   describe("GET /people", () => {
@@ -362,8 +365,14 @@ describe("People Routes", () => {
 
       expect(response.status).toBe(400);
       const data = await response.json();
-      expect(data.error).toBe("Name is required");
-      expect(data.code).toBe("MISSING_NAME");
+      expect(data.error).toBe("Invalid person data");
+      expect(data.code).toBe("VALIDATION_ERROR");
+      expect(data.details?.fields).toContainEqual(
+        expect.objectContaining({
+          field: "name",
+          message: "name is required",
+        })
+      );
     });
 
     test("validates required fields - relationships", async () => {
@@ -383,8 +392,14 @@ describe("People Routes", () => {
 
       expect(response.status).toBe(400);
       const data = await response.json();
-      expect(data.error).toBe("At least one relationship is required");
-      expect(data.code).toBe("MISSING_RELATIONSHIPS");
+      expect(data.error).toBe("Invalid person data");
+      expect(data.code).toBe("VALIDATION_ERROR");
+      expect(data.details?.fields).toContainEqual(
+        expect.objectContaining({
+          field: "relationships",
+          message: "relationships must not be empty",
+        })
+      );
     });
 
     test("returns 400 for invalid JSON", async () => {

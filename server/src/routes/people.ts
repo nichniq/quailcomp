@@ -19,6 +19,14 @@ import type { Router } from "@/router";
 import { requireAuth } from "@/auth/middleware";
 import { requireRead, requireWrite, requireOwner } from "@/authz/middleware";
 import { AuthorizationService } from "@/authz/service";
+import {
+  badRequest,
+  notFound,
+  unauthorized,
+  getValidEntityId,
+  parseJsonBody,
+} from "@/utils/error-responses";
+import { validate } from "@/utils/validation";
 
 const PERSON_TYPE = "person";
 const BOOK_TYPE = "book";
@@ -67,22 +75,11 @@ export function registerPeopleRoutes(router: Router, sql: Sql): void {
   router.get(
     "/people/:id",
     async (ctx) => {
-      const entityId = parseInt(ctx.params.id, 10);
-
-      if (isNaN(entityId)) {
-        return Response.json(
-          { error: "Invalid person ID", code: "INVALID_ID" },
-          { status: 400 }
-        );
-      }
-
+      const entityId = getValidEntityId(ctx.params, "person");
       const person = await entities.getById<PersonEntitySnapshot>(entityId);
 
       if (!person) {
-        return Response.json(
-          { error: "Person not found", code: "NOT_FOUND" },
-          { status: 404 }
-        );
+        notFound("Person not found", "NOT_FOUND");
       }
 
       ctx.log.info("Person retrieved", { entityId });
@@ -96,37 +93,17 @@ export function registerPeopleRoutes(router: Router, sql: Sql): void {
     "/people",
     async (ctx, req) => {
       if (!ctx.user) {
-        return Response.json(
-          { error: "Authentication required" },
-          { status: 401 }
-        );
+        unauthorized();
       }
 
-      let body: PersonEntitySnapshot;
-
-      try {
-        body = (await req.json()) as PersonEntitySnapshot;
-      } catch {
-        return Response.json(
-          { error: "Invalid JSON body", code: "INVALID_BODY" },
-          { status: 400 }
-        );
-      }
+      const body = await parseJsonBody<PersonEntitySnapshot>(req);
 
       // Validate required fields
-      if (!body.name || body.name.trim().length === 0) {
-        return Response.json(
-          { error: "Name is required", code: "MISSING_NAME" },
-          { status: 400 }
-        );
-      }
-
-      if (!body.relationships || !Array.isArray(body.relationships) || body.relationships.length === 0) {
-        return Response.json(
-          { error: "At least one relationship is required", code: "MISSING_RELATIONSHIPS" },
-          { status: 400 }
-        );
-      }
+      validate()
+        .required("name", body.name)
+        .minLength("name", body.name, 1)
+        .arrayNotEmpty("relationships", body.relationships)
+        .validate("Invalid person data");
 
       const entry = await entities.create<PersonEntitySnapshot>({
         type: PERSON_TYPE,

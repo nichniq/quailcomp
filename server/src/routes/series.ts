@@ -19,6 +19,12 @@ import type { Router } from "@/router";
 import { requireAuth } from "@/auth/middleware";
 import { requireRead, requireWrite, requireOwner } from "@/authz/middleware";
 import { AuthorizationService } from "@/authz/service";
+import {
+  notFound,
+  unauthorized,
+  getValidEntityId,
+  parseJsonBody,
+} from "@/utils/error-responses";
 
 const SERIES_TYPE = "series";
 const BOOK_TYPE = "book";
@@ -67,22 +73,11 @@ export function registerSeriesRoutes(router: Router, sql: Sql): void {
   router.get(
     "/series/:id",
     async (ctx) => {
-      const entityId = parseInt(ctx.params.id, 10);
-
-      if (isNaN(entityId)) {
-        return Response.json(
-          { error: "Invalid series ID", code: "INVALID_ID" },
-          { status: 400 }
-        );
-      }
-
+      const entityId = getValidEntityId(ctx.params, "series");
       const series = await entities.getById<SeriesEntitySnapshot>(entityId);
 
       if (!series) {
-        return Response.json(
-          { error: "Series not found", code: "NOT_FOUND" },
-          { status: 404 }
-        );
+        notFound("Series not found", "NOT_FOUND");
       }
 
       ctx.log.info("Series retrieved", { entityId });

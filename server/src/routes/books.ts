@@ -34,6 +34,13 @@ import { AuthorizationService } from "@/authz/service";
 import { parseCSV, parseJSON, parseXLSX } from "@/utils/import-parsers";
 import { exportCSV, exportJSON, exportXLSX } from "@/utils/export-formatters";
 import { broadcastUpdate } from "@/websocket/server";
+import {
+  badRequest,
+  notFound,
+  unauthorized,
+  getValidEntityId,
+  parseJsonBody,
+} from "@/utils/error-responses";
 
 const BOOK_TYPE = "book";
 
@@ -81,22 +88,11 @@ export function registerBookRoutes(router: Router, sql: Sql): void {
   router.get(
     "/books/:id",
     async (ctx) => {
-      const entityId = parseInt(ctx.params.id, 10);
-
-      if (isNaN(entityId)) {
-        return Response.json(
-          { error: "Invalid book ID", code: "INVALID_ID" },
-          { status: 400 }
-        );
-      }
-
+      const entityId = getValidEntityId(ctx.params, "book");
       const book = await entities.getById<BookEntitySnapshot>(entityId);
 
       if (!book) {
-        return Response.json(
-          { error: "Book not found", code: "NOT_FOUND" },
-          { status: 404 }
-        );
+        notFound("Book not found", "NOT_FOUND");
       }
 
       ctx.log.info("Book retrieved", { entityId });
@@ -110,22 +106,10 @@ export function registerBookRoutes(router: Router, sql: Sql): void {
     "/books",
     async (ctx, req) => {
       if (!ctx.user) {
-        return Response.json(
-          { error: "Authentication required" },
-          { status: 401 }
-        );
+        unauthorized();
       }
 
-      let body: BookEntitySnapshot;
-
-      try {
-        body = (await req.json()) as BookEntitySnapshot;
-      } catch {
-        return Response.json(
-          { error: "Invalid JSON body", code: "INVALID_BODY" },
-          { status: 400 }
-        );
-      }
+      const body = await parseJsonBody<BookEntitySnapshot>(req);
 
       const entry = await entities.create<BookEntitySnapshot>({
         type: BOOK_TYPE,

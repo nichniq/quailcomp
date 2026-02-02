@@ -6,6 +6,10 @@
 
 import { captureError } from "@/observability/sentry";
 import type { Middleware } from "@/middleware/types";
+import type {
+  ErrorResponse,
+  ValidationErrorDetail,
+} from "@/middleware/error-types";
 
 /**
  * Base error class for HTTP errors
@@ -14,7 +18,8 @@ export class HttpError extends Error {
   constructor(
     public statusCode: number,
     message: string,
-    public code?: string
+    public code?: string,
+    public details?: Record<string, unknown>
   ) {
     super(message);
     this.name = "HttpError";
@@ -25,9 +30,19 @@ export class HttpError extends Error {
  * 400 Bad Request
  */
 export class BadRequestError extends HttpError {
-  constructor(message: string, code?: string) {
-    super(400, message, code);
+  constructor(message: string, code?: string, details?: Record<string, unknown>) {
+    super(400, message, code, details);
     this.name = "BadRequestError";
+  }
+}
+
+/**
+ * 400 Bad Request - Validation Error
+ */
+export class ValidationError extends BadRequestError {
+  constructor(message: string, public fields: ValidationErrorDetail[]) {
+    super(message, "VALIDATION_ERROR", { fields });
+    this.name = "ValidationError";
   }
 }
 
@@ -65,9 +80,45 @@ export class NotFoundError extends HttpError {
  * 409 Conflict
  */
 export class ConflictError extends HttpError {
-  constructor(message: string, code?: string) {
-    super(409, message, code);
+  constructor(message: string, code?: string, details?: Record<string, unknown>) {
+    super(409, message, code, details);
     this.name = "ConflictError";
+  }
+}
+
+/**
+ * 500 Internal Server Error
+ */
+export class InternalServerError extends HttpError {
+  constructor(
+    message = "Internal server error",
+    code = "INTERNAL_ERROR",
+    details?: Record<string, unknown>
+  ) {
+    super(500, message, code, details);
+    this.name = "InternalServerError";
+  }
+}
+
+/**
+ * Get default error code for HTTP status code
+ */
+function getDefaultCode(statusCode: number): string {
+  switch (statusCode) {
+    case 400:
+      return "BAD_REQUEST";
+    case 401:
+      return "UNAUTHORIZED";
+    case 403:
+      return "FORBIDDEN";
+    case 404:
+      return "NOT_FOUND";
+    case 409:
+      return "CONFLICT";
+    case 500:
+      return "INTERNAL_ERROR";
+    default:
+      return "UNKNOWN_ERROR";
   }
 }
 
@@ -80,13 +131,19 @@ export const errorHandler: Middleware = (next) => async (ctx, req) => {
   } catch (error) {
     // Handle known HTTP errors
     if (error instanceof HttpError) {
-      return Response.json(
-        {
-          error: error.message,
-          code: error.code,
-        },
-        { status: error.statusCode }
-      );
+      const response: ErrorResponse = {
+        error: error.message,
+        code: error.code || getDefaultCode(error.statusCode),
+        path: new URL(req.url).pathname,
+        requestId: ctx.requestId,
+      };
+
+      // Add details if present
+      if (error.details) {
+        response.details = error.details;
+      }
+
+      return Response.json(response, { status: error.statusCode });
     }
 
     // Log unexpected errors
@@ -116,11 +173,13 @@ export const errorHandler: Middleware = (next) => async (ctx, req) => {
     }
 
     // Return generic 500 for unexpected errors
-    return Response.json(
-      {
-        error: "Internal server error",
-      },
-      { status: 500 }
-    );
+    const response: ErrorResponse = {
+      error: "Internal server error",
+      code: "INTERNAL_ERROR",
+      path: new URL(req.url).pathname,
+      requestId: ctx.requestId,
+    };
+
+    return Response.json(response, { status: 500 });
   }
 };
