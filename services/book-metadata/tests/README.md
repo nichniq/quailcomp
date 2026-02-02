@@ -4,12 +4,20 @@ Unit and integration tests for metadata providers.
 
 ## Test Files
 
-Tests are organized by provider:
+Tests are organized by functionality:
 
+### Provider Tests
 - Provider-specific tests (e.g., `google-books.test.ts`)
-- Composite provider tests
-- Mock provider tests
-- Utility function tests
+- [`composite.test.ts`](./composite.test.ts) - Composite provider with fallback
+- [`mock.test.ts`](./mock.test.ts) - Mock provider for testing
+
+### Resilience Tests
+- [`rate-limiter.test.ts`](./rate-limiter.test.ts) - Rate limiter utility tests
+- [`circuit-breaker.test.ts`](./circuit-breaker.test.ts) - Circuit breaker utility tests
+- [`providers-resilience.test.ts`](./providers-resilience.test.ts) - Integration tests for resilience wrappers
+
+### Utility Tests
+- [`utils.test.ts`](./utils.test.ts) - ISBN normalization and conversion
 
 ## Running Tests
 

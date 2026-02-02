@@ -4,12 +4,19 @@ External API client implementations for book metadata lookup.
 
 ## Provider Files
 
+### API Clients
 - [`google-books.ts`](./google-books.ts) - Google Books API client
 - [`open-library.ts`](./open-library.ts) - Open Library API client
 - [`library-of-congress.ts`](./library-of-congress.ts) - Library of Congress API client
 - [`hardcover.ts`](./hardcover.ts) - Hardcover API client
 - [`worldcat-classify.ts`](./worldcat-classify.ts) - WorldCat Classify API client
 - [`composite.ts`](./composite.ts) - Composite provider with intelligent fallback
+
+### Resilience Wrappers
+- [`rate-limited.ts`](./rate-limited.ts) - Rate limiting wrapper using token bucket algorithm
+- [`resilient.ts`](./resilient.ts) - Circuit breaker wrapper for failure protection
+
+### Testing
 - [`mock.ts`](./mock.ts) - Mock provider for testing
 
 ## Provider Interface
