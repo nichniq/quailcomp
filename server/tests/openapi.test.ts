@@ -28,8 +28,8 @@ describe("OpenAPI Specification", () => {
     const spec = generateOpenAPISpec();
 
     expect(spec.paths["/health"]).toBeDefined();
-    expect(spec.paths["/health"].get).toBeDefined();
-    expect(spec.paths["/health"].get.tags).toContain("Health");
+    expect((spec.paths["/health"] as any).get).toBeDefined();
+    expect((spec.paths["/health"] as any).get.tags).toContain("Health");
   });
 
   test("includes metrics endpoint", () => {
@@ -86,8 +86,8 @@ describe("OpenAPI Specification", () => {
     const spec = generateOpenAPISpec();
 
     expect(spec.components.securitySchemes.bearerAuth).toBeDefined();
-    expect(spec.components.securitySchemes.bearerAuth.type).toBe("http");
-    expect(spec.components.securitySchemes.bearerAuth.scheme).toBe("bearer");
+    expect((spec.components.securitySchemes.bearerAuth as any).type).toBe("http");
+    expect((spec.components.securitySchemes.bearerAuth as any).scheme).toBe("bearer");
   });
 
   test("includes all required schemas", () => {
@@ -110,38 +110,38 @@ describe("OpenAPI Specification", () => {
     const spec = generateOpenAPISpec();
 
     // Check a few protected endpoints
-    expect(spec.paths["/auth/me"].get.security).toBeDefined();
-    expect(spec.paths["/books"].get.security).toBeDefined();
-    expect(spec.paths["/books/{id}"].get.security).toBeDefined();
+    expect((spec.paths["/auth/me"] as any).get.security).toBeDefined();
+    expect((spec.paths["/books"] as any).get.security).toBeDefined();
+    expect((spec.paths["/books/{id}"] as any).get.security).toBeDefined();
   });
 
   test("public endpoints don't require authentication", () => {
     const spec = generateOpenAPISpec();
 
     // Health endpoint should not require auth
-    expect(spec.paths["/health"].get.security).toBeUndefined();
+    expect((spec.paths["/health"] as any).get.security).toBeUndefined();
 
     // Login/register should not require auth
-    expect(spec.paths["/auth/login"].post.security).toBeUndefined();
-    expect(spec.paths["/auth/register"].post.security).toBeUndefined();
+    expect((spec.paths["/auth/login"] as any).post.security).toBeUndefined();
+    expect((spec.paths["/auth/register"] as any).post.security).toBeUndefined();
   });
 
   test("includes proper response codes", () => {
     const spec = generateOpenAPISpec();
 
     // Check health endpoint responses
-    expect(spec.paths["/health"].get.responses["200"]).toBeDefined();
-    expect(spec.paths["/health"].get.responses["503"]).toBeDefined();
+    expect((spec.paths["/health"] as any).get.responses["200"]).toBeDefined();
+    expect((spec.paths["/health"] as any).get.responses["503"]).toBeDefined();
 
     // Check book creation responses
-    expect(spec.paths["/books"].post.responses["201"]).toBeDefined();
-    expect(spec.paths["/books"].post.responses["400"]).toBeDefined();
-    expect(spec.paths["/books"].post.responses["401"]).toBeDefined();
+    expect((spec.paths["/books"] as any).post.responses["201"]).toBeDefined();
+    expect((spec.paths["/books"] as any).post.responses["400"]).toBeDefined();
+    expect((spec.paths["/books"] as any).post.responses["401"]).toBeDefined();
 
     // Check book retrieval responses
-    expect(spec.paths["/books/{id}"].get.responses["200"]).toBeDefined();
-    expect(spec.paths["/books/{id}"].get.responses["400"]).toBeDefined();
-    expect(spec.paths["/books/{id}"].get.responses["403"]).toBeDefined();
-    expect(spec.paths["/books/{id}"].get.responses["404"]).toBeDefined();
+    expect((spec.paths["/books/{id}"] as any).get.responses["200"]).toBeDefined();
+    expect((spec.paths["/books/{id}"] as any).get.responses["400"]).toBeDefined();
+    expect((spec.paths["/books/{id}"] as any).get.responses["403"]).toBeDefined();
+    expect((spec.paths["/books/{id}"] as any).get.responses["404"]).toBeDefined();
   });
 });

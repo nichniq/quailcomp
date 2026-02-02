@@ -159,13 +159,12 @@ describe("Analytics Service", () => {
       // Create a broken events client that will fail
       const brokenSql = {
         ...sql,
-        // @ts-expect-error - Intentionally breaking for test
         async query() {
           throw new Error("Database connection failed");
         },
       };
 
-      const brokenEvents = new EventsClient(brokenSql as typeof sql);
+      const brokenEvents = new EventsClient(brokenSql as any);
       const brokenAnalytics = new AnalyticsService(brokenEvents);
 
       // Should not throw - analytics failures are caught and logged

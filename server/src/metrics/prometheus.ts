@@ -6,7 +6,7 @@
  */
 
 import { metrics } from "./collector";
-import type { Counter, MetricsSnapshot } from "./collector";
+import type { Counter, Histogram, MetricsSnapshot } from "./collector";
 
 /**
  * Escape label values for Prometheus format

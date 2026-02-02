@@ -451,9 +451,9 @@ describe("Read Operations", () => {
 
     expect(events.length).toBeGreaterThanOrEqual(3);
     // Should be ordered by occurred_at DESC (most recent first)
-    expect(events[0].data.value).toBe(3);
-    expect(events[1].data.value).toBe(2);
-    expect(events[2].data.value).toBe(1);
+    expect((events[0].data as any).value).toBe(3);
+    expect((events[1].data as any).value).toBe(2);
+    expect((events[2].data as any).value).toBe(1);
   });
 
   it("should check if event exists", async () => {
@@ -505,7 +505,7 @@ describe("Search Operations", () => {
     const results = await client.findByData(eventType, { book_id: searchBookId });
 
     expect(results.length).toBeGreaterThanOrEqual(1);
-    expect(results[0].data.book_id).toBe(searchBookId);
+    expect((results[0].data as any).book_id).toBe(searchBookId);
   });
 
   it("should find events for a specific entity", async () => {
@@ -539,7 +539,7 @@ describe("Search Operations", () => {
 
     expect(events.length).toBeGreaterThanOrEqual(3);
     events.forEach((e) => {
-      expect(e.data.book_id).toBe(bookId);
+      expect((e.data as any).book_id).toBe(bookId);
     });
   });
 });
@@ -588,7 +588,7 @@ describe("Time Ordering", () => {
     const janEvents = await client.getByTimeRange(jan1, new Date("2024-01-31"));
 
     const janData = janEvents.filter(
-      (e) => e.data.month === "jan1" || e.data.month === "jan15"
+      (e) => (e.data as any).month === "jan1" || (e.data as any).month === "jan15"
     );
     expect(janData.length).toBeGreaterThanOrEqual(2);
   });

@@ -90,8 +90,8 @@ describe("Property-Based Tests: EntitiesClient", () => {
           }
 
           // Property 4: Latest entry matches last update
-          const latest = await entitiesClient.get(entity.entityId);
-          expect(latest?.data.updateIndex).toBe(updateCount - 1);
+          const latest = await entitiesClient.getById(entity.entityId);
+          expect((latest?.data as any).updateIndex).toBe(updateCount - 1);
         }
       ),
       { numRuns: 5 } // Run 5 random test cases (reduced to avoid flaky edge cases)
@@ -122,13 +122,13 @@ describe("Property-Based Tests: EntitiesClient", () => {
           const randomBook = books[Math.floor(Math.random() * books.length)];
 
           // Query by author
-          const found = await entitiesClient.findByData({
+          const found = await entitiesClient.findByData(
             type,
-            data: { author: randomBook.author },
-          });
+            { author: randomBook.author }
+          );
 
           // Property 1: Results contain at least one matching entity
-          expect(found.some((e) => e.data.author === randomBook.author)).toBe(true);
+          expect(found.some((e) => (e.data as any).author === randomBook.author)).toBe(true);
 
           // Property 2: All results have the correct type
           for (const entity of found) {
@@ -137,7 +137,7 @@ describe("Property-Based Tests: EntitiesClient", () => {
 
           // Property 3: All results match the query criteria
           for (const entity of found) {
-            expect(entity.data.author).toBe(randomBook.author);
+            expect((entity.data as any).author).toBe(randomBook.author);
           }
 
           // Property 4: Result count matches expected
@@ -164,21 +164,25 @@ describe("Property-Based Tests: EntitiesClient", () => {
           const entity = await entitiesClient.create({ type, data });
 
           // Store original data
-          const original = await entitiesClient.get(entity.entityId);
+          const original = await entitiesClient.getById(entity.entityId);
 
           // Soft delete
-          await entitiesClient.delete(entity.entityId);
+          await entitiesClient.delete({
+            entityId: entity.entityId,
+            type: entity.type,
+            data: entity.data,
+          });
 
           // Property 1: Entity no longer returned by default queries
-          const afterDelete = await entitiesClient.get(entity.entityId);
+          const afterDelete = await entitiesClient.getById(entity.entityId);
           expect(afterDelete).toBeNull();
 
           // Property 2: Entity still exists with includeDeleted flag
-          const deleted = await entitiesClient.get(entity.entityId, { includeDeleted: true });
+          const deleted = await entitiesClient.getById(entity.entityId, { includeDeleted: true });
           expect(deleted).not.toBeNull();
 
-          // Property 3: Data is preserved
-          expect(deleted?.data).toEqual(original?.data);
+          // Property 3: Data is preserved (compare as unknown to avoid type errors)
+          expect((deleted?.data as any)).toEqual((original?.data as any));
 
           // Property 4: deletedAt is set
           expect(deleted?.deletedAt).not.toBeNull();

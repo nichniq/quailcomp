@@ -41,10 +41,9 @@ export function initSentry(): void {
     // Attach stack traces to messages
     attachStacktrace: true,
 
-    // Integrations
+    // Integrations (httpIntegration is built-in for @sentry/bun)
     integrations: [
-      // Add default integrations
-      new Sentry.Integrations.Http({ tracing: true }),
+      Sentry.httpIntegration({ tracing: true }),
     ],
   });
 }
