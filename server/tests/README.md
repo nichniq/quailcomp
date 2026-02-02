@@ -17,8 +17,9 @@ Comprehensive test suite for the Quailcomp server application.
 | `bulk-operations.test.ts` | 27 | Import/export parsers (CSV/JSON/XLSX), formatters, bulk operations |
 | `people.test.ts` | 19 | People CRUD operations, authorization |
 | `series.test.ts` | 19 | Series CRUD operations, authorization |
+| `websocket.test.ts` | 12 | WebSocket connections, authentication, subscriptions, real-time updates |
 
-**Total:** 244 server tests
+**Total:** 256 server tests
 
 ## What's Tested
 
@@ -53,6 +54,7 @@ Comprehensive test suite for the Quailcomp server application.
 - **API Documentation**: OpenAPI spec generation, Swagger UI endpoints
 - **People**: People CRUD operations with authorization
 - **Series**: Series CRUD operations with authorization
+- **WebSocket**: Real-time connections, JWT authentication, subscriptions, authorization, broadcasts
 
 ## Test Patterns
 
