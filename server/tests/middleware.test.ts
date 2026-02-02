@@ -56,7 +56,7 @@ describe("requireAuth middleware", () => {
     const authService = new AuthService(sql);
     const result = await authService.register({
       email: `auth-middleware-${testTimestamp}@example.com`,
-      password: "password123",
+      password: "TestP@ssw0rd123",
       username: `auth_mw_${testTimestamp}`,
     });
     testUserId = result.user.userId;
@@ -137,7 +137,7 @@ describe("optionalAuth middleware", () => {
     const authService = new AuthService(sql);
     const result = await authService.register({
       email: `optional-auth-${testTimestamp}@example.com`,
-      password: "password123",
+      password: "TestP@ssw0rd123",
     });
     validToken = result.token;
   });
@@ -211,7 +211,7 @@ describe("requireAccess middleware", () => {
     // Create owner user
     const owner = await authService.register({
       email: `owner-${testTimestamp}@example.com`,
-      password: "password123",
+      password: "TestP@ssw0rd123",
     });
     ownerId = owner.user.userId;
     ownerToken = owner.token;
@@ -219,7 +219,7 @@ describe("requireAccess middleware", () => {
     // Create reader user
     const reader = await authService.register({
       email: `reader-${testTimestamp}@example.com`,
-      password: "password123",
+      password: "TestP@ssw0rd123",
     });
     readerId = reader.user.userId;
     readerToken = reader.token;
@@ -227,7 +227,7 @@ describe("requireAccess middleware", () => {
     // Create non-access user
     const nonAccess = await authService.register({
       email: `noaccess-${testTimestamp}@example.com`,
-      password: "password123",
+      password: "TestP@ssw0rd123",
     });
     nonAccessUserId = nonAccess.user.userId;
     nonAccessToken = nonAccess.token;

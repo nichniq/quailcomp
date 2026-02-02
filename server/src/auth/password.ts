@@ -30,17 +30,8 @@ export async function verifyPassword(
  * Validate password strength
  *
  * Returns an error message if invalid, null if valid
+ *
+ * Note: This uses the enhanced password validator which checks
+ * minimum length, complexity requirements, and common passwords.
  */
-export function validatePassword(password: string): string | null {
-  if (password.length < 8) {
-    return "Password must be at least 8 characters";
-  }
-
-  // Add more validation rules as needed:
-  // - Require uppercase/lowercase
-  // - Require numbers
-  // - Require special characters
-  // - Check against common passwords
-
-  return null;
-}
+export { validatePassword } from "./password-validator";

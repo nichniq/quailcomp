@@ -163,21 +163,21 @@ describe("Password utilities", () => {
     expect(isValid).toBe(false);
   });
 
-  test("validate password rejects less than 8 characters", () => {
-    const error = validatePassword("short");
+  test("validate password rejects less than 12 characters", () => {
+    const error = validatePassword("Short1!");
 
     expect(error).not.toBeNull();
-    expect(error).toContain("at least 8 characters");
+    expect(error).toContain("at least 12 characters");
   });
 
-  test("validate password accepts 8 characters", () => {
-    const error = validatePassword("validpwd");
+  test("validate password rejects without complexity", () => {
+    const error = validatePassword("alllowercase123");
 
-    expect(error).toBeNull();
+    expect(error).not.toBeNull();
   });
 
-  test("validate password accepts longer passwords", () => {
-    const error = validatePassword("thisIsAVeryLongPassword123!");
+  test("validate password accepts strong passwords", () => {
+    const error = validatePassword("ValidP@ssw0rd123");
 
     expect(error).toBeNull();
   });
@@ -232,7 +232,7 @@ describe("AuthService", () => {
 
   test("register with duplicate email fails", async () => {
     const email = `duplicate-${testTimestamp}@example.com`;
-    const password = "password123";
+    const password = "TestP@ssw0rd123";
 
     await authService.register({ email, password });
 
@@ -264,7 +264,7 @@ describe("AuthService", () => {
     await expect(
       authService.register({
         email: "not-an-email",
-        password: "password123",
+        password: "TestP@ssw0rd123",
       })
     ).rejects.toThrow("Invalid email format");
   });
@@ -342,7 +342,7 @@ describe("AuthService", () => {
     const username = `get_id_user_${testTimestamp}`;
     const registered = await authService.register({
       email,
-      password: "password123",
+      password: "TestP@ssw0rd123",
       username,
     });
 
@@ -366,7 +366,7 @@ describe("AuthService", () => {
     const email = `get-by-email-${testTimestamp}@example.com`;
     await authService.register({
       email,
-      password: "password123",
+      password: "TestP@ssw0rd123",
     });
 
     const user = await authService.getUserByEmail(email);
@@ -401,14 +401,14 @@ describe("AuthorizationService", () => {
     // Create test users
     const user1 = await authService.register({
       email: `authz-user1-${testTimestamp}@example.com`,
-      password: "password123",
+      password: "TestP@ssw0rd123",
       username: `authz_user1_${testTimestamp}`,
     });
     testUserId1 = user1.user.userId;
 
     const user2 = await authService.register({
       email: `authz-user2-${testTimestamp}@example.com`,
-      password: "password123",
+      password: "TestP@ssw0rd123",
       username: `authz_user2_${testTimestamp}`,
     });
     testUserId2 = user2.user.userId;

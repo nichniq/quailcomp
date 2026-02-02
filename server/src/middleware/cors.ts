@@ -4,7 +4,7 @@
  * Handles Cross-Origin Resource Sharing headers.
  */
 
-import { env } from "@/config";
+import { env, isProduction } from "@/config";
 import type { Middleware } from "@/middleware/types";
 
 export interface CorsOptions {
@@ -135,8 +135,13 @@ export function cors(options: CorsOptions = {}): Middleware {
 
 /**
  * Default CORS middleware (configured from environment)
+ *
+ * In development: Allows all origins (*) for easier local development
+ * In production: Only allows configured origins from CORS_ORIGINS
  */
 export const defaultCors = cors({
-  origin: env.CORS_ORIGINS,
+  origin: isProduction
+    ? env.CORS_ORIGINS.split(",").map((o) => o.trim())
+    : "*",
   credentials: true,
 });

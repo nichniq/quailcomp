@@ -32,7 +32,7 @@ describe("E2E Authentication Workflow", () => {
 
   test("complete registration flow", async () => {
     const email = `e2e-register-${timestamp}@example.com`;
-    const password = "securePassword123";
+    const password = "SecureP@ss123!";
     const username = `e2e_user_${timestamp}`;
 
     const response = await fetch(`${baseUrl}/auth/register`, {
@@ -56,7 +56,7 @@ describe("E2E Authentication Workflow", () => {
 
   test("registration with duplicate email fails", async () => {
     const email = `e2e-duplicate-${timestamp}@example.com`;
-    const password = "password123";
+    const password = "TestP@ssw0rd123";
 
     // First registration
     const response1 = await fetch(`${baseUrl}/auth/register`, {
@@ -100,7 +100,7 @@ describe("E2E Authentication Workflow", () => {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         email: "not-an-email",
-        password: "password123",
+        password: "TestP@ssw0rd123",
       }),
     });
 
@@ -112,7 +112,7 @@ describe("E2E Authentication Workflow", () => {
 
   test("complete login flow with email", async () => {
     const email = `e2e-login-${timestamp}@example.com`;
-    const password = "loginPassword123";
+    const password = "LoginP@ss123!";
 
     // Register user
     await fetch(`${baseUrl}/auth/register`, {
@@ -142,7 +142,7 @@ describe("E2E Authentication Workflow", () => {
   test("complete login flow with username", async () => {
     const email = `e2e-username-login-${timestamp}@example.com`;
     const username = `e2e_login_${timestamp}`;
-    const password = "usernameLoginPassword123";
+    const password = "UsernameP@ss123!";
 
     // Register user
     await fetch(`${baseUrl}/auth/register`, {
@@ -167,7 +167,7 @@ describe("E2E Authentication Workflow", () => {
 
   test("login with incorrect password fails", async () => {
     const email = `e2e-wrong-pwd-${timestamp}@example.com`;
-    const password = "correctPassword123";
+    const password = "CorrectP@ss123!";
 
     // Register user
     await fetch(`${baseUrl}/auth/register`, {
@@ -208,7 +208,7 @@ describe("E2E Authentication Workflow", () => {
   test("get current user with valid token", async () => {
     const email = `e2e-me-${timestamp}@example.com`;
     const username = `e2e_me_${timestamp}`;
-    const password = "password123";
+    const password = "TestP@ssw0rd123";
 
     // Register and get token
     const registerResponse = await fetch(`${baseUrl}/auth/register`, {
@@ -265,7 +265,7 @@ describe("E2E Authentication Workflow", () => {
   test("complete workflow: register -> login -> get user", async () => {
     const email = `e2e-workflow-${timestamp}@example.com`;
     const username = `e2e_workflow_${timestamp}`;
-    const password = "workflowPassword123";
+    const password = "WorkflowP@ss123!";
 
     // Step 1: Register
     const registerResponse = await fetch(`${baseUrl}/auth/register`, {

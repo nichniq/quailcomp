@@ -47,7 +47,7 @@ describe("E2E Book Workflow", () => {
   const timestamp = Date.now();
 
   test("create book with minimal data", async () => {
-    const token = await registerUser(`create-minimal-${timestamp}@example.com`, "password123");
+    const token = await registerUser(`create-minimal-${timestamp}@example.com`, "TestP@ssw0rd123");
 
     const response = await fetch(`${baseUrl}/books`, {
       method: "POST",
@@ -72,7 +72,7 @@ describe("E2E Book Workflow", () => {
   });
 
   test("create book with full data", async () => {
-    const token = await registerUser(`create-full-${timestamp}@example.com`, "password123");
+    const token = await registerUser(`create-full-${timestamp}@example.com`, "TestP@ssw0rd123");
 
     const bookData = {
       title: "Complete Book",
@@ -118,7 +118,7 @@ describe("E2E Book Workflow", () => {
   });
 
   test("get book by ID", async () => {
-    const token = await registerUser(`get-book-${timestamp}@example.com`, "password123");
+    const token = await registerUser(`get-book-${timestamp}@example.com`, "TestP@ssw0rd123");
 
     // Create book
     const createResponse = await fetch(`${baseUrl}/books`, {
@@ -147,7 +147,7 @@ describe("E2E Book Workflow", () => {
   });
 
   test("get non-existent book returns 404", async () => {
-    const token = await registerUser(`get-404-${timestamp}@example.com`, "password123");
+    const token = await registerUser(`get-404-${timestamp}@example.com`, "TestP@ssw0rd123");
 
     const response = await fetch(`${baseUrl}/books/999999999`, {
       headers: { Authorization: `Bearer ${token}` },
@@ -157,7 +157,7 @@ describe("E2E Book Workflow", () => {
   });
 
   test("update book", async () => {
-    const token = await registerUser(`update-book-${timestamp}@example.com`, "password123");
+    const token = await registerUser(`update-book-${timestamp}@example.com`, "TestP@ssw0rd123");
 
     // Create book
     const createResponse = await fetch(`${baseUrl}/books`, {
@@ -198,7 +198,7 @@ describe("E2E Book Workflow", () => {
   });
 
   test("update preserves unmodified fields", async () => {
-    const token = await registerUser(`update-preserve-${timestamp}@example.com`, "password123");
+    const token = await registerUser(`update-preserve-${timestamp}@example.com`, "TestP@ssw0rd123");
 
     // Create book with multiple fields
     const createResponse = await fetch(`${baseUrl}/books`, {
@@ -238,7 +238,7 @@ describe("E2E Book Workflow", () => {
   });
 
   test("delete book (soft delete)", async () => {
-    const token = await registerUser(`delete-book-${timestamp}@example.com`, "password123");
+    const token = await registerUser(`delete-book-${timestamp}@example.com`, "TestP@ssw0rd123");
 
     // Create book
     const createResponse = await fetch(`${baseUrl}/books`, {
@@ -275,7 +275,7 @@ describe("E2E Book Workflow", () => {
   });
 
   test("list books returns user's books", async () => {
-    const token = await registerUser(`list-books-${timestamp}@example.com`, "password123");
+    const token = await registerUser(`list-books-${timestamp}@example.com`, "TestP@ssw0rd123");
 
     // Create multiple books
     const book1Response = await fetch(`${baseUrl}/books`, {
@@ -323,7 +323,7 @@ describe("E2E Book Workflow", () => {
   });
 
   test("complete CRUD workflow", async () => {
-    const token = await registerUser(`crud-workflow-${timestamp}@example.com`, "password123");
+    const token = await registerUser(`crud-workflow-${timestamp}@example.com`, "TestP@ssw0rd123");
 
     // Create
     const createResponse = await fetch(`${baseUrl}/books`, {
@@ -382,7 +382,7 @@ describe("E2E Book Workflow", () => {
   });
 
   test("metadata lookup with ISBN", async () => {
-    const token = await registerUser(`metadata-lookup-${timestamp}@example.com`, "password123");
+    const token = await registerUser(`metadata-lookup-${timestamp}@example.com`, "TestP@ssw0rd123");
 
     // Use a well-known ISBN (The Great Gatsby)
     const isbn = "9780743273565";
@@ -412,7 +412,7 @@ describe("E2E Book Workflow", () => {
   });
 
   test("metadata lookup without ISBN fails", async () => {
-    const token = await registerUser(`metadata-no-isbn-${timestamp}@example.com`, "password123");
+    const token = await registerUser(`metadata-no-isbn-${timestamp}@example.com`, "TestP@ssw0rd123");
 
     const response = await fetch(`${baseUrl}/books/metadata/lookup`, {
       method: "POST",
@@ -427,7 +427,7 @@ describe("E2E Book Workflow", () => {
   });
 
   test("metadata lookup with invalid ISBN", async () => {
-    const token = await registerUser(`metadata-invalid-isbn-${timestamp}@example.com`, "password123");
+    const token = await registerUser(`metadata-invalid-isbn-${timestamp}@example.com`, "TestP@ssw0rd123");
 
     const response = await fetch(`${baseUrl}/books/metadata/lookup`, {
       method: "POST",
@@ -447,7 +447,7 @@ describe("E2E Book Workflow", () => {
   });
 
   test("book history tracking via event sourcing", async () => {
-    const token = await registerUser(`history-tracking-${timestamp}@example.com`, "password123");
+    const token = await registerUser(`history-tracking-${timestamp}@example.com`, "TestP@ssw0rd123");
 
     // Create book
     const createResponse = await fetch(`${baseUrl}/books`, {

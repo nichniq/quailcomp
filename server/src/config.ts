@@ -24,7 +24,7 @@ const envSchema = z.object({
   JWT_SECRET_OLD: z.string().min(32).optional(),
 
   // CORS
-  CORS_ORIGINS: z.string().transform(val => val.split(',')).default('http://localhost:5173'),
+  CORS_ORIGINS: z.string().default('http://localhost:5173'),
 
   // Rate limiting
   RATE_LIMIT_ENABLED: z.coerce.boolean().default(true),
@@ -44,6 +44,11 @@ const envSchema = z.object({
   SENTRY_DSN: z.string().url().optional(),
   SENTRY_ENABLED: z.coerce.boolean().default(false),
   PROMETHEUS_ENABLED: z.coerce.boolean().default(true),
+
+  // Security
+  PASSWORD_MIN_LENGTH: z.coerce.number().int().min(8).default(12),
+  PASSWORD_REQUIRE_COMPLEXITY: z.coerce.boolean().default(true),
+  HTTPS_REDIRECT: z.coerce.boolean().default(true),
 });
 
 /**

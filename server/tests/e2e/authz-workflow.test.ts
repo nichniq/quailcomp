@@ -64,7 +64,7 @@ describe("E2E Authorization Workflow", () => {
   test("owner automatically granted on book creation", async () => {
     const { token } = await registerUser(
       `owner-grant-${timestamp}@example.com`,
-      "password123"
+      "TestP@ssw0rd123"
     );
 
     // Create book
@@ -99,8 +99,8 @@ describe("E2E Authorization Workflow", () => {
   });
 
   test("user without access cannot read book", async () => {
-    const owner = await registerUser(`owner-no-access-${timestamp}@example.com`, "password123");
-    const other = await registerUser(`other-no-access-${timestamp}@example.com`, "password123");
+    const owner = await registerUser(`owner-no-access-${timestamp}@example.com`, "TestP@ssw0rd123");
+    const other = await registerUser(`other-no-access-${timestamp}@example.com`, "TestP@ssw0rd123");
 
     const bookId = await createBook(owner.token, {
       title: "Private Book",
@@ -118,8 +118,8 @@ describe("E2E Authorization Workflow", () => {
   });
 
   test("user without write access cannot update book", async () => {
-    const owner = await registerUser(`owner-no-write-${timestamp}@example.com`, "password123");
-    const reader = await registerUser(`reader-no-write-${timestamp}@example.com`, "password123");
+    const owner = await registerUser(`owner-no-write-${timestamp}@example.com`, "TestP@ssw0rd123");
+    const reader = await registerUser(`reader-no-write-${timestamp}@example.com`, "TestP@ssw0rd123");
 
     const bookId = await createBook(owner.token, {
       title: "Read Only Book",
@@ -158,8 +158,8 @@ describe("E2E Authorization Workflow", () => {
   });
 
   test("user without owner access cannot delete book", async () => {
-    const owner = await registerUser(`owner-no-delete-${timestamp}@example.com`, "password123");
-    const writer = await registerUser(`writer-no-delete-${timestamp}@example.com`, "password123");
+    const owner = await registerUser(`owner-no-delete-${timestamp}@example.com`, "TestP@ssw0rd123");
+    const writer = await registerUser(`writer-no-delete-${timestamp}@example.com`, "TestP@ssw0rd123");
 
     const bookId = await createBook(owner.token, {
       title: "Protected Book",
@@ -199,8 +199,8 @@ describe("E2E Authorization Workflow", () => {
   });
 
   test("owner can grant read access", async () => {
-    const owner = await registerUser(`owner-grant-read-${timestamp}@example.com`, "password123");
-    const reader = await registerUser(`reader-grant-${timestamp}@example.com`, "password123");
+    const owner = await registerUser(`owner-grant-read-${timestamp}@example.com`, "TestP@ssw0rd123");
+    const reader = await registerUser(`reader-grant-${timestamp}@example.com`, "TestP@ssw0rd123");
 
     const bookId = await createBook(owner.token, {
       title: "Shared Book",
@@ -235,8 +235,8 @@ describe("E2E Authorization Workflow", () => {
   });
 
   test("owner can grant write access", async () => {
-    const owner = await registerUser(`owner-grant-write-${timestamp}@example.com`, "password123");
-    const writer = await registerUser(`writer-grant-${timestamp}@example.com`, "password123");
+    const owner = await registerUser(`owner-grant-write-${timestamp}@example.com`, "TestP@ssw0rd123");
+    const writer = await registerUser(`writer-grant-${timestamp}@example.com`, "TestP@ssw0rd123");
 
     const bookId = await createBook(owner.token, {
       title: "Collaborative Book",
@@ -269,9 +269,9 @@ describe("E2E Authorization Workflow", () => {
   });
 
   test("non-owner cannot grant access", async () => {
-    const owner = await registerUser(`owner-non-grant-${timestamp}@example.com`, "password123");
-    const reader = await registerUser(`reader-non-grant-${timestamp}@example.com`, "password123");
-    const other = await registerUser(`other-non-grant-${timestamp}@example.com`, "password123");
+    const owner = await registerUser(`owner-non-grant-${timestamp}@example.com`, "TestP@ssw0rd123");
+    const reader = await registerUser(`reader-non-grant-${timestamp}@example.com`, "TestP@ssw0rd123");
+    const other = await registerUser(`other-non-grant-${timestamp}@example.com`, "TestP@ssw0rd123");
 
     const bookId = await createBook(owner.token, {
       title: "Owner Only Grant",
@@ -307,8 +307,8 @@ describe("E2E Authorization Workflow", () => {
   });
 
   test("owner can revoke access", async () => {
-    const owner = await registerUser(`owner-revoke-${timestamp}@example.com`, "password123");
-    const reader = await registerUser(`reader-revoke-${timestamp}@example.com`, "password123");
+    const owner = await registerUser(`owner-revoke-${timestamp}@example.com`, "TestP@ssw0rd123");
+    const reader = await registerUser(`reader-revoke-${timestamp}@example.com`, "TestP@ssw0rd123");
 
     const bookId = await createBook(owner.token, {
       title: "Revoked Access Book",
@@ -349,9 +349,9 @@ describe("E2E Authorization Workflow", () => {
   });
 
   test("non-owner cannot revoke access", async () => {
-    const owner = await registerUser(`owner-non-revoke-${timestamp}@example.com`, "password123");
-    const reader1 = await registerUser(`reader1-non-revoke-${timestamp}@example.com`, "password123");
-    const reader2 = await registerUser(`reader2-non-revoke-${timestamp}@example.com`, "password123");
+    const owner = await registerUser(`owner-non-revoke-${timestamp}@example.com`, "TestP@ssw0rd123");
+    const reader1 = await registerUser(`reader1-non-revoke-${timestamp}@example.com`, "TestP@ssw0rd123");
+    const reader2 = await registerUser(`reader2-non-revoke-${timestamp}@example.com`, "TestP@ssw0rd123");
 
     const bookId = await createBook(owner.token, {
       title: "Multi Reader Book",
@@ -392,8 +392,8 @@ describe("E2E Authorization Workflow", () => {
   });
 
   test("owner can transfer ownership", async () => {
-    const owner = await registerUser(`owner-transfer-${timestamp}@example.com`, "password123");
-    const newOwner = await registerUser(`new-owner-transfer-${timestamp}@example.com`, "password123");
+    const owner = await registerUser(`owner-transfer-${timestamp}@example.com`, "TestP@ssw0rd123");
+    const newOwner = await registerUser(`new-owner-transfer-${timestamp}@example.com`, "TestP@ssw0rd123");
 
     const bookId = await createBook(owner.token, {
       title: "Transferred Book",
@@ -446,9 +446,9 @@ describe("E2E Authorization Workflow", () => {
   });
 
   test("non-owner cannot transfer ownership", async () => {
-    const owner = await registerUser(`owner-non-transfer-${timestamp}@example.com`, "password123");
-    const writer = await registerUser(`writer-non-transfer-${timestamp}@example.com`, "password123");
-    const other = await registerUser(`other-non-transfer-${timestamp}@example.com`, "password123");
+    const owner = await registerUser(`owner-non-transfer-${timestamp}@example.com`, "TestP@ssw0rd123");
+    const writer = await registerUser(`writer-non-transfer-${timestamp}@example.com`, "TestP@ssw0rd123");
+    const other = await registerUser(`other-non-transfer-${timestamp}@example.com`, "TestP@ssw0rd123");
 
     const bookId = await createBook(owner.token, {
       title: "Owner Only Transfer",
@@ -483,9 +483,9 @@ describe("E2E Authorization Workflow", () => {
   });
 
   test("list accessors shows all users with access", async () => {
-    const owner = await registerUser(`owner-list-${timestamp}@example.com`, "password123");
-    const reader = await registerUser(`reader-list-${timestamp}@example.com`, "password123");
-    const writer = await registerUser(`writer-list-${timestamp}@example.com`, "password123");
+    const owner = await registerUser(`owner-list-${timestamp}@example.com`, "TestP@ssw0rd123");
+    const reader = await registerUser(`reader-list-${timestamp}@example.com`, "TestP@ssw0rd123");
+    const writer = await registerUser(`writer-list-${timestamp}@example.com`, "TestP@ssw0rd123");
 
     const bookId = await createBook(owner.token, {
       title: "Multi Access Book",
@@ -531,8 +531,8 @@ describe("E2E Authorization Workflow", () => {
   });
 
   test("user without access cannot list accessors", async () => {
-    const owner = await registerUser(`owner-list-no-access-${timestamp}@example.com`, "password123");
-    const other = await registerUser(`other-list-no-access-${timestamp}@example.com`, "password123");
+    const owner = await registerUser(`owner-list-no-access-${timestamp}@example.com`, "TestP@ssw0rd123");
+    const other = await registerUser(`other-list-no-access-${timestamp}@example.com`, "TestP@ssw0rd123");
 
     const bookId = await createBook(owner.token, {
       title: "Private List Book",
@@ -547,8 +547,8 @@ describe("E2E Authorization Workflow", () => {
   });
 
   test("user can only see their own books in list", async () => {
-    const user1 = await registerUser(`user1-list-books-${timestamp}@example.com`, "password123");
-    const user2 = await registerUser(`user2-list-books-${timestamp}@example.com`, "password123");
+    const user1 = await registerUser(`user1-list-books-${timestamp}@example.com`, "TestP@ssw0rd123");
+    const user2 = await registerUser(`user2-list-books-${timestamp}@example.com`, "TestP@ssw0rd123");
 
     const book1Id = await createBook(user1.token, {
       title: "User 1 Book",

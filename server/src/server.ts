@@ -13,7 +13,9 @@ import { createContext } from "@/context";
 import { compose } from "@/middleware/compose";
 import { defaultCors } from "@/middleware/cors";
 import { errorHandler } from "@/middleware/error-handler";
+import { httpsRedirect } from "@/middleware/https-redirect";
 import { requestIdMiddleware } from "@/middleware/request-id";
+import { securityHeaders } from "@/middleware/security-headers";
 import type { Handler, Middleware } from "@/middleware/types";
 import { requestLogger } from "@/logging/request-logger";
 import { requestMetrics } from "@/metrics/request-metrics";
@@ -78,6 +80,8 @@ export function createServer(config: ServerConfig = {}): ServerInstance {
   // Global middleware stack (applied to all requests)
   const globalMiddleware = compose(
     errorHandler,
+    httpsRedirect,
+    securityHeaders,
     requestIdMiddleware,
     requestLogger,
     requestMetrics,
