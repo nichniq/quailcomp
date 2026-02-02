@@ -17,3 +17,6 @@ domains/.domains-cache.json
 
 # Coverage
 coverage/
+
+# Apple file
+.DS_Store

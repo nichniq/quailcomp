@@ -21,6 +21,7 @@ This guide provides detailed instructions for deploying Quailcomp to a productio
 ### Server Requirements
 
 **Minimum Specifications:**
+
 - Ubuntu 22.04 or 24.04 LTS
 - 2 CPU cores
 - 2GB RAM (4GB recommended for production)
@@ -29,6 +30,7 @@ This guide provides detailed instructions for deploying Quailcomp to a productio
 - Root or sudo access
 
 **Software Requirements:**
+
 - Bun 1.3.6 or higher
 - PostgreSQL 16
 - Nginx (for reverse proxy)
@@ -37,6 +39,7 @@ This guide provides detailed instructions for deploying Quailcomp to a productio
 ### Domain Configuration
 
 Before deployment, ensure you have:
+
 - A registered domain name
 - DNS A record pointing to your server's IP address
 - Optional: DNS AAAA record for IPv6
@@ -111,6 +114,7 @@ psql --version
 ### 1. Create Database Users
 
 Quailcomp uses two database users with different privilege levels:
+
 - `quailcomp_owner`: For migrations and schema changes
 - `quailcomp_app`: For runtime operations (limited privileges)
 
@@ -137,6 +141,7 @@ CREATE DATABASE quailcomp OWNER quailcomp_owner;
 ```
 
 **Security Note:** Use strong, randomly generated passwords. Example:
+
 ```bash
 openssl rand -base64 32
 ```
@@ -234,6 +239,7 @@ git checkout v1.0.0
 ### 2. Run Installation Script
 
 The installation script automates:
+
 - Creating the `quailcomp` system user
 - Installing application to `/opt/quailcomp`
 - Installing dependencies with Bun
@@ -248,6 +254,7 @@ sudo bash deployment/install.sh
 ```
 
 The script will:
+
 1. Create system user `quailcomp` with home directory `/opt/quailcomp`
 2. Copy application files to `/opt/quailcomp`
 3. Install dependencies (`bun install`)
@@ -342,6 +349,7 @@ sudo -u quailcomp psql -U quailcomp_app -d quailcomp -h localhost -c "\dt"
 ```
 
 Expected tables:
+
 - `entities`
 - `events`
 - `entity_access`
@@ -362,6 +370,7 @@ sudo systemctl status quailcomp
 ```
 
 Expected output:
+
 ```
 ● quailcomp.service - Quailcomp Book Management API
      Loaded: loaded (/etc/systemd/system/quailcomp.service; enabled)
@@ -387,6 +396,7 @@ curl http://localhost:3000/health
 ```
 
 Expected response:
+
 ```json
 {"status":"ok","timestamp":"2026-02-01T12:00:00.000Z"}
 ```
@@ -511,6 +521,7 @@ sudo nginx -t
 ```
 
 Expected output:
+
 ```
 nginx: configuration file /etc/nginx/nginx.conf test is successful
 ```
@@ -538,6 +549,7 @@ sudo certbot --nginx -d yourdomain.com -d www.yourdomain.com
 ```
 
 Follow prompts:
+
 1. Enter email address for renewal notifications
 2. Agree to Terms of Service
 3. Choose whether to redirect HTTP to HTTPS (recommended: yes)
@@ -565,6 +577,7 @@ sudo certbot renew --dry-run
 ```
 
 Expected output:
+
 ```
 Congratulations, all simulated renewals succeeded
 ```
@@ -641,6 +654,7 @@ sudo journalctl -u quailcomp -p warning
 ```
 
 Log rotation is configured automatically via `/etc/logrotate.d/quailcomp`:
+
 - Daily rotation
 - 14 day retention
 - Compression enabled
@@ -657,6 +671,7 @@ curl https://yourdomain.com/health
 ```
 
 Expected response:
+
 ```json
 {
   "status": "ok",
@@ -675,6 +690,7 @@ curl http://localhost:3000/metrics
 ```
 
 Example metrics:
+
 ```
 # HTTP request duration
 http_request_duration_seconds_bucket{method="GET",path="/health",status="200",le="0.005"} 100
@@ -714,6 +730,7 @@ sudo crontab -e
 ```
 
 Add line:
+
 ```
 */5 * * * * /opt/quailcomp/deployment/healthcheck.sh || echo "Quailcomp health check failed" | mail -s "Alert: Quailcomp Down" admin@yourdomain.com
 ```
@@ -728,6 +745,7 @@ Configure external monitoring with services like:
 - **Healthchecks.io**
 
 Monitor endpoint: `https://yourdomain.com/health`
+
 - Check interval: 5 minutes
 - Timeout: 10 seconds
 - Expected: HTTP 200 with JSON response
@@ -885,11 +903,13 @@ sudo kill -9 <PID>
 2. **Database connection failed:**
 
 Check DATABASE_URL in `.env`:
+
 ```bash
 sudo -u quailcomp cat /opt/quailcomp/.env | grep DATABASE_URL
 ```
 
 Test database connection:
+
 ```bash
 sudo -u quailcomp psql -U quailcomp_app -d quailcomp -h localhost -c "SELECT 1;"
 ```
@@ -943,6 +963,7 @@ sudo systemctl restart quailcomp
 ### Database Connection Pool Exhausted
 
 **Symptoms:**
+
 - Errors: "connection pool exhausted"
 - Slow API responses
 - 500 errors
@@ -1002,11 +1023,13 @@ sudo journalctl -u quailcomp -p err -n 50
 **Enable debug logging temporarily:**
 
 Edit `/opt/quailcomp/.env`:
+
 ```bash
 LOG_LEVEL=debug
 ```
 
 Restart:
+
 ```bash
 sudo systemctl restart quailcomp
 ```
@@ -1171,5 +1194,6 @@ sudo chmod 644 /etc/systemd/system/quailcomp.service
 ## Support
 
 For issues and questions:
-- GitHub Issues: https://github.com/yourusername/quailcomp/issues
+
+- GitHub Issues: <https://github.com/yourusername/quailcomp/issues>
 - Documentation: [docs/](../../docs/)

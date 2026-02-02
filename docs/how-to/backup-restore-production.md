@@ -17,6 +17,7 @@ This guide covers backup and restore procedures for Quailcomp in production envi
 ### What Gets Backed Up
 
 Quailcomp backups include:
+
 - **PostgreSQL database** - All application data (entities, events, access control)
 - **Environment configuration** - `.env` file (optional, contains secrets)
 - **Application files** - Source code and frontend builds (optional, can be restored from git)
@@ -24,6 +25,7 @@ Quailcomp backups include:
 ### Backup Strategy
 
 Recommended backup approach:
+
 - **Database**: Daily automated backups with 30-day retention
 - **Configuration**: Manual backups when changed
 - **Application files**: Not needed (restore from git repository)
@@ -33,6 +35,7 @@ Recommended backup approach:
 Default backup directory: `/var/backups/quailcomp/`
 
 Contents:
+
 ```
 /var/backups/quailcomp/
 ├── quailcomp-20260201-120000.sql.gz
@@ -48,6 +51,7 @@ Contents:
 The backup script is located at `/opt/quailcomp/deployment/backup.sh`.
 
 **Features:**
+
 - Creates compressed PostgreSQL dumps (`.sql.gz`)
 - Automatic retention (default: 30 days)
 - Logging to `backup.log`
@@ -63,6 +67,7 @@ sudo -u quailcomp /opt/quailcomp/deployment/backup.sh
 ```
 
 Output:
+
 ```
 =========================================
 Quailcomp Database Backup
@@ -274,6 +279,7 @@ sudo tar -czf \
 ### Prerequisites
 
 Before restoring:
+
 1. Stop the application: `sudo systemctl stop quailcomp`
 2. Ensure PostgreSQL is running: `sudo systemctl status postgresql`
 3. Have a valid backup file
@@ -594,6 +600,7 @@ gpg --decrypt quailcomp-20260201-120000.sql.gz.gpg > quailcomp-20260201-120000.s
 Complete recovery procedure from scratch:
 
 **1. Provision new server**
+
 - Follow [Production Deployment Guide](./deploy-production.md)
 - Install Bun, PostgreSQL, Nginx
 
@@ -661,6 +668,7 @@ curl http://localhost:3000/health
 ### Recovery Time Objective (RTO)
 
 Expected recovery times:
+
 - **Database restore only**: 5-15 minutes (depending on size)
 - **Full system recovery**: 30-60 minutes (including server provisioning)
 - **From off-site backup**: Add download time
@@ -668,6 +676,7 @@ Expected recovery times:
 ### Recovery Point Objective (RPO)
 
 Data loss windows:
+
 - **Daily backups**: Up to 24 hours of data loss
 - **6-hour backups**: Up to 6 hours of data loss
 - **Hourly backups**: Up to 1 hour of data loss
