@@ -1,3 +1,5 @@
+<!-- markdownlint-disable -->
+
 # Phase 5 Implementation Plan: Advanced Features
 
 **Created:** 2026-02-01

@@ -135,6 +135,10 @@ Manages physical books in the collection and their acquisition history. Tracks a
 
 Tracks individuals related to books in the collection - authors, contributors, gift-givers, and borrowers. Provides a central registry for managing relationships with books through contact information and relationship types.
 
+### Series (`/domains/series.md`)
+
+Book series, collections, or multi-volume works. Tracks series names, total volumes, and ordering of books within each series. Referenced by individual books through series_id and volume_number fields.
+
 ### Analytics (`/domains/analytics.md`)
 
 Observability and telemetry tracking for application behavior and performance. Records analytics events for HTTP requests, metadata lookups, user sessions, milestones, and feature usage. Uses 90-day retention policy.
@@ -144,10 +148,6 @@ Observability and telemetry tracking for application behavior and performance. R
 ### Locations (`/domains/locations`)
 
 Places where events happen - bookstores, museums, coffee shops, etc. Referenced by the Books domain and potentially others.
-
-### Series (`/domains/series`)
-
-Book series, collections, or multi-volume works. Referenced by individual books.
 
 ### Finance (`/domains/finance`)
 

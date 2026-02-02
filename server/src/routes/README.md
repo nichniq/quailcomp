@@ -7,6 +7,7 @@ HTTP route handlers for RESTful API endpoints.
 - [`api-docs.ts`](api-docs.ts) - API documentation endpoints (OpenAPI spec and Swagger UI)
 - [`books.ts`](books.ts) - Book management endpoints (CRUD operations)
 - [`people.ts`](people.ts) - People management endpoints (CRUD operations)
+- [`series.ts`](series.ts) - Series management endpoints (CRUD operations)
 - [`entities.ts`](entities.ts) - Entity access management endpoints
 - [`health.ts`](health.ts) - Health check and metrics endpoints
 
@@ -58,6 +59,17 @@ POST   /api/people        - Create new person
 PUT    /api/people/:id    - Update person
 DELETE /api/people/:id    - Delete person
 GET    /api/people/:id/books - List books associated with person
+```
+
+### Series
+
+```
+GET    /api/series        - List all series
+GET    /api/series/:id    - Get single series
+POST   /api/series        - Create new series
+PUT    /api/series/:id    - Update series
+DELETE /api/series/:id    - Delete series
+GET    /api/series/:id/books - List books in series (ordered by volume)
 ```
 
 ### Health & Metrics

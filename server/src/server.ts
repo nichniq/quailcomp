@@ -28,6 +28,7 @@ import {
 import { registerAuthRoutes } from "@/auth/routes";
 import { registerBookRoutes } from "@/routes/books";
 import { registerPeopleRoutes } from "@/routes/people";
+import { registerSeriesRoutes } from "@/routes/series";
 import { registerEntityRoutes } from "@/routes/entities";
 import { openAPIHandler, swaggerUIHandler } from "@/routes/api-docs";
 
@@ -63,6 +64,9 @@ function registerRoutes(router: Router, sql: Sql): void {
 
   // People routes
   registerPeopleRoutes(router, sql);
+
+  // Series routes
+  registerSeriesRoutes(router, sql);
 
   // Entity access routes
   registerEntityRoutes(router, sql);
