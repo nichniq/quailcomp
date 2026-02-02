@@ -144,10 +144,30 @@ export class InvalidISBNError extends BookMetadataServiceError {
 // Configuration Types
 // =============================================================================
 
+/** Rate limiting configuration */
+export interface RateLimitConfig {
+  /** Maximum number of tokens (burst capacity) */
+  maxRequests: number;
+  /** Tokens per second */
+  perSeconds: number;
+}
+
+/** Circuit breaker configuration */
+export interface CircuitBreakerConfig {
+  /** Number of failures before opening circuit */
+  failureThreshold: number;
+  /** Milliseconds before attempting recovery */
+  recoveryTimeout: number;
+}
+
 /** Base configuration shared by all providers */
 export interface BaseProviderConfig {
   /** Request timeout in milliseconds (default: 10000) */
   timeout?: number;
+  /** Rate limiting configuration (optional) */
+  rateLimit?: RateLimitConfig;
+  /** Circuit breaker configuration (optional) */
+  circuitBreaker?: CircuitBreakerConfig;
 }
 
 /** Google Books specific configuration */

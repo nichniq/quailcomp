@@ -34,6 +34,8 @@ export type {
   WorldCatClassifyConfig,
   CompositeConfig,
   BaseProviderConfig,
+  RateLimitConfig,
+  CircuitBreakerConfig,
 } from "./types";
 
 // =============================================================================
@@ -59,6 +61,13 @@ export { createWorldCatClassifyProvider } from "./providers/worldcat-classify";
 export { createCompositeProvider, createBookMetadataService } from "./providers/composite";
 
 // =============================================================================
+// Resilience Wrappers
+// =============================================================================
+
+export { createRateLimitedProvider } from "./providers/rate-limited";
+export { createResilientProvider } from "./providers/resilient";
+
+// =============================================================================
 // Testing Utilities
 // =============================================================================
 
@@ -73,3 +82,7 @@ export {
 // =============================================================================
 
 export { normalizeISBN, isbn10ToIsbn13, isbn13ToIsbn10 } from "./utils";
+export { RateLimiter } from "./rate-limiter";
+export type { RateLimiterConfig } from "./rate-limiter";
+export { CircuitBreaker, CircuitOpenError } from "./circuit-breaker";
+export type { CircuitBreakerState, CircuitBreakerConfig as CircuitBreakerUtilConfig } from "./circuit-breaker";
