@@ -48,6 +48,7 @@ server/
 │   ├── metrics/           # Metrics collection (Prometheus)
 │   ├── middleware/        # HTTP middleware
 │   ├── observability/     # Error tracking (Sentry)
+│   ├── openapi/           # OpenAPI 3.0 specification
 │   ├── router.ts          # HTTP router
 │   ├── routes/            # API route handlers
 │   └── server.ts          # Server setup

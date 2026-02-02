@@ -4,6 +4,7 @@ HTTP route handlers for RESTful API endpoints.
 
 ## Files
 
+- [`api-docs.ts`](api-docs.ts) - API documentation endpoints (OpenAPI spec and Swagger UI)
 - [`books.ts`](books.ts) - Book management endpoints (CRUD operations)
 - [`entities.ts`](entities.ts) - Entity access management endpoints
 - [`health.ts`](health.ts) - Health check and metrics endpoints
@@ -53,6 +54,13 @@ DELETE /api/books/:id   - Delete book
 GET /health            - Health check (database connectivity)
 GET /metrics           - Prometheus metrics (text format)
 GET /metrics/json      - Metrics snapshot (JSON format)
+```
+
+### API Documentation
+
+```
+GET /api/docs          - Interactive Swagger UI interface
+GET /api/openapi.json  - OpenAPI 3.0 specification
 ```
 
 ## Authentication & Authorization

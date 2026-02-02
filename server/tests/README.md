@@ -13,8 +13,9 @@ Comprehensive test suite for the Quailcomp server application.
 | `metrics.test.ts` | 25 | Metrics collector, request metrics middleware |
 | `routes.test.ts` | 25 | Books CRUD, health/metrics endpoints, authentication flows |
 | `observability.test.ts` | 5 | Prometheus metrics, request ID tracking, JSON metrics |
+| `openapi.test.ts` | 12 | OpenAPI spec generation, endpoint documentation |
 
-**Total:** 167 server tests
+**Total:** 179 server tests
 
 ## What's Tested
 
@@ -45,6 +46,7 @@ Comprehensive test suite for the Quailcomp server application.
 - **Metadata Lookup**: ISBN validation, error handling, authentication
 - **Health**: Database connectivity checks, error states
 - **Metrics**: Snapshot endpoint for monitoring
+- **API Documentation**: OpenAPI spec generation, Swagger UI endpoints
 
 ## Test Patterns
 

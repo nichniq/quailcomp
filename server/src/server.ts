@@ -26,6 +26,7 @@ import {
 import { registerAuthRoutes } from "@/auth/routes";
 import { registerBookRoutes } from "@/routes/books";
 import { registerEntityRoutes } from "@/routes/entities";
+import { openAPIHandler, swaggerUIHandler } from "@/routes/api-docs";
 
 export interface ServerConfig {
   port?: number;
@@ -46,6 +47,10 @@ function registerRoutes(router: Router, sql: Sql): void {
   router.get("/health", healthHandler);
   router.get("/metrics", metricsHandler);
   router.get("/metrics/json", metricsJsonHandler);
+
+  // API documentation
+  router.get("/api/docs", swaggerUIHandler);
+  router.get("/api/openapi.json", openAPIHandler);
 
   // Authentication routes
   registerAuthRoutes(router, sql);
