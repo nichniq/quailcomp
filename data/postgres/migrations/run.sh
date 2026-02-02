@@ -69,8 +69,9 @@ RESET ROLE;
 EOF
 
 # Discover all migration files (NNN_*.sql) and sort them
+# Exclude *_down.sql files (those are rollback migrations)
 
-MIGRATION_FILES=$(ls -1 "$SCRIPT_DIR"/[0-9][0-9][0-9]_*.sql 2>/dev/null | sort)
+MIGRATION_FILES=$(ls -1 "$SCRIPT_DIR"/[0-9][0-9][0-9]_*.sql 2>/dev/null | grep -v '_down\.sql$' | sort)
 
 if [[ -z "$MIGRATION_FILES" ]]; then
   echo "No migration files found"

@@ -27,6 +27,7 @@ import {
 } from "@/routes/health";
 import { registerAuthRoutes } from "@/auth/routes";
 import { registerBookRoutes } from "@/routes/books";
+import { registerPeopleRoutes } from "@/routes/people";
 import { registerEntityRoutes } from "@/routes/entities";
 import { openAPIHandler, swaggerUIHandler } from "@/routes/api-docs";
 
@@ -59,6 +60,9 @@ function registerRoutes(router: Router, sql: Sql): void {
 
   // Book routes
   registerBookRoutes(router, sql);
+
+  // People routes
+  registerPeopleRoutes(router, sql);
 
   // Entity access routes
   registerEntityRoutes(router, sql);

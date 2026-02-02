@@ -131,6 +131,10 @@ The extraction ensures types stay synchronized with documentation while keeping 
 
 Manages physical books in the collection and their acquisition history. Tracks acquisition events (purchased, ordered, given, won, inherited) and references other domains like Locations, People, and Series.
 
+### People (`/domains/people.md`)
+
+Tracks individuals related to books in the collection - authors, contributors, gift-givers, and borrowers. Provides a central registry for managing relationships with books through contact information and relationship types.
+
 ### Analytics (`/domains/analytics.md`)
 
 Observability and telemetry tracking for application behavior and performance. Records analytics events for HTTP requests, metadata lookups, user sessions, milestones, and feature usage. Uses 90-day retention policy.
@@ -140,10 +144,6 @@ Observability and telemetry tracking for application behavior and performance. R
 ### Locations (`/domains/locations`)
 
 Places where events happen - bookstores, museums, coffee shops, etc. Referenced by the Books domain and potentially others.
-
-### People/Contacts (`/domains/people`)
-
-Relationships with people who give gifts, lend/borrow items, or are otherwise connected to items in the collection.
 
 ### Series (`/domains/series`)
 
