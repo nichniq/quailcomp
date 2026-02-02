@@ -277,6 +277,236 @@ Look up book metadata from external providers.
 }
 ```
 
+#### POST /books/import
+
+Bulk import books from CSV, JSON, or XLSX files.
+
+**Request (multipart/form-data):**
+
+- `file`: The file to import (CSV, JSON, or XLSX)
+- `format`: One of `csv`, `json`, or `xlsx`
+
+**CSV Example:**
+
+```csv
+title,author,isbn13,note
+The Hobbit,J.R.R. Tolkien,9780547928241,Great book
+The Fellowship of the Ring,J.R.R. Tolkien,9780544003415,Part 1
+```
+
+**JSON Example:**
+
+```json
+[
+  {
+    "title": "The Hobbit",
+    "author": "J.R.R. Tolkien",
+    "isbn13": "9780547928241",
+    "note": "Great book"
+  },
+  {
+    "title": "The Fellowship of the Ring",
+    "author": "J.R.R. Tolkien",
+    "isbn13": "9780544003415",
+    "note": "Part 1"
+  }
+]
+```
+
+**Response (201):**
+
+```json
+{
+  "imported": [
+    {
+      "entityId": 1,
+      "data": {
+        "title": "The Hobbit",
+        "author": "J.R.R. Tolkien",
+        "isbn13": "9780547928241",
+        "note": "Great book"
+      }
+    },
+    {
+      "entityId": 2,
+      "data": {
+        "title": "The Fellowship of the Ring",
+        "author": "J.R.R. Tolkien",
+        "isbn13": "9780544003415",
+        "note": "Part 1"
+      }
+    }
+  ],
+  "count": 2,
+  "total": 2
+}
+```
+
+**Error Response (400):**
+
+```json
+{
+  "error": "Failed to parse file: Invalid CSV format",
+  "code": "PARSE_ERROR"
+}
+```
+
+**Supported CSV Headers:**
+
+The CSV parser recognizes multiple variations of column names (case-insensitive):
+
+- `title`, `Title`
+- `author`, `Author`
+- `isbn13`, `ISBN-13`, `ISBN`, `isbn`
+- `isbn10`, `ISBN-10`
+- `series_id`, `seriesid`, `series`, `Series ID`
+- `lccn`, `LCCN`
+- `note`, `notes`, `Note`, `Notes`
+
+#### GET /books/export
+
+Export all accessible books to CSV, JSON, or XLSX format.
+
+**Query Parameters:**
+
+- `format`: One of `csv`, `json`, or `xlsx` (default: `json`)
+
+**Example Request:**
+
+```
+GET /books/export?format=csv
+```
+
+**Response (200):**
+
+Returns a file download with appropriate content type:
+
+- CSV: `text/csv` with filename `books-{timestamp}.csv`
+- JSON: `application/json` with filename `books-{timestamp}.json`
+- XLSX: `application/vnd.openxmlformats-officedocument.spreadsheetml.sheet` with filename `books-{timestamp}.xlsx`
+
+**CSV Export Format:**
+
+```csv
+entity_id,title,subtitle,author,series_id,isbn10,isbn13,lccn,note
+1,The Hobbit,,J.R.R. Tolkien,,0547928246,9780547928241,,Great book
+2,The Fellowship of the Ring,The Lord of the Rings Part 1,J.R.R. Tolkien,,,9780544003415,,
+```
+
+**JSON Export Format:**
+
+```json
+[
+  {
+    "entity_id": 1,
+    "title": "The Hobbit",
+    "author": "J.R.R. Tolkien",
+    "isbn10": "0547928246",
+    "isbn13": "9780547928241",
+    "note": "Great book"
+  },
+  {
+    "entity_id": 2,
+    "title": "The Fellowship of the Ring",
+    "subtitle": "The Lord of the Rings Part 1",
+    "author": "J.R.R. Tolkien",
+    "isbn13": "9780544003415"
+  }
+]
+```
+
+#### PUT /books/batch
+
+Batch update multiple books in a single request.
+
+**Request:**
+
+```json
+{
+  "updates": [
+    {
+      "entity_id": 1,
+      "data": {
+        "note": "Updated note"
+      }
+    },
+    {
+      "entity_id": 2,
+      "data": {
+        "note": "Another update"
+      }
+    }
+  ]
+}
+```
+
+**Response (200):**
+
+```json
+{
+  "results": [
+    {
+      "entity_id": 1,
+      "success": true,
+      "data": {
+        "entityId": 1,
+        "data": {
+          "title": "The Hobbit",
+          "author": "J.R.R. Tolkien",
+          "note": "Updated note"
+        }
+      }
+    },
+    {
+      "entity_id": 2,
+      "success": true,
+      "data": {
+        "entityId": 2,
+        "data": {
+          "title": "The Fellowship of the Ring",
+          "note": "Another update"
+        }
+      }
+    }
+  ],
+  "success": 2,
+  "failed": 0
+}
+```
+
+**Partial Success Response:**
+
+If some updates fail (e.g., due to permissions or non-existent books):
+
+```json
+{
+  "results": [
+    {
+      "entity_id": 1,
+      "success": true,
+      "data": { ... }
+    },
+    {
+      "entity_id": 999,
+      "error": "Not found"
+    },
+    {
+      "entity_id": 3,
+      "error": "Forbidden - no write access"
+    }
+  ],
+  "success": 1,
+  "failed": 2
+}
+```
+
+**Notes:**
+
+- Each update is a partial update - only provided fields are modified
+- Authorization is checked per book - user must have write access
+- Updates are applied sequentially, not in a transaction
+- Failed updates don't prevent other updates from succeeding
+
 ### Monitoring
 
 These endpoints do not require authentication.

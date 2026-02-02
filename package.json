@@ -62,5 +62,8 @@
     "markdownlint-cli2": "^0.20.0",
     "typescript": "^5.9.3",
     "vue-eslint-parser": "^10.2.0"
+  },
+  "dependencies": {
+    "xlsx": "^0.18.5"
   }
 }

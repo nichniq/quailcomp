@@ -43,11 +43,15 @@ app.use('/health', healthRoutes)
 ### Books
 
 ```
-GET    /api/books       - List all books
-GET    /api/books/:id   - Get single book
-POST   /api/books       - Create new book
-PUT    /api/books/:id   - Update book
-DELETE /api/books/:id   - Delete book
+GET    /api/books                  - List all books
+GET    /api/books/:id              - Get single book
+POST   /api/books                  - Create new book
+PUT    /api/books/:id              - Update book
+DELETE /api/books/:id              - Delete book
+POST   /api/books/metadata/lookup  - Look up book metadata by ISBN/LCCN
+POST   /api/books/import           - Bulk import books (CSV/JSON/XLSX)
+GET    /api/books/export           - Export books (CSV/JSON/XLSX)
+PUT    /api/books/batch            - Batch update multiple books
 ```
 
 ### People
