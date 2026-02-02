@@ -14,8 +14,11 @@ Comprehensive test suite for the Quailcomp server application.
 | `routes.test.ts` | 25 | Books CRUD, health/metrics endpoints, authentication flows |
 | `observability.test.ts` | 5 | Prometheus metrics, request ID tracking, JSON metrics |
 | `openapi.test.ts` | 12 | OpenAPI spec generation, endpoint documentation |
+| `bulk-operations.test.ts` | 27 | Import/export parsers (CSV/JSON/XLSX), formatters, bulk operations |
+| `people.test.ts` | 19 | People CRUD operations, authorization |
+| `series.test.ts` | 19 | Series CRUD operations, authorization |
 
-**Total:** 179 server tests
+**Total:** 244 server tests
 
 ## What's Tested
 
@@ -43,10 +46,13 @@ Comprehensive test suite for the Quailcomp server application.
 ### API Routes
 
 - **Books**: Create, read, update, delete (soft delete) operations
+- **Bulk Operations**: Import (CSV/JSON/XLSX), export (CSV/JSON/XLSX), batch updates
 - **Metadata Lookup**: ISBN validation, error handling, authentication
 - **Health**: Database connectivity checks, error states
 - **Metrics**: Snapshot endpoint for monitoring
 - **API Documentation**: OpenAPI spec generation, Swagger UI endpoints
+- **People**: People CRUD operations with authorization
+- **Series**: Series CRUD operations with authorization
 
 ## Test Patterns
 
