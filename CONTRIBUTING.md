@@ -70,7 +70,7 @@ quailcomp/
 
 - Run `bun test` after modifying code
 - Maintain 90% code coverage (enforced in CI)
-- Use Bun's SQL tagged templates (not raw strings)
+- Use Bun's SQL tagged templates (not raw strings) - **enforced by ESLint**
 - Use `EntitiesClient` for mutable data, `EventsClient` for immutable facts
 - Tests must use unique type names (with timestamps)
 - Never modify existing migration files
@@ -80,4 +80,4 @@ quailcomp/
 
 - External PostgreSQL drivers (Bun has built-in support)
 - Truncating tables in tests
-- Direct SQL string concatenation (SQL injection risk)
+- Direct SQL string concatenation (SQL injection risk) - **prevented by `custom-rules/no-unsafe-sql`**

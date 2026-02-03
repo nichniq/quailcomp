@@ -3,6 +3,7 @@ import tsparser from '@typescript-eslint/parser';
 import importPlugin from 'eslint-plugin-import';
 import vuePlugin from 'eslint-plugin-vue';
 import vueParser from 'vue-eslint-parser';
+import noUnsafeSql from './eslint-rules/no-unsafe-sql.js';
 
 export default [
   {
@@ -28,6 +29,11 @@ export default [
     plugins: {
       '@typescript-eslint': tseslint,
       import: importPlugin,
+      'custom-rules': {
+        rules: {
+          'no-unsafe-sql': noUnsafeSql,
+        },
+      },
     },
     rules: {
       // Enforce using @ path aliases instead of relative imports
@@ -43,6 +49,8 @@ export default [
           ],
         },
       ],
+      // Enforce parameterized SQL queries using Bun tagged templates
+      'custom-rules/no-unsafe-sql': 'error',
       // Enforce 2-space indentation
       indent: ['error', 2, { SwitchCase: 1 }],
       // Enforce newline at end of file

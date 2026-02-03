@@ -309,3 +309,76 @@ describe('Static File Serving', () => {
     expect(serverFile).toContain('/api/')
   })
 })
+
+describe('ESLint Custom Rules', () => {
+  test('no-unsafe-sql rule exists and is configured', async () => {
+    // Check that the rule file exists
+    const ruleFile = Bun.file('eslint-rules/no-unsafe-sql.js')
+    expect(await ruleFile.exists()).toBe(true)
+
+    // Check that the rule is properly configured in eslint.config.js
+    const config = await Bun.file('eslint.config.js').text()
+    expect(config).toContain('no-unsafe-sql')
+    expect(config).toContain('custom-rules/no-unsafe-sql')
+
+    // Check that the rule has proper metadata
+    const ruleContent = await ruleFile.text()
+    expect(ruleContent).toContain('meta:')
+    expect(ruleContent).toContain('type: \'problem\'')
+    expect(ruleContent).toContain('Security')
+  })
+
+  test('no-unsafe-sql rule has comprehensive tests', async () => {
+    const testFile = Bun.file('eslint-rules/no-unsafe-sql.test.js')
+    expect(await testFile.exists()).toBe(true)
+
+    const content = await testFile.text()
+
+    // Check for both valid and invalid test cases
+    expect(content).toContain('allows Bun SQL tagged templates')
+    expect(content).toContain('rejects string concatenation')
+    expect(content).toContain('rejects untagged template literals')
+  })
+
+  test('no-unsafe-sql rule detects SQL injection vulnerabilities', async () => {
+    // Create a test file with unsafe SQL (add newline to avoid eol-last error)
+    const testFile = '.eslint-test-temp/unsafe-sql-test.ts'
+    await $`mkdir -p .eslint-test-temp`.quiet()
+    await Bun.write(
+      testFile,
+      'const query = "SELECT * FROM users WHERE id = " + userId;\n'
+    )
+
+    // Run eslint on the test file - ESLint outputs to stderr
+    const result = await $`npx eslint ${testFile} 2>&1`.nothrow()
+
+    // Should detect the violation
+    const output = result.stdout.toString()
+    expect(result.exitCode).toBe(1)
+    expect(output).toContain('custom-rules/no-unsafe-sql')
+    expect(output).toContain('string concatenation')
+
+    // Clean up
+    await $`rm -rf .eslint-test-temp`.quiet()
+  })
+
+  test('no-unsafe-sql rule allows proper Bun tagged templates', async () => {
+    // Create a test file with safe SQL (add newline to avoid eol-last error)
+    const testFile = '.eslint-test-temp/safe-sql-test.ts'
+    await $`mkdir -p .eslint-test-temp`.quiet()
+    await Bun.write(
+      testFile,
+      'const result = await sql`SELECT * FROM users WHERE id = ${userId}`;\n'
+    )
+
+    // Run eslint on the test file - ESLint outputs to stderr
+    const result = await $`npx eslint ${testFile} 2>&1`.nothrow()
+
+    // Should NOT detect violations from our rule
+    const output = result.stdout.toString()
+    expect(output).not.toContain('custom-rules/no-unsafe-sql')
+
+    // Clean up
+    await $`rm -rf .eslint-test-temp`.quiet()
+  })
+})

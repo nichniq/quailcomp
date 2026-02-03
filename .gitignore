@@ -20,3 +20,6 @@ coverage/
 
 # Apple file
 .DS_Store
+
+# ESLint test temp directory
+.eslint-test-temp/
