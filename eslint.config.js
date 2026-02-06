@@ -115,4 +115,11 @@ export default [
       },
     },
   },
+  // Devtools directory: allow relative imports (different structure from main app)
+  {
+    files: ['devtools/**/*.ts', 'devtools/**/*.vue'],
+    rules: {
+      'no-restricted-imports': 'off',
+    },
+  },
 ];
