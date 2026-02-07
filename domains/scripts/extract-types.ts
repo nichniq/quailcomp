@@ -61,10 +61,94 @@ function extractTypeScriptBlocks(markdown: string): string {
 
   let match
   while ((match = codeBlockRegex.exec(markdown)) !== null) {
-    blocks.push(match[1].trim())
+    const codeBlock = match[1].trim()
+    // Check if this code block has ANY exports
+    const hasExports = /^\s*export\s+/m.test(codeBlock)
+
+    if (hasExports) {
+      // Filter to only include exports and their dependencies
+      const filtered = filterExportedCode(codeBlock)
+      if (filtered) {
+        blocks.push(filtered)
+      }
+    }
+    // If no exports in this block, skip it entirely (it's example code)
   }
 
   return blocks.join('\n\n')
+}
+
+/**
+ * Filter code block to only include exported statements and their dependencies
+ * Preserves multi-line exports like interfaces, types, classes, etc.
+ * Also includes const/let/var declarations that exported code may depend on.
+ */
+function filterExportedCode(code: string): string {
+  const lines = code.split('\n')
+  const exportedLines: string[] = []
+  let inStatement = false
+  let braceDepth = 0
+  let parenDepth = 0
+  let bracketDepth = 0
+
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i]
+    const trimmed = line.trim()
+
+    // Check if this line starts an export or top-level declaration
+    const isExport = trimmed.startsWith('export ')
+    const isDeclaration = /^(const|let|var|class|function|enum|interface|type)\s+/.test(trimmed)
+
+    if (isExport || (!inStatement && isDeclaration)) {
+      inStatement = true
+      exportedLines.push(line)
+
+      // Count opening/closing delimiters
+      braceDepth = (line.match(/{/g) || []).length - (line.match(/}/g) || []).length
+      parenDepth = (line.match(/\(/g) || []).length - (line.match(/\)/g) || []).length
+      bracketDepth = (line.match(/\[/g) || []).length - (line.match(/\]/g) || []).length
+
+      // Check if statement definitely ends on this line
+      // (semicolon AND all delimiters balanced)
+      if (trimmed.endsWith(';') && braceDepth === 0 && parenDepth === 0 && bracketDepth === 0) {
+        inStatement = false
+      }
+      // If all delimiters balanced (no semicolon), check if next line is a continuation
+      else if (braceDepth === 0 && parenDepth === 0 && bracketDepth === 0) {
+        // Check if next line is a continuation (starts with | or & or ,)
+        const nextLine = i + 1 < lines.length ? lines[i + 1].trim() : ''
+        if (!nextLine.startsWith('|') && !nextLine.startsWith('&') && !nextLine.startsWith(',')) {
+          inStatement = false
+        }
+      }
+      continue
+    }
+
+    // If we're inside a multi-line statement, continue collecting lines
+    if (inStatement) {
+      exportedLines.push(line)
+
+      // Update delimiter depths
+      braceDepth += (line.match(/{/g) || []).length - (line.match(/}/g) || []).length
+      parenDepth += (line.match(/\(/g) || []).length - (line.match(/\)/g) || []).length
+      bracketDepth += (line.match(/\[/g) || []).length - (line.match(/\]/g) || []).length
+
+      // Check if statement definitely ends (semicolon AND all delimiters balanced)
+      if (trimmed.endsWith(';') && braceDepth === 0 && parenDepth === 0 && bracketDepth === 0) {
+        inStatement = false
+      }
+      // If all delimiters balanced (no semicolon), check if next line is a continuation
+      else if (braceDepth === 0 && parenDepth === 0 && bracketDepth === 0) {
+        // Check if next line is a continuation (starts with | or & or ,)
+        const nextLine = i + 1 < lines.length ? lines[i + 1].trim() : ''
+        if (!nextLine.startsWith('|') && !nextLine.startsWith('&') && !nextLine.startsWith(',')) {
+          inStatement = false
+        }
+      }
+    }
+  }
+
+  return exportedLines.join('\n').trim()
 }
 
 /**

@@ -90,20 +90,27 @@ Each level grants specific capabilities:
 The hierarchy allows permission checks like "does this user have at least write access?"
 which returns true for both write and owner levels.
 
-```typescript
-const ACCESS_HIERARCHY: Record<AccessLevel, number> = {
-  owner: 3,
-  write: 2,
-  read: 1,
-}
-```
-
 ### Access Level Checking
 
 > Check if user's access level meets or exceeds the required level.
 
 Uses the permission hierarchy to determine if a user's access level is sufficient
 for an operation that requires a minimum level.
+
+```typescript
+const ACCESS_HIERARCHY: Record<AccessLevel, number> = {
+  owner: 3,
+  write: 2,
+  read: 1,
+}
+
+export function hasAccess(
+  userLevel: AccessLevel,
+  requiredLevel: AccessLevel
+): boolean {
+  return ACCESS_HIERARCHY[userLevel] >= ACCESS_HIERARCHY[requiredLevel]
+}
+```
 
 Examples:
 
@@ -112,15 +119,6 @@ hasAccess('owner', 'read')  // true - owner can do anything
 hasAccess('write', 'owner') // false - write cannot do owner actions
 hasAccess('read', 'read')   // true - exact match
 hasAccess('owner', 'write') // true - owner exceeds write requirement
-```
-
-```typescript
-export function hasAccess(
-  userLevel: AccessLevel,
-  requiredLevel: AccessLevel
-): boolean {
-  return ACCESS_HIERARCHY[userLevel] >= ACCESS_HIERARCHY[requiredLevel]
-}
 ```
 
 ## Entity Access

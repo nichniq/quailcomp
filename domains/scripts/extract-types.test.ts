@@ -300,4 +300,307 @@ export type Test = { version: 2 }
 
     await cleanupTestEnv(testDir)
   })
+
+  test('filtering: only exports are included, example code excluded', async () => {
+    const testDir = await setupTestEnv({
+      'domain.md': `# Domain
+
+Type definitions:
+\`\`\`typescript
+export type User = {
+  id: string
+  name: string
+}
+
+export interface Session {
+  userId: string
+  token: string
+}
+\`\`\`
+
+Usage example:
+\`\`\`typescript
+import { User } from './domain'
+
+// Example usage - should NOT be included
+const user: User = {
+  id: '123',
+  name: 'Alice',
+}
+
+console.log(user.name)
+\`\`\`
+`,
+    })
+
+    const result = await runExtraction(testDir)
+    expect(result.exitCode).toBe(0)
+
+    const output = await Bun.file(join(testDir, 'types', 'domain.ts')).text()
+
+    // Should include exports
+    expect(output).toContain('export type User')
+    expect(output).toContain('export interface Session')
+
+    // Should NOT include example code
+    expect(output).not.toContain('import { User }')
+    expect(output).not.toContain('const user: User')
+    expect(output).not.toContain('console.log')
+
+    await cleanupTestEnv(testDir)
+  })
+
+  test('filtering: multi-line exports are preserved completely', async () => {
+    const testDir = await setupTestEnv({
+      'types.md': `# Types
+
+Definition:
+\`\`\`typescript
+export interface ComplexType {
+  nested: {
+    deeply: {
+      values: string[]
+    }
+  }
+  method(): void
+}
+\`\`\`
+
+Usage example:
+\`\`\`typescript
+const example = { nested: { deeply: { values: [] } } }
+\`\`\``,
+    })
+
+    const result = await runExtraction(testDir)
+    expect(result.exitCode).toBe(0)
+
+    const output = await Bun.file(join(testDir, 'types', 'types.ts')).text()
+
+    // Should include entire multi-line export
+    expect(output).toContain('export interface ComplexType')
+    expect(output).toContain('nested: {')
+    expect(output).toContain('deeply: {')
+    expect(output).toContain('values: string[]')
+    expect(output).toContain('method(): void')
+
+    // Should NOT include example code from separate block
+    expect(output).not.toContain('const example')
+
+    await cleanupTestEnv(testDir)
+  })
+
+  test('filtering: mixed exports and non-exports', async () => {
+    const testDir = await setupTestEnv({
+      'mixed.md': `# Mixed types
+
+Type definitions:
+\`\`\`typescript
+// Helper constant used by exported function
+const HELPER = 'value'
+
+export type Public = {
+  value: string
+}
+
+export function guard(x: unknown): x is Public {
+  return typeof x === 'object'
+}
+\`\`\`
+
+Usage example (separate block):
+\`\`\`typescript
+// This entire block should be excluded
+const x: Public = { value: 'test' }
+
+if (guard(x)) {
+  console.log(x.value)
+}
+\`\`\``,
+    })
+
+    const result = await runExtraction(testDir)
+    expect(result.exitCode).toBe(0)
+
+    const output = await Bun.file(join(testDir, 'types', 'mixed.ts')).text()
+
+    // Should include exports AND dependencies in the same block
+    expect(output).toContain('const HELPER')
+    expect(output).toContain('export type Public')
+    expect(output).toContain('export function guard')
+
+    // Should NOT include example code from separate block
+    expect(output).not.toContain('const x:')
+    expect(output).not.toContain('if (guard(x))')
+    expect(output).not.toContain('console.log')
+
+    await cleanupTestEnv(testDir)
+  })
+
+  test('filtering: multi-line union types are preserved', async () => {
+    const testDir = await setupTestEnv({
+      'unions.md': `# Unions
+
+Type definitions:
+\`\`\`typescript
+export type Status =
+  | "pending"
+  | "active"
+  | "completed"
+
+export type Result<T> =
+  | { ok: true; value: T }
+  | { ok: false; error: string }
+\`\`\`
+
+Usage example:
+\`\`\`typescript
+const example: Status = "pending"
+\`\`\``,
+    })
+
+    const result = await runExtraction(testDir)
+    expect(result.exitCode).toBe(0)
+
+    const output = await Bun.file(join(testDir, 'types', 'unions.ts')).text()
+
+    // Should include complete union types
+    expect(output).toContain('export type Status')
+    expect(output).toContain('| "pending"')
+    expect(output).toContain('| "active"')
+    expect(output).toContain('| "completed"')
+
+    expect(output).toContain('export type Result<T>')
+    expect(output).toContain('| { ok: true; value: T }')
+    expect(output).toContain('| { ok: false; error: string }')
+
+    // Should NOT include example from separate block
+    expect(output).not.toContain('const example')
+
+    await cleanupTestEnv(testDir)
+  })
+
+  test('filtering: const dependencies of exported functions are preserved', async () => {
+    const testDir = await setupTestEnv({
+      'authz.md': `# Authorization
+
+Access hierarchy and helper:
+\`\`\`typescript
+export type AccessLevel = "owner" | "write" | "read"
+
+const ACCESS_HIERARCHY: Record<AccessLevel, number> = {
+  owner: 3,
+  write: 2,
+  read: 1,
+}
+
+export function hasAccess(
+  userLevel: AccessLevel,
+  requiredLevel: AccessLevel
+): boolean {
+  return ACCESS_HIERARCHY[userLevel] >= ACCESS_HIERARCHY[requiredLevel]
+}
+\`\`\``,
+    })
+
+    const result = await runExtraction(testDir)
+    expect(result.exitCode).toBe(0)
+
+    const output = await Bun.file(join(testDir, 'types', 'authz.ts')).text()
+
+    // Should include the type
+    expect(output).toContain('export type AccessLevel')
+
+    // Should include the const (dependency of exported function)
+    expect(output).toContain('const ACCESS_HIERARCHY')
+    expect(output).toContain('owner: 3')
+
+    // Should include the exported function
+    expect(output).toContain('export function hasAccess')
+    expect(output).toContain('ACCESS_HIERARCHY[userLevel]')
+
+    await cleanupTestEnv(testDir)
+  })
+
+  test('filtering: code block with only non-exported code produces no output', async () => {
+    const testDir = await setupTestEnv({
+      'examples.md': `# Examples
+
+\`\`\`typescript
+// Only example code, no exports
+const foo = 'bar'
+console.log(foo)
+\`\`\`
+`,
+      'valid.md': `\`\`\`typescript
+export type Valid = { ok: true }
+\`\`\``,
+    })
+
+    const result = await runExtraction(testDir)
+    expect(result.exitCode).toBe(0)
+
+    // examples.ts should not exist (no exports found)
+    const examplesExists = await Bun.file(join(testDir, 'types', 'examples.ts')).exists()
+    expect(examplesExists).toBe(false)
+
+    // valid.ts should exist
+    const validOutput = await Bun.file(join(testDir, 'types', 'valid.ts')).text()
+    expect(validOutput).toContain('export type Valid')
+
+    await cleanupTestEnv(testDir)
+  })
+
+  test('regression: configuration-style usage examples are filtered out', async () => {
+    const testDir = await setupTestEnv({
+      'config.md': `# Configuration
+
+Type definition:
+\`\`\`typescript
+export type Config = {
+  port: number
+  host: string
+}
+\`\`\`
+
+Usage example:
+\`\`\`typescript
+import { config } from '@/config'
+
+const server = Bun.serve({
+  port: config.port,
+  hostname: config.host,
+  fetch: handler,
+})
+
+console.log(\`Server listening on \${config.host}:\${config.port}\`)
+\`\`\`
+
+Another example:
+\`\`\`typescript
+if (isDevelopment()) {
+  console.log('Dev mode')
+}
+\`\`\``,
+    })
+
+    const result = await runExtraction(testDir)
+    expect(result.exitCode).toBe(0)
+
+    const output = await Bun.file(join(testDir, 'types', 'config.ts')).text()
+
+    // Should include the type
+    expect(output).toContain('export type Config')
+    expect(output).toContain('port: number')
+
+    // Should NOT include any usage examples
+    expect(output).not.toContain('import {')
+    expect(output).not.toContain('Bun.serve')
+    expect(output).not.toContain('const server')
+    expect(output).not.toContain('console.log')
+    expect(output).not.toContain('isDevelopment()')
+    expect(output).not.toContain('Dev mode')
+
+    await cleanupTestEnv(testDir)
+  })
 })
