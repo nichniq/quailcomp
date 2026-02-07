@@ -425,6 +425,21 @@ ORDER BY avg_duration_ms ASC;
 - Records `analytics.user_milestone` for first book
 - Records `analytics.feature_used` for various features
 
+### Related Domains
+
+**[Metrics Domain](./metrics.md)** - In-memory counters and histograms vs persistent analytics:
+
+- **Metrics** - Real-time in-memory counters (request count, error count) and histograms (latency distribution). Fast, lightweight, lost on restart. For current performance monitoring.
+- **Analytics** - Persistent event records stored in the database. Queryable historical data, survives restarts, enables trend analysis. For long-term insights and reporting.
+- **Together** - Metrics provide real-time dashboards, analytics enable historical analysis and business intelligence.
+
+**[Events Domain](./events.md)** - Analytics events use the same event-sourcing infrastructure:
+
+- All analytics events stored in the `events` table with `analytics.*` prefix
+- Leverage the same immutable append-only semantics
+- Use specialized indexes for efficient analytics queries
+- Follow retention policies specific to analytics data (90 days vs indefinite for domain events)
+
 ## Related Documentation
 
 - [Event Sourcing](../docs/explanation/event-sourcing.md) - Events vs entities architecture

@@ -335,11 +335,33 @@ export function getAccessLevelIcon(level: AccessLevel): string {
 
 ## References to Other Domains
 
-> Authorization references the Authentication domain for user identity.
+> Authorization integrates with authentication, HTTP request handling, and real-time subscriptions.
+
+### Authentication Domain
+
+**[Authentication](./authentication.md)** - User identity verification:
 
 Authorization operates on `user_id` values obtained from authentication. See the
 Authentication domain for how users prove their identity and receive JWTs containing
 their `user_id`.
+
+### HTTP Domain
+
+**[HTTP](./http.md)** - Request context integration:
+
+- `RequestContext.user` provides the authenticated user for authorization checks
+- Authorization middleware runs after authentication to verify entity access
+- Handlers receive `RequestContext` with both user identity and database connection
+- Every entity access check uses `user.user_id` from the request context
+
+### WebSocket Domain
+
+**[WebSocket](./websocket.md)** - Real-time subscription authorization:
+
+- Subscription requests verify user has read access to requested entity types
+- Entity updates only broadcast to users with appropriate access levels
+- WebSocket authentication provides `user_id` for ongoing authorization checks
+- Access revocation can trigger subscription termination for affected entities
 
 ## Invariants
 

@@ -563,11 +563,33 @@ export function getCredentialTypeLabel(type: CredentialType): string {
 
 ## References to Other Domains
 
-> Authentication references the Authorization domain for permissions.
+> Authentication integrates with several other domains to provide complete request handling.
+
+### Authorization Domain
+
+**[Authorization](./authorization.md)** - Permission checking after authentication:
 
 Once a user is authenticated (receives a JWT with user_id), the Authorization domain
 determines what entities and resources they can access. See the Authorization domain
 for details on permission checking and access control.
+
+### HTTP Domain
+
+**[HTTP](./http.md)** - Request context and authentication middleware:
+
+- `AuthenticatedUser` type (defined in HTTP domain) matches the JWT payload structure
+- `RequestContext.user` contains the authenticated user from JWT verification
+- Authentication middleware extracts and verifies JWT tokens from request headers
+- Populated `RequestContext.user` flows through the entire request lifecycle
+
+### Errors Domain
+
+**[Errors](./errors.md)** - Standardized error responses:
+
+- `AuthError` types follow the `ErrorResponse` pattern from the Errors domain
+- Authentication failures return standardized error responses with appropriate HTTP status codes
+- Error codes like `INVALID_CREDENTIALS`, `EMAIL_EXISTS` map to user-friendly error messages
+- See Errors domain for complete error handling patterns used throughout the API
 
 ## Invariants
 
