@@ -195,6 +195,10 @@ Real-time bidirectional communication for entity updates. Provides authenticated
 
 External book metadata provider integration with circuit breaker and rate limiting. Normalizes data from Google Books, Open Library, Library of Congress, Hardcover, and WorldCat.
 
+#### DevTools (`/domains/devtools.md`)
+
+Development tooling system for file watching, task automation, and continuous maintenance. Monitors file changes using glob patterns, executes tasks with debouncing, and provides a real-time web UI for monitoring task execution and history.
+
 ## Future Domains
 
 ### Locations (`/domains/locations`)
