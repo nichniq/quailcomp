@@ -8,7 +8,7 @@
  * In production: Serves both API and static files from dist/
  */
 
-import { join, extname } from 'node:path'
+import { join, extname } from 'path'
 import { watcherState, onStateChange, triggerRule } from '../watch/index'
 
 const PORT = 3001

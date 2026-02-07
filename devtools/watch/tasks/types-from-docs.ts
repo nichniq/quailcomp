@@ -4,9 +4,9 @@
  * Adapted from domains/scripts/extract-types.ts to work as a watch task
  */
 
-import { readdir, readFile, writeFile, mkdir } from 'node:fs/promises'
-import { join, basename } from 'node:path'
-import { createHash } from 'node:crypto'
+import { readdir, readFile, writeFile, mkdir } from 'fs/promises'
+import { join, basename } from 'path'
+import { createHash } from 'crypto'
 import type { TaskResult } from '../types'
 
 // Project root is 2 levels up from this file

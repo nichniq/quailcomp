@@ -8,7 +8,7 @@
  */
 
 import { watch } from 'fs'
-import { join } from 'node:path'
+import { join } from 'path'
 import { minimatch } from 'minimatch'
 import { rules } from './rules'
 import { createTaskExecutor } from './runner'

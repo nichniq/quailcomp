@@ -5,7 +5,7 @@
  */
 
 import { getConnection, type Sql } from "@quailcomp/data";
-import * as path from "node:path";
+import * as path from "path";
 import { file } from "bun";
 
 import { env, isProduction } from "@/config";

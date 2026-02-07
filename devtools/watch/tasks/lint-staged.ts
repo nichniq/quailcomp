@@ -5,7 +5,7 @@
  */
 
 import { $ } from 'bun'
-import { join } from 'node:path'
+import { join } from 'path'
 import type { TaskResult } from '../types'
 
 const PROJECT_ROOT = join(import.meta.dir, '../../..')

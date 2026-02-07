@@ -10,9 +10,9 @@
  * 4. Generates domains/types.ts with all extracted types
  */
 
-import { readdir, readFile, writeFile } from 'node:fs/promises'
-import { join, basename } from 'node:path'
-import { createHash } from 'node:crypto'
+import { readdir, readFile, writeFile } from 'fs/promises'
+import { join, basename } from 'path'
+import { createHash } from 'crypto'
 
 // Allow override for testing, otherwise default to parent of script directory
 const DOMAINS_DIR = process.env.DOMAINS_DIR || join(import.meta.dir, '..')
@@ -124,7 +124,7 @@ async function main() {
     console.log(`Found ${domainFiles.length} domain files:`, domainFiles.join(', '))
 
     // Ensure output directory exists
-    const { mkdir } = await import('node:fs/promises')
+    const { mkdir } = await import('fs/promises')
     await mkdir(OUTPUT_DIR, { recursive: true })
 
     const newCache: Cache = {}

@@ -4,8 +4,8 @@
  * Extracted from .githooks/pre-commit to work as a watch task
  */
 
-import { stat } from 'node:fs/promises'
-import { dirname, join } from 'node:path'
+import { stat } from 'fs/promises'
+import { dirname, join } from 'path'
 import type { TaskResult } from '../types'
 
 const PROJECT_ROOT = join(import.meta.dir, '../../..')
