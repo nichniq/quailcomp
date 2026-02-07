@@ -127,21 +127,73 @@ The extraction ensures types stay synchronized with documentation while keeping 
 
 ## Current Domains
 
-### Books (`/domains/books.md`)
+### Application Domains
+
+#### Books (`/domains/books.md`)
 
 Manages physical books in the collection and their acquisition history. Tracks acquisition events (purchased, ordered, given, won, inherited) and references other domains like Locations, People, and Series.
 
-### People (`/domains/people.md`)
+#### People (`/domains/people.md`)
 
 Tracks individuals related to books in the collection - authors, contributors, gift-givers, and borrowers. Provides a central registry for managing relationships with books through contact information and relationship types.
 
-### Series (`/domains/series.md`)
+#### Series (`/domains/series.md`)
 
 Book series, collections, or multi-volume works. Tracks series names, total volumes, and ordering of books within each series. Referenced by individual books through series_id and volume_number fields.
 
-### Analytics (`/domains/analytics.md`)
+#### Authentication (`/domains/authentication.md`)
+
+User identity management with support for multiple authentication methods (passwords, passkeys, OAuth, API keys). Provides JWT-based session tokens for stateless authentication.
+
+#### Authorization (`/domains/authorization.md`)
+
+Access control system with hierarchical permission levels (owner, write, read). Manages user permissions for entities and enforces authorization checks.
+
+#### Analytics (`/domains/analytics.md`)
 
 Observability and telemetry tracking for application behavior and performance. Records analytics events for HTTP requests, metadata lookups, user sessions, milestones, and feature usage. Uses 90-day retention policy.
+
+### Infrastructure Domains
+
+#### Configuration (`/domains/configuration.md`)
+
+Environment variable configuration with Zod validation. Provides typed environment configuration including database URLs, JWT secrets, CORS origins, and logging settings.
+
+#### Logging (`/domains/logging.md`)
+
+Structured JSON logging with child logger support. Provides log levels (debug, info, warn, error) and consistent log entry formatting throughout the application.
+
+#### Metrics (`/domains/metrics.md`)
+
+In-memory metrics collection using counters and histograms. Provides real-time performance monitoring with label support for dimensional metrics.
+
+#### Errors (`/domains/errors.md`)
+
+Standardized error handling with typed error responses. Defines database errors (EntityNotFoundError, UniqueViolationError) and HTTP error responses (ErrorResponse, ValidationErrorResponse).
+
+#### Database (`/domains/database.md`)
+
+PostgreSQL connection management using Bun's SQL client. Provides connection pooling, transaction support, and SQL tagged template literals.
+
+#### HTTP (`/domains/http.md`)
+
+HTTP request/response handling with routing and middleware patterns. Defines handlers, middleware composition, request context, and route definitions.
+
+#### Entities (`/domains/entities.md`)
+
+Mutable entity management with append-only versioning and soft deletes. Provides CRUD operations through EntitiesClient with automatic version tracking.
+
+#### Events (`/domains/events.md`)
+
+Immutable event recording for audit trails and event sourcing. Provides append-only event storage through EventsClient with void support for soft deletion.
+
+#### WebSocket (`/domains/websocket.md`)
+
+Real-time bidirectional communication for entity updates. Provides authenticated WebSocket connections with subscription-based broadcasting and permission checks.
+
+#### Book Metadata Services (`/domains/book-metadata-services.md`)
+
+External book metadata provider integration with circuit breaker and rate limiting. Normalizes data from Google Books, Open Library, Library of Congress, Hardcover, and WorldCat.
 
 ## Future Domains
 
