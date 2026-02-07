@@ -17,6 +17,7 @@ import { metrics } from "@/metrics/collector";
 import { Router } from "@/router";
 import { registerBookRoutes } from "@/routes/books";
 import { compose } from "@/middleware/compose";
+import { errorHandler } from "@/middleware/error-handler";
 import type { BookEntitySnapshot } from "@domains/types/books";
 import { signToken } from "@/auth/jwt";
 
@@ -158,13 +159,14 @@ describe("Books routes", () => {
     // Set params in context
     ctx.params = match.params;
 
-    // Apply middleware if present (compose returns a function that wraps the handler)
-    if (match.route.middleware && match.route.middleware.length > 0) {
-      const handler = compose(...match.route.middleware)(match.route.handler);
-      return handler(ctx, request);
-    }
+    // Build handler chain: route middleware -> error handler -> handler
+    // This mirrors the actual server setup where errorHandler is in globalMiddleware
+    const routeMiddleware = match.route.middleware ?? [];
+    const handler = compose(...routeMiddleware)(
+      errorHandler(match.route.handler)
+    );
 
-    return match.route.handler(ctx, request);
+    return handler(ctx, request);
   }
 
   describe("GET /books", () => {
