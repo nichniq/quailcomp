@@ -24,24 +24,33 @@ git commit -m "Update domains"
 
 1. Reads all `.md` files in [`domains/`](../)
 2. Finds TypeScript code blocks (```typescript)
-3. Extracts type definitions, interfaces, and enums
-4. Generates corresponding `.ts` files in [`types/`](../types/)
-5. Preserves imports and exports
+3. Filters to only include exported statements and their dependencies
+4. Skips code blocks containing only example/usage code
+5. Generates corresponding `.ts` files in [`types/`](../types/)
 
 ### Example
 
 Given this in `authentication.md`:
 
 ````markdown
+Type definition:
 ```typescript
 export type User = {
   id: string
   email: string
+}
+```
+
+Usage example:
+```typescript
+const user: User = {
+  id: '123',
+  email: 'user@example.com',
 }
 ```
 ````
 
-Generates `types/authentication.ts`:
+Generates `types/authentication.ts` with **only the exported type**:
 
 ```typescript
 export type User = {
@@ -49,6 +58,8 @@ export type User = {
   email: string
 }
 ```
+
+The usage example is filtered out since it contains no exports.
 
 ## Documentation
 
