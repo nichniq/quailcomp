@@ -44,6 +44,7 @@ Quailcomp is a personal data management system using event-sourced append-only s
 - [CLI Reference](docs/reference/cli.md) - Command-line interface
 - [API Reference](docs/reference/api.md) - HTTP endpoints
 - [Environment Variables](docs/reference/environment-variables.md) - Configuration
+- [Dependencies](docs/reference/dependencies.md) - All project dependencies
 - [Domain Models](docs/reference/domains.md) - Index of domain documentation
 
 ## Project Structure
