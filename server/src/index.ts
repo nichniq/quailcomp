@@ -23,7 +23,7 @@ if (env.SENTRY_DSN && env.SENTRY_ENABLED) {
     enabled: env.SENTRY_ENABLED,
     release: process.env.RELEASE_VERSION,
     attachStacktrace: true,
-    integrations: [Sentry.httpIntegration({ tracing: true })],
+    integrations: [Sentry.httpIntegration()],
   });
 }
 

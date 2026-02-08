@@ -67,7 +67,7 @@ export function createWebSocketHandler(sql: Sql) {
       message: string | Buffer
     ) {
       try {
-        const data = JSON.parse(message.toString()) as WebSocketMessage & {
+        const data = JSON.parse(message.toString()) as (WebSocketMessage | { type: "authenticate"; token: string }) & {
           token?: string;
         };
 

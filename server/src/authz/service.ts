@@ -7,11 +7,27 @@
 import type { Sql } from "@quailcomp/data";
 
 import {
-  hasAccess,
   type AccessLevel,
   type EntityAccess,
   AuthorizationError,
 } from "@domains/types/authorization";
+
+// Access level hierarchy for permission checks
+const ACCESS_HIERARCHY: Record<AccessLevel, number> = {
+  owner: 3,
+  write: 2,
+  read: 1,
+};
+
+/**
+ * Check if user's access level meets or exceeds required level
+ */
+function hasAccess(
+  userLevel: AccessLevel,
+  requiredLevel: AccessLevel
+): boolean {
+  return ACCESS_HIERARCHY[userLevel] >= ACCESS_HIERARCHY[requiredLevel];
+}
 
 export class AuthorizationService {
   constructor(private sql: Sql) {}

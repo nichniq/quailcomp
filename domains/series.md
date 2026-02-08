@@ -35,6 +35,8 @@ export type SeriesEntityRow = {
 ## Query Result Types
 
 ```typescript
+import type { PhysicalBook } from "./books";
+
 export type SeriesListItem = {
   entity_id: string
   name: string

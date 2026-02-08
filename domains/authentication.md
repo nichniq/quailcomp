@@ -483,19 +483,19 @@ export interface CredentialRow {
 Use these to safely narrow the CredentialData union type based on the credential_type.
 
 ```typescript
-export function isPasswordCredential(data: CredentialData): data is PasswordCredentialData {
+function isPasswordCredential(data: CredentialData): data is PasswordCredentialData {
   return "password_hash" in data && "identifier" in data
 }
 
-export function isPasskeyCredential(data: CredentialData): data is PasskeyCredentialData {
+function isPasskeyCredential(data: CredentialData): data is PasskeyCredentialData {
   return "credential_id" in data && "public_key" in data && "counter" in data
 }
 
-export function isOAuthCredential(data: CredentialData): data is OAuthCredentialData {
+function isOAuthCredential(data: CredentialData): data is OAuthCredentialData {
   return "provider_user_id" in data
 }
 
-export function isApiKeyCredential(data: CredentialData): data is ApiKeyCredentialData {
+function isApiKeyCredential(data: CredentialData): data is ApiKeyCredentialData {
   return "key_hash" in data && "prefix" in data && "last_4" in data
 }
 ```
@@ -518,7 +518,7 @@ Examples:
 - "API Key (CI/CD Pipeline)"
 
 ```typescript
-export function getCredentialDisplayName(credential: Credential): string {
+function getCredentialDisplayName(credential: Credential): string {
   switch (credential.credentialType) {
     case "password": {
       const data = credential.credentialData as PasswordCredentialData
@@ -545,7 +545,7 @@ export function getCredentialDisplayName(credential: Credential): string {
 > User-friendly label for credential type.
 
 ```typescript
-export function getCredentialTypeLabel(type: CredentialType): string {
+function getCredentialTypeLabel(type: CredentialType): string {
   switch (type) {
     case "password":
       return "Password"

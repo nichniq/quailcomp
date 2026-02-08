@@ -12,6 +12,8 @@
  * 3. Or commit changes - the pre-commit hook will regenerate automatically
  */
 
+import type { Sql } from "./database";
+import type { Logger } from "./logging";
 export type RequestContext = {
   /** Unique identifier for this request (for tracing) */
   requestId: string;
@@ -37,58 +39,7 @@ export type Handler = (
   req: Request
 ) => Promise<Response> | Response;
 
-export const getUser: Handler = async (ctx, req) => {
-  // Access authenticated user
-  if (!ctx.user) {
-    return new Response('Unauthorized', { status: 401 });
-  }
-
-  // Use database connection from context
-  const [user] = await ctx.sql`
-    SELECT id, email, username, created_at
-    FROM users
-    WHERE id = ${ctx.user.userId}
-  `;
-
-  // Log with request-scoped logger
-  ctx.log.info('User fetched', { userId: user.id });
-
-  return new Response(JSON.stringify(user), {
-    headers: { 'Content-Type': 'application/json' },
-  });
-};
-
 export type Middleware = (next: Handler) => Handler;
-
-export const requireAuth: Middleware = (next) => {
-  return async (ctx, req) => {
-    const token = req.headers.get('Authorization')?.replace('Bearer ', '');
-
-    if (!token) {
-      return new Response('Missing token', { status: 401 });
-    }
-
-    try {
-      const user = await verifyJWT(token);
-      ctx.user = user; // Augment context
-      return next(ctx, req); // Continue to handler
-    } catch (error) {
-      return new Response('Invalid token', { status: 401 });
-    }
-  };
-};
-export const requestLogger: Middleware = (next) => {
-  return async (ctx, req) => {
-    ctx.log.info('Request started', { method: req.method, url: req.url });
-
-    const response = await next(ctx, req);
-
-    const duration = Date.now() - ctx.startTime;
-    ctx.log.info('Request completed', { status: response.status, duration });
-
-    return response;
-  };
-};
 
 export type HttpMethod = 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE' | 'OPTIONS';
 export type Route = {
@@ -108,68 +59,4 @@ export type AuthenticatedUser = {
   username: string | null; // Username (may be null)
   credentialId: number;   // Which credential was used (for multi-credential users)
   authMethod: string;     // How they authenticated (e.g., 'password', 'google')
-};
-
-export const createBook: Handler = async (ctx, req) => {
-  // Require authentication
-  if (!ctx.user) {
-    return new Response('Unauthorized', { status: 401 });
-  }
-
-  const data = await req.json();
-
-  // Use authenticated user ID
-  const [book] = await ctx.sql`
-    INSERT INTO books (user_id, title, author)
-    VALUES (${ctx.user.userId}, ${data.title}, ${data.author})
-    RETURNING *
-  `;
-
-  return new Response(JSON.stringify(book), { status: 201 });
-};
-
-export const healthCheck: Handler = async (ctx, req) => {
-  return new Response(JSON.stringify({ status: 'ok' }), {
-    headers: { 'Content-Type': 'application/json' },
-  });
-};
-
-export const getBook: Handler = async (ctx, req) => {
-  const bookId = parseInt(ctx.params.id, 10); // From /api/books/:id
-
-  const [book] = await ctx.sql`
-    SELECT * FROM books WHERE id = ${bookId}
-  `;
-
-  if (!book) {
-    return new Response('Book not found', { status: 404 });
-  }
-
-  return new Response(JSON.stringify(book), {
-    headers: { 'Content-Type': 'application/json' },
-  });
-};
-
-export const createBook: Handler = async (ctx, req) => {
-  if (!ctx.user) {
-    return new Response('Unauthorized', { status: 401 });
-  }
-
-  const data = await req.json();
-
-  // Validate input
-  if (!data.title || !data.author) {
-    return new Response('Missing required fields', { status: 400 });
-  }
-
-  const [book] = await ctx.sql`
-    INSERT INTO books (user_id, title, author)
-    VALUES (${ctx.user.userId}, ${data.title}, ${data.author})
-    RETURNING *
-  `;
-
-  return new Response(JSON.stringify(book), {
-    status: 201,
-    headers: { 'Content-Type': 'application/json' },
-  });
 };

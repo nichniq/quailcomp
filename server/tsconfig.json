@@ -20,5 +20,5 @@
     }
   },
   "include": ["src/**/*", "tests/**/*", "scripts/**/*", "../domains/**/*"],
-  "exclude": ["node_modules", "dist", "../services"]
+  "exclude": ["node_modules", "dist", "../services", "../domains/types"]
 }

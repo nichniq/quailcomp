@@ -19,7 +19,7 @@ import type {
   MetadataLookupEvent,
   MetadataProviderResult,
   UserSessionStartedEvent,
-} from "@quailcomp/domains/types/analytics";
+} from "@domains/types/analytics";
 
 const eventsClient = new EventsClient(getConnection());
 

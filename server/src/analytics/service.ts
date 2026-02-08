@@ -22,7 +22,7 @@ import type {
   UserSessionEndedEvent,
   UserMilestoneEvent,
   FeatureUsageEvent,
-} from "@quailcomp/domains/types/analytics";
+} from "@domains/types/analytics";
 import { createLogger } from "@/logging/logger";
 
 const analyticsLogger = createLogger().child({ context: "analytics" });

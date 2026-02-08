@@ -126,7 +126,7 @@ These classes are imported from the source code rather than defined in this doma
 The `parseDatabaseError` function converts PostgreSQL errors into typed DatabaseError instances:
 
 ```typescript
-export type DatabaseErrorParser = (error: unknown, operation: string) => DatabaseError;
+export type DatabaseErrorParser = (error: unknown, operation: string) => Error;
 ```
 
 **PostgreSQL Error Code Mapping:**

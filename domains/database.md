@@ -19,6 +19,8 @@ Traditional database clients require separate libraries and configuration. Bun's
 5. **camelCase Conversion** - Automatic conversion of snake_case columns to camelCase (configurable)
 
 ```typescript
+import type { SQL } from "bun";
+
 export type Sql = SQL;
 ```
 
@@ -297,7 +299,7 @@ try {
 // HTTP handler with database access
 import type { Handler } from '@/server/src/middleware/types';
 
-export const getUserBooks: Handler = async (ctx, req) => {
+const getUserBooks: Handler = async (ctx, req) => {
   const { sql } = ctx; // Connection from RequestContext
 
   const books = await sql`

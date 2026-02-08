@@ -32,6 +32,7 @@ export type SeriesEntityRow = {
   deleted_at: Date | null
 }
 
+import type { PhysicalBook } from "./books";
 export type SeriesListItem = {
   entity_id: string
   name: string

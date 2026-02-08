@@ -104,7 +104,7 @@ const ACCESS_HIERARCHY: Record<AccessLevel, number> = {
   read: 1,
 }
 
-export function hasAccess(
+function hasAccess(
   userLevel: AccessLevel,
   requiredLevel: AccessLevel
 ): boolean {
@@ -283,7 +283,7 @@ export interface AccessListItem {
 > User-friendly label for access level.
 
 ```typescript
-export function getAccessLevelLabel(level: AccessLevel): string {
+function getAccessLevelLabel(level: AccessLevel): string {
   switch (level) {
     case "owner":
       return "Owner"
@@ -300,7 +300,7 @@ export function getAccessLevelLabel(level: AccessLevel): string {
 > Detailed description of what each access level allows.
 
 ```typescript
-export function getAccessLevelDescription(level: AccessLevel): string {
+function getAccessLevelDescription(level: AccessLevel): string {
   switch (level) {
     case "owner":
       return "Full control including deleting and managing access"
@@ -319,7 +319,7 @@ export function getAccessLevelDescription(level: AccessLevel): string {
 Useful for UI display with icon libraries.
 
 ```typescript
-export function getAccessLevelIcon(level: AccessLevel): string {
+function getAccessLevelIcon(level: AccessLevel): string {
   switch (level) {
     case "owner":
       return "crown"

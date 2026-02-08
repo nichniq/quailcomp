@@ -16,6 +16,7 @@ import type { SeriesEntitySnapshot } from "@domains/types/series";
 import type { BookEntitySnapshot } from "@domains/types/books";
 
 import type { Router } from "@/router";
+import type { RequestContext } from "@/context";
 import { requireAuth } from "@/auth/middleware";
 import { requireRead, requireWrite, requireOwner } from "@/authz/middleware";
 import { AuthorizationService } from "@/authz/service";
@@ -32,7 +33,7 @@ const BOOK_TYPE = "book";
 /**
  * Helper to extract entity ID from route params
  */
-const getEntityIdFromParams = (ctx: { params: { id: string } }) =>
+const getEntityIdFromParams = (ctx: RequestContext) =>
   parseInt(ctx.params.id, 10);
 
 /**

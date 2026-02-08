@@ -171,7 +171,7 @@ describe("MetricsCollector", () => {
   test("reset() clears all metrics", () => {
     metrics.incrementCounter("counter1");
     metrics.incrementCounter("counter2");
-    metrics.recordHistogram("histogram1", {}, 100);
+    metrics.recordHistogram("histogram1", 100);
 
     metrics.reset();
 

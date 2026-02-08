@@ -12,6 +12,7 @@
  * 3. Or commit changes - the pre-commit hook will regenerate automatically
  */
 
+import type { SQL } from "bun";
 export type Sql = SQL;
 
 export type DbConfig = {
@@ -22,18 +23,4 @@ export type DbConfig = {
   password: string;       // Database password
   ssl: boolean;           // Enable SSL/TLS for connection
   max: number;            // Maximum connections in pool
-};
-
-export const getUserBooks: Handler = async (ctx, req) => {
-  const { sql } = ctx; // Connection from RequestContext
-
-  const books = await sql`
-    SELECT * FROM books
-    WHERE user_id = ${ctx.user.id}
-    ORDER BY created_at DESC
-  `;
-
-  return new Response(JSON.stringify(books), {
-    headers: { 'Content-Type': 'application/json' },
-  });
 };

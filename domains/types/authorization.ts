@@ -14,18 +14,6 @@
 
 export type AccessLevel = "owner" | "write" | "read"
 
-const ACCESS_HIERARCHY: Record<AccessLevel, number> = {
-  owner: 3,
-  write: 2,
-  read: 1,
-}
-export function hasAccess(
-  userLevel: AccessLevel,
-  requiredLevel: AccessLevel
-): boolean {
-  return ACCESS_HIERARCHY[userLevel] >= ACCESS_HIERARCHY[requiredLevel]
-}
-
 export interface EntityAccess {
   entityId: number
   userId: number
@@ -71,37 +59,4 @@ export interface AccessListItem {
   accessLevel: AccessLevel
   grantedAt: Date
   grantedBy: number | null
-}
-
-export function getAccessLevelLabel(level: AccessLevel): string {
-  switch (level) {
-    case "owner":
-      return "Owner"
-    case "write":
-      return "Can Edit"
-    case "read":
-      return "Can View"
-  }
-}
-
-export function getAccessLevelDescription(level: AccessLevel): string {
-  switch (level) {
-    case "owner":
-      return "Full control including deleting and managing access"
-    case "write":
-      return "Can view and modify but cannot delete or manage access"
-    case "read":
-      return "Can view only, cannot modify"
-  }
-}
-
-export function getAccessLevelIcon(level: AccessLevel): string {
-  switch (level) {
-    case "owner":
-      return "crown"
-    case "write":
-      return "edit"
-    case "read":
-      return "eye"
-  }
 }

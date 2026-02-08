@@ -149,37 +149,3 @@ export type BookListItem = {
   author?: string
   acquisition_date?: Date
 }
-
-export function isPurchased(acq: AcquisitionEvent): acq is PurchasedAcquisition {
-  return acq.type === 'purchased'
-}
-export function isOrdered(acq: AcquisitionEvent): acq is OrderedAcquisition {
-  return acq.type === 'ordered'
-}
-export function isGiven(acq: AcquisitionEvent): acq is GivenAcquisition {
-  return acq.type === 'given'
-}
-export function isWon(acq: AcquisitionEvent): acq is WonAcquisition {
-  return acq.type === 'won'
-}
-export function isInherited(acq: AcquisitionEvent): acq is InheritedAcquisition {
-  return acq.type === 'inherited'
-}
-
-export function getBookDisplayName(book: PhysicalBook): string {
-  if (!book.title) {
-    return `Book #${book.entity_id}`
-  }
-
-  const parts = [book.title]
-
-  if (book.subtitle) {
-    parts.push(book.subtitle)
-  }
-
-  if (book.author) {
-    parts.push(`by ${book.author}`)
-  }
-
-  return parts.join(': ')
-}

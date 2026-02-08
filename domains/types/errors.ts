@@ -51,4 +51,4 @@ export type DatabaseErrorCode =
   | "NOT_FOUND" // Entity or event not found
   | "UNKNOWN_ERROR"; // Unclassified error
 
-export type DatabaseErrorParser = (error: unknown, operation: string) => DatabaseError;
+export type DatabaseErrorParser = (error: unknown, operation: string) => Error;

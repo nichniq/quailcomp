@@ -313,23 +313,23 @@ export type BookListItem = {
 > Runtime type checking for acquisition variants.
 
 ```typescript
-export function isPurchased(acq: AcquisitionEvent): acq is PurchasedAcquisition {
+function isPurchased(acq: AcquisitionEvent): acq is PurchasedAcquisition {
   return acq.type === 'purchased'
 }
 
-export function isOrdered(acq: AcquisitionEvent): acq is OrderedAcquisition {
+function isOrdered(acq: AcquisitionEvent): acq is OrderedAcquisition {
   return acq.type === 'ordered'
 }
 
-export function isGiven(acq: AcquisitionEvent): acq is GivenAcquisition {
+function isGiven(acq: AcquisitionEvent): acq is GivenAcquisition {
   return acq.type === 'given'
 }
 
-export function isWon(acq: AcquisitionEvent): acq is WonAcquisition {
+function isWon(acq: AcquisitionEvent): acq is WonAcquisition {
   return acq.type === 'won'
 }
 
-export function isInherited(acq: AcquisitionEvent): acq is InheritedAcquisition {
+function isInherited(acq: AcquisitionEvent): acq is InheritedAcquisition {
   return acq.type === 'inherited'
 }
 ```
@@ -354,7 +354,7 @@ Examples:
 - "Water: Exploring the Blue Planet"
 
 ```typescript
-export function getBookDisplayName(book: PhysicalBook): string {
+function getBookDisplayName(book: PhysicalBook): string {
   if (!book.title) {
     return `Book #${book.entity_id}`
   }

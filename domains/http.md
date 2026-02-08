@@ -13,6 +13,9 @@ Every HTTP request flows through this domain's types: from URL matching in the r
 Traditional frameworks pass request data through global variables or framework-specific APIs. The HTTP domain uses explicit context passing: every handler receives a `RequestContext` object containing everything needed to process the request.
 
 ```typescript
+import type { Sql } from "./database";
+import type { Logger } from "./logging";
+
 export type RequestContext = {
   /** Unique identifier for this request (for tracing) */
   requestId: string;
@@ -76,7 +79,7 @@ export type Handler = (
 ```typescript
 import type { Handler } from '@/domains/types/http';
 
-export const getUser: Handler = async (ctx, req) => {
+const getUser: Handler = async (ctx, req) => {
   // Access authenticated user
   if (!ctx.user) {
     return new Response('Unauthorized', { status: 401 });
@@ -121,7 +124,7 @@ export type Middleware = (next: Handler) => Handler;
 import type { Middleware } from '@/domains/types/http';
 
 // Authentication middleware: populate ctx.user from JWT
-export const requireAuth: Middleware = (next) => {
+const requireAuth: Middleware = (next) => {
   return async (ctx, req) => {
     const token = req.headers.get('Authorization')?.replace('Bearer ', '');
 
@@ -140,7 +143,7 @@ export const requireAuth: Middleware = (next) => {
 };
 
 // Logging middleware: log request/response
-export const requestLogger: Middleware = (next) => {
+const requestLogger: Middleware = (next) => {
   return async (ctx, req) => {
     ctx.log.info('Request started', { method: req.method, url: req.url });
 
@@ -235,7 +238,7 @@ export type AuthenticatedUser = {
 **Usage in Handlers:**
 
 ```typescript
-export const createBook: Handler = async (ctx, req) => {
+const createBook: Handler = async (ctx, req) => {
   // Require authentication
   if (!ctx.user) {
     return new Response('Unauthorized', { status: 401 });
@@ -261,7 +264,7 @@ export const createBook: Handler = async (ctx, req) => {
 ```typescript
 import type { Handler } from '@/domains/types/http';
 
-export const healthCheck: Handler = async (ctx, req) => {
+const healthCheck: Handler = async (ctx, req) => {
   return new Response(JSON.stringify({ status: 'ok' }), {
     headers: { 'Content-Type': 'application/json' },
   });
@@ -273,7 +276,7 @@ export const healthCheck: Handler = async (ctx, req) => {
 ```typescript
 import type { Handler } from '@/domains/types/http';
 
-export const getBook: Handler = async (ctx, req) => {
+const getBook: Handler = async (ctx, req) => {
   const bookId = parseInt(ctx.params.id, 10); // From /api/books/:id
 
   const [book] = await ctx.sql`
@@ -295,7 +298,7 @@ export const getBook: Handler = async (ctx, req) => {
 ```typescript
 import type { Handler } from '@/domains/types/http';
 
-export const createBook: Handler = async (ctx, req) => {
+const createBook: Handler = async (ctx, req) => {
   if (!ctx.user) {
     return new Response('Unauthorized', { status: 401 });
   }

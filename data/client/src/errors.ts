@@ -132,14 +132,22 @@ export function parseDatabaseError(
 
   const err = error as Record<string, unknown>;
 
+  // Helper to safely get string values
+  const getString = (value: unknown): string | undefined =>
+    typeof value === "string" ? value : undefined;
+
+  // Helper to safely get Error object
+  const getError = (value: unknown): Error | undefined =>
+    value instanceof Error ? value : undefined;
+
   // PostgreSQL error codes
   // https://www.postgresql.org/docs/current/errcodes-appendix.html
 
   if (err.code === "23505") {
     // unique_violation
     return new UniqueViolationError(
-      err.message || "Unique constraint violation",
-      err.constraint_name || err.constraint || "unknown",
+      getString(err.message) || "Unique constraint violation",
+      getString(err.constraint_name) || getString(err.constraint) || "unknown",
       err.detail
     );
   }
@@ -147,25 +155,25 @@ export function parseDatabaseError(
   if (err.code === "23503") {
     // foreign_key_violation
     return new ForeignKeyViolationError(
-      err.message || "Foreign key constraint violation",
-      err.constraint_name || err.constraint || "unknown",
-      err.detail
+      getString(err.message) || "Foreign key constraint violation",
+      getString(err.constraint_name) || getString(err.constraint) || "unknown",
+      getString(err.detail)
     );
   }
 
   if (err.code === "23502") {
     // not_null_violation
     return new NotNullViolationError(
-      err.message || "Not null constraint violation",
-      err.column_name || err.column
+      getString(err.message) || "Not null constraint violation",
+      getString(err.column_name) || getString(err.column)
     );
   }
 
   if (err.code === "23514") {
     // check_violation
     return new CheckViolationError(
-      err.message || "Check constraint violation",
-      err.constraint_name || err.constraint
+      getString(err.message) || "Check constraint violation",
+      getString(err.constraint_name) || getString(err.constraint)
     );
   }
 
@@ -176,16 +184,16 @@ export function parseDatabaseError(
       "CONNECTION_ERROR",
       operation,
       { originalCode: err.code },
-      err
+      getError(err)
     );
   }
 
   // Generic query error
   return new DatabaseError(
-    err.message || "Database query failed",
+    getString(err.message) || "Database query failed",
     "QUERY_ERROR",
     operation,
     { originalError: err },
-    err
+    getError(err)
   );
 }

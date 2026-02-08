@@ -12,8 +12,8 @@ import {
   NotFoundError,
   ConflictError,
   ValidationError,
-  type ValidationErrorDetail,
 } from "@/middleware/error-handler";
+import type { ValidationErrorDetail } from "@/middleware/error-types";
 
 /**
  * Throw a 400 Bad Request error
@@ -80,7 +80,7 @@ export function validationError(
  * @throws BadRequestError if ID is invalid
  */
 export function getValidEntityId(
-  params: { id: string },
+  params: Record<string, string>,
   entityType = "entity"
 ): number {
   const id = parseInt(params.id, 10);

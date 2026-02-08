@@ -28,6 +28,7 @@ import {
 } from "@quailcomp/book-metadata";
 
 import type { Router } from "@/router";
+import type { RequestContext } from "@/context";
 import { requireAuth } from "@/auth/middleware";
 import { requireRead, requireWrite, requireOwner } from "@/authz/middleware";
 import { AuthorizationService } from "@/authz/service";
@@ -47,7 +48,7 @@ const BOOK_TYPE = "book";
 /**
  * Helper to extract entity ID from route params
  */
-const getEntityIdFromParams = (ctx: { params: { id: string } }) =>
+const getEntityIdFromParams = (ctx: RequestContext) =>
   parseInt(ctx.params.id, 10);
 
 /**
@@ -121,7 +122,7 @@ export function registerBookRoutes(router: Router, sql: Sql): void {
         accessibleIds.has(book.entityId)
       );
 
-      let content: string | Buffer;
+      let content: BodyInit;
       let contentType: string;
       let filename: string;
 
@@ -135,8 +136,9 @@ export function registerBookRoutes(router: Router, sql: Sql): void {
           contentType = "application/json";
           filename = `books-${Date.now()}.json`;
         } else {
-          // xlsx
-          content = await exportXLSX(accessibleBooks);
+          // xlsx - convert Buffer to Uint8Array for Response
+          const buffer = await exportXLSX(accessibleBooks);
+          content = new Uint8Array(buffer);
           contentType =
             "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
           filename = `books-${Date.now()}.xlsx`;

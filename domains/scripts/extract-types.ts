@@ -95,11 +95,12 @@ function filterExportedCode(code: string): string {
     const line = lines[i]
     const trimmed = line.trim()
 
-    // Check if this line starts an export or top-level declaration
+    // Check if this line starts an import, export, or top-level declaration
+    const isImport = trimmed.startsWith('import ')
     const isExport = trimmed.startsWith('export ')
     const isDeclaration = /^(const|let|var|class|function|enum|interface|type)\s+/.test(trimmed)
 
-    if (isExport || (!inStatement && isDeclaration)) {
+    if (isImport || isExport || (!inStatement && isDeclaration)) {
       inStatement = true
       exportedLines.push(line)
 

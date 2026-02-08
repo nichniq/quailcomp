@@ -43,7 +43,7 @@ export function initSentry(): void {
 
     // Integrations (httpIntegration is built-in for @sentry/bun)
     integrations: [
-      Sentry.httpIntegration({ tracing: true }),
+      Sentry.httpIntegration(),
     ],
   });
 }
