@@ -293,9 +293,9 @@ ws.onmessage = (event) => {
 - Last-write-wins is sufficient for most use cases
 - Can be added later if needed
 
-## Phase 5 Domain Relationships
+## Domain Relationships
 
-Phase 5 introduced new domains that reference the Books domain.
+The following domains reference the Books domain.
 
 ### People Domain
 

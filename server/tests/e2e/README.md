@@ -73,7 +73,7 @@ test('complete workflow', async () => {
 
 ## Known Issues
 
-- Authorization E2E tests currently fail because authorization middleware is not yet enabled on book routes (Phase 1 work)
-- These tests will pass once Phase 1 task 1.2 is completed
+- Authorization E2E tests currently fail because authorization middleware is not yet enabled on book routes
+- These tests will pass once authorization middleware is properly integrated
 
 See [Running Tests](../../../docs/how-to/run-tests.md) for more guidelines.

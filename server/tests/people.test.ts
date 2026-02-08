@@ -663,8 +663,7 @@ describe("People Routes", () => {
 
   describe("GET /people/:id/books", () => {
     test("returns books given by person", async () => {
-      // This is a placeholder test - in Phase 5, books don't yet reference people
-      // This test validates the endpoint exists and returns empty array
+      // This test validates the endpoint exists and returns the correct books
       const personData: PersonEntitySnapshot = {
         name: `test-person-${testTimestamp}-books`,
         relationships: ["gift_giver"],

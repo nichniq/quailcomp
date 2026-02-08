@@ -34,9 +34,6 @@ Quailcomp is a sophisticated TypeScript application that demonstrates production
 - **Book Metadata Lookup** - Query 5 providers in parallel with automatic fallback
 - **Vue 3 Frontend** - Modern SPA with Pinia state management
 - **RESTful API** - Bun HTTP server with middleware composition
-
-### Phase 5 Advanced Features
-
 - **People Management** - Track authors, gift-givers, and borrowers with full CRUD API and relationship tracking
 - **Series Tracking** - Organize books into series with volume ordering and comprehensive series management
 - **Bulk Operations** - Import/export books in CSV, JSON, or XLSX formats with batch update support

@@ -1,8 +1,8 @@
 /**
- * Phase 5 Integration Tests
+ * Cross-Domain Integration Tests
  *
- * Tests cross-domain interactions between People, Series, and Books.
- * These tests verify that Phase 5 domains work together correctly.
+ * Tests interactions between People, Series, and Books domains.
+ * These tests verify that domains work together correctly when referencing each other.
  *
  * Test Coverage:
  * - People + Books Integration (gift-giving)
@@ -68,7 +68,7 @@ async function executeRequest(
   return handler(ctx, req);
 }
 
-describe("Phase 5 Integration Tests", () => {
+describe("Cross-Domain Integration Tests", () => {
   let router: Router;
   let testUserId: number;
   let authToken: string;
@@ -77,9 +77,9 @@ describe("Phase 5 Integration Tests", () => {
   beforeAll(async () => {
     // Create test user
     const user = await authService.register({
-      email: `test-phase5-${testTimestamp}@example.com`,
+      email: `test-crossdomain-${testTimestamp}@example.com`,
       password: "TestP@ssw0rd123",
-      username: `test_phase5_${testTimestamp}`,
+      username: `test_crossdomain_${testTimestamp}`,
     });
     testUserId = user.user.userId;
     authToken = await signToken({
@@ -88,7 +88,7 @@ describe("Phase 5 Integration Tests", () => {
       username: user.user.username ?? undefined,
     });
 
-    // Setup router with all Phase 5 routes
+    // Setup router with all domain routes
     router = new Router();
     registerBookRoutes(router, sql);
     registerPeopleRoutes(router, sql);
