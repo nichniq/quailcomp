@@ -17,6 +17,7 @@ Quailcomp is a personal data management system using event-sourced append-only s
 ## Getting Started
 
 - [Development Setup](docs/how-to/setup-development.md) - Install prerequisites, clone, configure database
+- [Start Local Servers](docs/how-to/start-local-servers.md) - Start backend, frontend, and devtools
 - [Running Tests](docs/how-to/run-tests.md) - Test commands and writing tests
 - [Commit Protocol](docs/how-to/commit-changes.md) - How to commit your changes
 
