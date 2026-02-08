@@ -2,6 +2,23 @@
 
 Quailcomp uses a comprehensive observability stack for monitoring, logging, and error tracking in production.
 
+## Architecture
+
+Quailcomp follows **hexagonal architecture (ports & adapters)** for observability:
+
+- **Application code** depends on **interfaces** (Tracer, MetricsRecorder, ErrorTracker)
+- **Adapters** provide concrete implementations (NoOp, InMemory, Sentry, future OTel)
+- Implementations can be swapped without changing application code
+
+This design provides:
+
+- **Flexibility** - Easy to switch from Sentry to OpenTelemetry later
+- **Testability** - Simple to mock observability in tests
+- **No vendor lock-in** - Application code is implementation-agnostic
+- **Future-proof** - Tracing interfaces ready, implementation can be added when needed
+
+See [server/src/observability/README.md](../../server/src/observability/README.md) for implementation details.
+
 ## Components
 
 ### 1. Structured Logging (Pino)
@@ -28,8 +45,9 @@ Example log output (development):
 
 Metrics are collected using a lightweight in-memory collector and exposed in Prometheus text format:
 
-- **Counters:** HTTP requests, responses by status code
+- **Counters:** HTTP requests, responses by status code, errors
 - **Histograms:** Request duration with configurable buckets
+- **Gauges:** Current values (connections, queue depth, etc.)
 - **Labels:** Method, path, status code for filtering
 
 **Endpoints:**
@@ -37,10 +55,21 @@ Metrics are collected using a lightweight in-memory collector and exposed in Pro
 - `GET /metrics` - Prometheus text format
 - `GET /metrics/json` - JSON format for debugging
 
-**Implementation:**
+**Architecture:**
 
-- Collector: [server/src/metrics/collector.ts](../../server/src/metrics/collector.ts:1)
-- Prometheus exporter: [server/src/metrics/prometheus.ts](../../server/src/metrics/prometheus.ts:1)
+- Interface: [server/src/observability/metrics.ts](../../server/src/observability/metrics.ts) - `MetricsRecorder` interface
+- Adapter: [server/src/observability/adapters/inmemory-metrics.ts](../../server/src/observability/adapters/inmemory-metrics.ts) - In-memory implementation
+- Exporter: [server/src/metrics/prometheus.ts](../../server/src/metrics/prometheus.ts) - Prometheus format converter
+- Middleware: [server/src/metrics/request-metrics.ts](../../server/src/metrics/request-metrics.ts) - HTTP metrics collection
+
+**Usage in application code:**
+
+```typescript
+// Access via context
+ctx.observability.metrics.incrementCounter("books_created", 1, { genre: "fiction" });
+ctx.observability.metrics.recordHistogram("db_query_ms", 42, { table: "books" });
+ctx.observability.metrics.recordGauge("active_sessions", 15);
+```
 
 Example Prometheus output:
 
@@ -67,7 +96,25 @@ http_request_duration_ms_count{method="GET",path="/health",status="200"} 42
 - **Request metadata** (path, method, request ID)
 - **Graceful shutdown** with event flushing
 
-**Implementation:** [server/src/observability/sentry.ts](../../server/src/observability/sentry.ts:1)
+**Architecture:**
+
+- Interface: [server/src/observability/error-tracker.ts](../../server/src/observability/error-tracker.ts) - `ErrorTracker` interface
+- Adapter: [server/src/observability/adapters/sentry-error-tracker.ts](../../server/src/observability/adapters/sentry-error-tracker.ts) - Sentry implementation
+- No-op adapter: [server/src/observability/adapters/noop-error-tracker.ts](../../server/src/observability/adapters/noop-error-tracker.ts) - When disabled
+- Middleware: [server/src/middleware/error-handler.ts](../../server/src/middleware/error-handler.ts) - Error capture
+
+**Usage in application code:**
+
+```typescript
+// Capture error
+ctx.observability.errors.captureError(error, {
+  tags: { feature: "authentication" },
+  extra: { userId: user.id },
+});
+
+// Add breadcrumb
+ctx.observability.errors.addBreadcrumb("User logged in", { userId: user.id }, "auth");
+```
 
 Sentry is disabled by default. Enable it by setting:
 
@@ -76,7 +123,42 @@ SENTRY_DSN=https://...@sentry.io/...
 SENTRY_ENABLED=true
 ```
 
-### 4. Request Tracing (Request ID)
+When disabled, a no-op implementation is used (zero overhead).
+
+### 4. Distributed Tracing (Future)
+
+The codebase includes tracing interfaces ready for distributed tracing:
+
+- **Interface:** [server/src/observability/tracer.ts](../../server/src/observability/tracer.ts) - `Tracer` and `Span` interfaces
+- **Current implementation:** No-op (zero cost, does nothing)
+- **Future:** Create OpenTelemetry adapter and swap it in
+
+**Interface is ready today:**
+
+```typescript
+const span = ctx.observability.tracer.startSpan("process_book");
+span.setAttribute("book_id", bookId);
+
+try {
+  span.addEvent("fetching_data");
+  const data = await fetch();
+  span.addEvent("processing_complete");
+  return data;
+} catch (error) {
+  span.recordException(error);
+  throw error;
+} finally {
+  span.end();
+}
+```
+
+Currently this code runs with zero overhead (no-op). When you're ready for distributed tracing:
+
+1. Create an OpenTelemetry adapter implementing the `Tracer` interface
+2. Swap it in [server/src/index.ts](../../server/src/index.ts)
+3. All existing span calls automatically start working!
+
+### 5. Request Tracing (Request ID)
 
 Every request gets a unique ID for correlation:
 

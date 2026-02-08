@@ -6,7 +6,6 @@
  */
 
 import type { Middleware } from "@/middleware/types";
-import { metrics } from "@/metrics/collector";
 import { analytics } from "@/analytics/service";
 
 /**
@@ -46,21 +45,21 @@ export const requestMetrics: Middleware = (next) => async (ctx, req) => {
   };
 
   // Count incoming request
-  metrics.inc("http_requests_total", labels);
+  ctx.observability.metrics.incrementCounter("http_requests_total", 1, labels);
 
   try {
     const response = await next(ctx, req);
 
     // Record latency
     const durationMs = Date.now() - ctx.startTime;
-    metrics.observe(
+    ctx.observability.metrics.recordHistogram(
       "http_request_duration_ms",
-      { ...labels, status: String(response.status) },
-      durationMs
+      durationMs,
+      { ...labels, status: String(response.status) }
     );
 
     // Count response by status
-    metrics.inc("http_responses_total", {
+    ctx.observability.metrics.incrementCounter("http_responses_total", 1, {
       ...labels,
       status: String(response.status),
     });
@@ -79,7 +78,7 @@ export const requestMetrics: Middleware = (next) => async (ctx, req) => {
     return response;
   } catch (error) {
     // Count errors
-    metrics.inc("http_errors_total", labels);
+    ctx.observability.metrics.incrementCounter("http_errors_total", 1, labels);
 
     // Record error details to analytics
     await analytics.recordHttpError({

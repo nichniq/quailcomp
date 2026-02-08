@@ -32,10 +32,18 @@ import { registerSeriesRoutes } from "@/routes/series";
 import { registerEntityRoutes } from "@/routes/entities";
 import { openAPIHandler, swaggerUIHandler } from "@/routes/api-docs";
 import { createWebSocketHandler } from "@/websocket/server";
+import type { ObservabilityContext } from "@/observability/context";
+import { createObservabilityContext } from "@/observability/context";
+import {
+  createNoOpTracer,
+  createInMemoryMetrics,
+  createNoOpErrorTracker,
+} from "@/observability/adapters";
 
 export interface ServerConfig {
   port?: number;
   hostname?: string;
+  observability?: ObservabilityContext;
 }
 
 export interface ServerInstance {
@@ -79,6 +87,15 @@ function registerRoutes(router: Router, sql: Sql): void {
 export function createServer(config: ServerConfig = {}): ServerInstance {
   const port = config.port ?? env.PORT;
   const hostname = config.hostname ?? env.HOST;
+
+  // Use provided observability or create default (for tests)
+  const observability =
+    config.observability ??
+    createObservabilityContext(
+      createNoOpTracer(),
+      createInMemoryMetrics(),
+      createNoOpErrorTracker()
+    );
 
   const router = createRouter();
   const sql = getConnection();
@@ -145,7 +162,7 @@ export function createServer(config: ServerConfig = {}): ServerInstance {
       }
 
       // Create request context
-      const ctx = createContext(req, sql);
+      const ctx = createContext(req, sql, observability);
       ctx.params = match.params;
 
       // Build handler chain: route middleware -> global middleware -> handler

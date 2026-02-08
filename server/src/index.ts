@@ -2,13 +2,41 @@
  * Server entry point
  */
 
-import { initSentry, flushSentry } from "@/observability/sentry";
+import * as Sentry from "@sentry/bun";
+import { env, isProduction } from "@/config";
 import { createServer } from "@/server";
+import { createObservabilityContext } from "@/observability/context";
+import {
+  createNoOpTracer,
+  createInMemoryMetrics,
+  createSentryErrorTracker,
+  createNoOpErrorTracker,
+} from "@/observability/adapters";
 
 // Initialize Sentry before everything else
-initSentry();
+if (env.SENTRY_DSN && env.SENTRY_ENABLED) {
+  Sentry.init({
+    dsn: env.SENTRY_DSN,
+    environment: isProduction ? "production" : "development",
+    sampleRate: 1.0,
+    tracesSampleRate: isProduction ? 0.1 : 1.0,
+    enabled: env.SENTRY_ENABLED,
+    release: process.env.RELEASE_VERSION,
+    attachStacktrace: true,
+    integrations: [Sentry.httpIntegration({ tracing: true })],
+  });
+}
 
-const server = createServer();
+// Create observability context
+const observability = createObservabilityContext(
+  createNoOpTracer(),
+  createInMemoryMetrics(),
+  env.SENTRY_ENABLED && env.SENTRY_DSN
+    ? createSentryErrorTracker()
+    : createNoOpErrorTracker()
+);
+
+const server = createServer({ observability });
 
 console.log(`Server running on ${server.url}`);
 
@@ -35,14 +63,14 @@ function gracefulShutdown(signal: string): void {
   Promise.all(Array.from(activeRequests))
     .then(async () => {
       clearTimeout(shutdownTimeout);
-      console.log("All requests completed, flushing Sentry...");
-      await flushSentry();
+      console.log("All requests completed, flushing error tracker...");
+      await observability.errors.flush();
       console.log("Exiting...");
       process.exit(0);
     })
     .catch(async (error) => {
       console.error("Error during shutdown:", error);
-      await flushSentry();
+      await observability.errors.flush();
       clearTimeout(shutdownTimeout);
       process.exit(1);
     });
@@ -55,16 +83,18 @@ process.on("SIGINT", () => gracefulShutdown("SIGINT"));
 // Handle uncaught errors gracefully
 process.on("uncaughtException", async (error) => {
   console.error("Uncaught exception:", error);
-  const { captureError } = await import("@/observability/sentry");
-  captureError(error, { tags: { type: "uncaught_exception" } });
+  observability.errors.captureError(error, {
+    tags: { type: "uncaught_exception" },
+  });
   gracefulShutdown("UNCAUGHT_EXCEPTION");
 });
 
 process.on("unhandledRejection", async (reason, promise) => {
   console.error("Unhandled rejection at:", promise, "reason:", reason);
-  const { captureError } = await import("@/observability/sentry");
   if (reason instanceof Error) {
-    captureError(reason, { tags: { type: "unhandled_rejection" } });
+    observability.errors.captureError(reason, {
+      tags: { type: "unhandled_rejection" },
+    });
   }
   gracefulShutdown("UNHANDLED_REJECTION");
 });

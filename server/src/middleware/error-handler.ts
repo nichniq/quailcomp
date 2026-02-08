@@ -4,7 +4,6 @@
  * Catches unhandled errors and returns appropriate HTTP responses.
  */
 
-import { captureError } from "@/observability/sentry";
 import type { Middleware } from "@/middleware/types";
 import type {
   ErrorResponse,
@@ -152,9 +151,9 @@ export const errorHandler: Middleware = (next) => async (ctx, req) => {
       stack: error instanceof Error ? error.stack : undefined,
     });
 
-    // Capture error in Sentry (for unexpected errors only)
+    // Capture error in error tracker (for unexpected errors only)
     if (error instanceof Error) {
-      captureError(error, {
+      ctx.observability.errors.captureError(error, {
         tags: {
           requestId: ctx.requestId,
         },

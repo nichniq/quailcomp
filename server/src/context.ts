@@ -8,6 +8,13 @@ import type { Sql } from "@quailcomp/data";
 
 import type { Logger } from "@/logging/logger";
 import { createLogger } from "@/logging/logger";
+import type { ObservabilityContext } from "@/observability/context";
+import { createObservabilityContext } from "@/observability/context";
+import {
+  createNoOpTracer,
+  createInMemoryMetrics,
+  createNoOpErrorTracker,
+} from "@/observability/adapters";
 
 /**
  * Authenticated user information extracted from JWT
@@ -41,6 +48,9 @@ export interface RequestContext {
 
   /** URL path parameters extracted by router */
   params: Record<string, string>;
+
+  /** Observability (tracing, metrics, error tracking) */
+  observability: ObservabilityContext;
 }
 
 /**
@@ -51,12 +61,30 @@ function generateRequestId(): string {
 }
 
 /**
+ * Create a default observability context for tests
+ */
+function createDefaultObservability(): ObservabilityContext {
+  return createObservabilityContext(
+    createNoOpTracer(),
+    createInMemoryMetrics(),
+    createNoOpErrorTracker()
+  );
+}
+
+/**
  * Create a new request context for an incoming request
  */
-export function createContext(req: Request, sql: Sql): RequestContext {
+export function createContext(
+  req: Request,
+  sql: Sql,
+  observability?: ObservabilityContext
+): RequestContext {
   // Extract or generate request ID
   const requestId =
     req.headers.get("x-request-id") ?? generateRequestId();
+
+  // Use provided observability or create default (for tests)
+  const obs = observability ?? createDefaultObservability();
 
   return {
     requestId,
@@ -65,5 +93,6 @@ export function createContext(req: Request, sql: Sql): RequestContext {
     sql,
     log: createLogger().child({ requestId }),
     params: {},
+    observability: obs.child({ requestId }),
   };
 }

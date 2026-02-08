@@ -13,7 +13,6 @@ import type { Sql } from "@quailcomp/data";
 
 import { healthHandler, metricsHandler } from "@/routes/health";
 import { createContext, type RequestContext } from "@/context";
-import { metrics } from "@/metrics/collector";
 import { Router } from "@/router";
 import { registerBookRoutes } from "@/routes/books";
 import { compose } from "@/middleware/compose";
@@ -81,11 +80,11 @@ describe("healthHandler", () => {
 
 describe("metricsHandler", () => {
   test("returns metrics snapshot", async () => {
-    metrics.reset();
-    metrics.inc("test_metric", { label: "value" });
-
     const request = new Request("http://localhost/metrics");
     const ctx = createContext(request, sql);
+
+    // Add a test metric via the context
+    ctx.observability.metrics.incrementCounter("test_metric", 1, { label: "value" });
 
     const response = await metricsHandler(ctx, request);
 

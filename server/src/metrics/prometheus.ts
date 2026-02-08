@@ -5,8 +5,21 @@
  * See: https://prometheus.io/docs/instrumenting/exposition_formats/
  */
 
-import { metrics } from "./collector";
-import type { Counter, Histogram, MetricsSnapshot } from "./collector";
+import type { MetricsSnapshot } from "@/observability/metrics";
+
+interface Counter {
+  name: string;
+  labels: Record<string, string>;
+  value: number;
+}
+
+interface Histogram {
+  name: string;
+  labels: Record<string, string>;
+  count: number;
+  sum: number;
+  buckets: Map<number, number>;
+}
 
 /**
  * Escape label values for Prometheus format
@@ -82,8 +95,7 @@ function formatHistogram(
 /**
  * Generate Prometheus text format output
  */
-export function generatePrometheusMetrics(): string {
-  const snapshot = metrics.snapshot();
+export function generatePrometheusMetrics(snapshot: MetricsSnapshot): string {
   const lines: string[] = [];
 
   // Group counters by name for HELP and TYPE comments
@@ -104,7 +116,10 @@ export function generatePrometheusMetrics(): string {
   }
 
   // Group histograms by name for HELP and TYPE comments
-  const histogramsByName = new Map<string, Histogram[]>();
+  const histogramsByName = new Map<
+    string,
+    MetricsSnapshot["histograms"][number][]
+  >();
   for (const histogram of snapshot.histograms) {
     const existing = histogramsByName.get(histogram.name) ?? [];
     existing.push(histogram);
@@ -129,8 +144,8 @@ export function generatePrometheusMetrics(): string {
  *
  * Returns Prometheus text format with appropriate content type.
  */
-export function prometheusMetricsHandler(): Response {
-  const metrics = generatePrometheusMetrics();
+export function prometheusMetricsHandler(snapshot: MetricsSnapshot): Response {
+  const metrics = generatePrometheusMetrics(snapshot);
 
   return new Response(metrics, {
     status: 200,
