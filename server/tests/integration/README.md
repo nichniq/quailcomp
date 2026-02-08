@@ -59,6 +59,7 @@ async function executeRequest(
 ### Domain Relationships
 
 Tests verify relationships between entities:
+
 - Books reference Series via `series_id`
 - Books reference People via acquisition `person_id`
 - Queries return related entities correctly
@@ -66,6 +67,7 @@ Tests verify relationships between entities:
 ### Data Consistency
 
 Tests ensure:
+
 - Entity IDs are properly typed (numbers vs strings)
 - Related entity queries filter by user permissions
 - Cross-domain operations maintain referential integrity
