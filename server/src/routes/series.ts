@@ -282,7 +282,6 @@ export function registerSeriesRoutes(router: Router, sql: Sql): void {
       const allBooks = await entities.getByType<BookEntitySnapshot>(BOOK_TYPE);
 
       // Filter books that belong to this series
-      const seriesIdStr = seriesId.toString();
       const seriesBooks = allBooks
         .filter((book) => {
           // Check if user has access to this book
@@ -291,8 +290,10 @@ export function registerSeriesRoutes(router: Router, sql: Sql): void {
           }
 
           // Check if book belongs to this series
+          // Handle both string and number series_id
           const bookData = book.data as any;
-          return bookData.series_id === seriesIdStr;
+          const bookSeriesId = bookData.series_id;
+          return bookSeriesId === seriesId || bookSeriesId === seriesId.toString();
         })
         .map((book) => {
           // Extract volume information

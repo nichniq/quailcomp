@@ -258,22 +258,26 @@ export function registerPeopleRoutes(router: Router, sql: Sql): void {
       const allBooks = await entities.getByType<BookEntitySnapshot>(BOOK_TYPE);
 
       // Filter books that reference this person (in acquisition events, lent events, etc.)
-      // For now, this is a simplified implementation - in Phase 5, books don't yet have
-      // direct references to people, but the structure is ready for when they do
-      const personIdStr = personId.toString();
       const relatedBooks = allBooks.filter((book) => {
         // Check if user has access to this book
         if (!accessibleIds.has(book.entityId)) {
           return false;
         }
 
-        // Check if book references this person
-        // This will work once books have person_id fields in their data
+        // Check if book references this person in any way
         const bookData = book.data as any;
-        return (
-          bookData.gift_giver_id === personIdStr ||
-          bookData.borrowed_by_id === personIdStr
-        );
+
+        // Check acquisition.person_id (for books given by this person)
+        if (bookData.acquisition?.person_id === personId) {
+          return true;
+        }
+
+        // Check lent.person_id (for books lent to this person)
+        if (bookData.lent?.person_id === personId) {
+          return true;
+        }
+
+        return false;
       });
 
       ctx.log.info("Person books retrieved", {

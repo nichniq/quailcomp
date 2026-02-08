@@ -11,7 +11,7 @@
  * - WebSocket notifications for cross-domain changes
  */
 
-import { describe, test, expect, beforeAll, afterAll } from "bun:test";
+import { describe, test, expect, beforeAll } from "bun:test";
 import { getConnection, createEntitiesClient } from "@quailcomp/data";
 import type { Sql } from "@quailcomp/data";
 
@@ -38,9 +38,35 @@ beforeAll(async () => {
   authzService = new AuthorizationService(sql);
 });
 
-afterAll(async () => {
-  await sql.end();
-});
+// Note: Do not close the shared connection in tests
+// The connection is a singleton managed by getConnection()
+// Closing it would break subsequent tests that use the same connection
+
+/**
+ * Helper function to execute a request through the router with proper middleware
+ */
+async function executeRequest(
+  router: Router,
+  sql: Sql,
+  method: string,
+  req: Request
+): Promise<Response> {
+  // Extract path from request URL
+  const url = new URL(req.url);
+  const path = url.pathname;
+
+  const match = router.match(method, path);
+  if (!match) throw new Error(`Route not found: ${method} ${path}`);
+
+  const ctx = createContext(req, sql);
+  // Set extracted params from router
+  ctx.params = match.params;
+
+  const middlewares = match.route.middleware || [];
+  const middleware = compose(...middlewares);
+  const handler = middleware(match.route.handler);
+  return handler(ctx, req);
+}
 
 describe("Phase 5 Integration Tests", () => {
   let router: Router;
@@ -56,7 +82,11 @@ describe("Phase 5 Integration Tests", () => {
       username: `test_phase5_${testTimestamp}`,
     });
     testUserId = user.user.userId;
-    authToken = signToken(user.user.userId);
+    authToken = await signToken({
+      user_id: user.user.userId,
+      email: user.user.email,
+      username: user.user.username ?? undefined,
+    });
 
     // Setup router with all Phase 5 routes
     router = new Router();
@@ -81,17 +111,11 @@ describe("Phase 5 Integration Tests", () => {
         } as Partial<PersonEntitySnapshot>),
       });
 
-      const personCtx: RequestContext = createContext(personReq);
-      const personMiddleware = compose(router.middleware);
-      const personResponse = await personMiddleware(personCtx, async () => {
-        const handler = router.match("POST", "/people");
-        if (!handler) throw new Error("Route not found");
-        return handler.handler(personCtx, personReq);
-      });
+      const personResponse = await executeRequest(router, sql, "POST", personReq);
 
       expect(personResponse.status).toBe(201);
-      const personData = (await personResponse.json()) as { person: { entity_id: number } };
-      const personId = personData.person.entity_id;
+      const personData = (await personResponse.json()) as { person: { entityId: number } };
+      const personId = personData.person.entityId;
 
       // Step 2: Create a book with the person as gift-giver
       const bookReq = new Request("http://localhost:3000/books", {
@@ -111,17 +135,11 @@ describe("Phase 5 Integration Tests", () => {
         } as Partial<PhysicalBook>),
       });
 
-      const bookCtx: RequestContext = createContext(bookReq);
-      const bookMiddleware = compose(router.middleware);
-      const bookResponse = await bookMiddleware(bookCtx, async () => {
-        const handler = router.match("POST", "/books");
-        if (!handler) throw new Error("Route not found");
-        return handler.handler(bookCtx, bookReq);
-      });
+      const bookResponse = await executeRequest(router, sql, "POST", bookReq);
 
       expect(bookResponse.status).toBe(201);
-      const bookData = (await bookResponse.json()) as { book: { entity_id: number; data: PhysicalBook } };
-      const bookId = bookData.book.entity_id;
+      const bookData = (await bookResponse.json()) as { book: { entityId: number; data: PhysicalBook } };
+      const bookId = bookData.book.entityId;
 
       // Step 3: Verify the book is associated with the person
       expect(bookData.book.data.acquisition?.type).toBe("given");
@@ -135,20 +153,13 @@ describe("Phase 5 Integration Tests", () => {
         },
       });
 
-      const personBooksCtx: RequestContext = createContext(personBooksReq);
-      personBooksCtx.params = { id: String(personId) };
-      const personBooksMiddleware = compose(router.middleware);
-      const personBooksResponse = await personBooksMiddleware(personBooksCtx, async () => {
-        const handler = router.match("GET", `/people/${personId}/books`);
-        if (!handler) throw new Error("Route not found");
-        return handler.handler(personBooksCtx, personBooksReq);
-      });
+      const personBooksResponse = await executeRequest(router, sql, "GET", personBooksReq);
 
       expect(personBooksResponse.status).toBe(200);
       const personBooksData = (await personBooksResponse.json()) as { books: any[] };
 
       // Verify the book appears in the person's associated books
-      const associatedBook = personBooksData.books.find((b: any) => b.entity_id === bookId);
+      const associatedBook = personBooksData.books.find((b: any) => b.entityId === bookId);
       expect(associatedBook).toBeDefined();
       expect(associatedBook.data.title).toBe("Gift Book from Jane");
     });
@@ -167,16 +178,10 @@ describe("Phase 5 Integration Tests", () => {
         } as Partial<PersonEntitySnapshot>),
       });
 
-      const personCtx: RequestContext = createContext(personReq);
-      const personMiddleware = compose(router.middleware);
-      const personResponse = await personMiddleware(personCtx, async () => {
-        const handler = router.match("POST", "/people");
-        if (!handler) throw new Error("Route not found");
-        return handler.handler(personCtx, personReq);
-      });
+      const personResponse = await executeRequest(router, sql, "POST", personReq);
 
-      const personData = (await personResponse.json()) as { person: { entity_id: number } };
-      const personId = personData.person.entity_id;
+      const personData = (await personResponse.json()) as { person: { entityId: number } };
+      const personId = personData.person.entityId;
 
       // Create multiple books associated with this person
       const bookTitles = ["Book One", "Book Two", "Book Three"];
@@ -200,16 +205,10 @@ describe("Phase 5 Integration Tests", () => {
           } as Partial<PhysicalBook>),
         });
 
-        const bookCtx: RequestContext = createContext(bookReq);
-        const bookMiddleware = compose(router.middleware);
-        const bookResponse = await bookMiddleware(bookCtx, async () => {
-          const handler = router.match("POST", "/books");
-          if (!handler) throw new Error("Route not found");
-          return handler.handler(bookCtx, bookReq);
-        });
+        const bookResponse = await executeRequest(router, sql, "POST", bookReq);
 
-        const bookData = (await bookResponse.json()) as { book: { entity_id: number } };
-        createdBookIds.push(bookData.book.entity_id);
+        const bookData = (await bookResponse.json()) as { book: { entityId: number } };
+        createdBookIds.push(bookData.book.entityId);
       }
 
       // Verify all books are associated with the person
@@ -220,14 +219,7 @@ describe("Phase 5 Integration Tests", () => {
         },
       });
 
-      const personBooksCtx: RequestContext = createContext(personBooksReq);
-      personBooksCtx.params = { id: String(personId) };
-      const personBooksMiddleware = compose(router.middleware);
-      const personBooksResponse = await personBooksMiddleware(personBooksCtx, async () => {
-        const handler = router.match("GET", `/people/${personId}/books`);
-        if (!handler) throw new Error("Route not found");
-        return handler.handler(personBooksCtx, personBooksReq);
-      });
+      const personBooksResponse = await executeRequest(router, sql, "GET", personBooksReq);
 
       const personBooksData = (await personBooksResponse.json()) as { books: any[] };
 
@@ -235,7 +227,7 @@ describe("Phase 5 Integration Tests", () => {
 
       // Verify each created book is in the list
       for (const bookId of createdBookIds) {
-        const found = personBooksData.books.some((b: any) => b.entity_id === bookId);
+        const found = personBooksData.books.some((b: any) => b.entityId === bookId);
         expect(found).toBe(true);
       }
     });
@@ -257,17 +249,11 @@ describe("Phase 5 Integration Tests", () => {
         } as Partial<SeriesEntitySnapshot>),
       });
 
-      const seriesCtx: RequestContext = createContext(seriesReq);
-      const seriesMiddleware = compose(router.middleware);
-      const seriesResponse = await seriesMiddleware(seriesCtx, async () => {
-        const handler = router.match("POST", "/series");
-        if (!handler) throw new Error("Route not found");
-        return handler.handler(seriesCtx, seriesReq);
-      });
+      const seriesResponse = await executeRequest(router, sql, "POST", seriesReq);
 
       expect(seriesResponse.status).toBe(201);
-      const seriesData = (await seriesResponse.json()) as { series: { entity_id: number } };
-      const seriesId = seriesData.series.entity_id;
+      const seriesData = (await seriesResponse.json()) as { series: { entityId: number } };
+      const seriesId = seriesData.series.entityId;
 
       // Step 2: Create books in the series
       const volumes = [
@@ -293,17 +279,11 @@ describe("Phase 5 Integration Tests", () => {
           } as Partial<PhysicalBook>),
         });
 
-        const bookCtx: RequestContext = createContext(bookReq);
-        const bookMiddleware = compose(router.middleware);
-        const bookResponse = await bookMiddleware(bookCtx, async () => {
-          const handler = router.match("POST", "/books");
-          if (!handler) throw new Error("Route not found");
-          return handler.handler(bookCtx, bookReq);
-        });
+        const bookResponse = await executeRequest(router, sql, "POST", bookReq);
 
         expect(bookResponse.status).toBe(201);
-        const bookData = (await bookResponse.json()) as { book: { entity_id: number; data: PhysicalBook } };
-        createdBooks.push(bookData.book.entity_id);
+        const bookData = (await bookResponse.json()) as { book: { entityId: number; data: PhysicalBook } };
+        createdBooks.push(bookData.book.entityId);
 
         // Verify book has series association
         expect(bookData.book.data.series_id).toBe(seriesId);
@@ -318,14 +298,7 @@ describe("Phase 5 Integration Tests", () => {
         },
       });
 
-      const seriesBooksCtx: RequestContext = createContext(seriesBooksReq);
-      seriesBooksCtx.params = { id: String(seriesId) };
-      const seriesBooksMiddleware = compose(router.middleware);
-      const seriesBooksResponse = await seriesBooksMiddleware(seriesBooksCtx, async () => {
-        const handler = router.match("GET", `/series/${seriesId}/books`);
-        if (!handler) throw new Error("Route not found");
-        return handler.handler(seriesBooksCtx, seriesBooksReq);
-      });
+      const seriesBooksResponse = await executeRequest(router, sql, "GET", seriesBooksReq);
 
       expect(seriesBooksResponse.status).toBe(200);
       const seriesBooksData = (await seriesBooksResponse.json()) as { books: any[] };
@@ -358,16 +331,10 @@ describe("Phase 5 Integration Tests", () => {
         } as Partial<SeriesEntitySnapshot>),
       });
 
-      const seriesCtx: RequestContext = createContext(seriesReq);
-      const seriesMiddleware = compose(router.middleware);
-      const seriesResponse = await seriesMiddleware(seriesCtx, async () => {
-        const handler = router.match("POST", "/series");
-        if (!handler) throw new Error("Route not found");
-        return handler.handler(seriesCtx, seriesReq);
-      });
+      const seriesResponse = await executeRequest(router, sql, "POST", seriesReq);
 
-      const seriesData = (await seriesResponse.json()) as { series: { entity_id: number } };
-      const seriesId = seriesData.series.entity_id;
+      const seriesData = (await seriesResponse.json()) as { series: { entityId: number } };
+      const seriesId = seriesData.series.entityId;
 
       // Create books without volume numbers
       const titles = ["The Color of Magic", "The Light Fantastic", "Equal Rites"];
@@ -387,13 +354,7 @@ describe("Phase 5 Integration Tests", () => {
           } as Partial<PhysicalBook>),
         });
 
-        const bookCtx: RequestContext = createContext(bookReq);
-        const bookMiddleware = compose(router.middleware);
-        const bookResponse = await bookMiddleware(bookCtx, async () => {
-          const handler = router.match("POST", "/books");
-          if (!handler) throw new Error("Route not found");
-          return handler.handler(bookCtx, bookReq);
-        });
+        const bookResponse = await executeRequest(router, sql, "POST", bookReq);
 
         expect(bookResponse.status).toBe(201);
       }
@@ -406,14 +367,7 @@ describe("Phase 5 Integration Tests", () => {
         },
       });
 
-      const seriesBooksCtx: RequestContext = createContext(seriesBooksReq);
-      seriesBooksCtx.params = { id: String(seriesId) };
-      const seriesBooksMiddleware = compose(router.middleware);
-      const seriesBooksResponse = await seriesBooksMiddleware(seriesBooksCtx, async () => {
-        const handler = router.match("GET", `/series/${seriesId}/books`);
-        if (!handler) throw new Error("Route not found");
-        return handler.handler(seriesBooksCtx, seriesBooksReq);
-      });
+      const seriesBooksResponse = await executeRequest(router, sql, "GET", seriesBooksReq);
 
       const seriesBooksData = (await seriesBooksResponse.json()) as { books: any[] };
 
@@ -437,16 +391,10 @@ describe("Phase 5 Integration Tests", () => {
         } as Partial<PersonEntitySnapshot>),
       });
 
-      const personCtx: RequestContext = createContext(personReq);
-      const personMiddleware = compose(router.middleware);
-      const personResponse = await personMiddleware(personCtx, async () => {
-        const handler = router.match("POST", "/people");
-        if (!handler) throw new Error("Route not found");
-        return handler.handler(personCtx, personReq);
-      });
+      const personResponse = await executeRequest(router, sql, "POST", personReq);
 
-      const personData = (await personResponse.json()) as { person: { entity_id: number } };
-      const personId = personData.person.entity_id;
+      const personData = (await personResponse.json()) as { person: { entityId: number } };
+      const personId = personData.person.entityId;
 
       // Create a series
       const seriesReq = new Request("http://localhost:3000/series", {
@@ -461,16 +409,10 @@ describe("Phase 5 Integration Tests", () => {
         } as Partial<SeriesEntitySnapshot>),
       });
 
-      const seriesCtx: RequestContext = createContext(seriesReq);
-      const seriesMiddleware = compose(router.middleware);
-      const seriesResponse = await seriesMiddleware(seriesCtx, async () => {
-        const handler = router.match("POST", "/series");
-        if (!handler) throw new Error("Route not found");
-        return handler.handler(seriesCtx, seriesReq);
-      });
+      const seriesResponse = await executeRequest(router, sql, "POST", seriesReq);
 
-      const seriesData = (await seriesResponse.json()) as { series: { entity_id: number } };
-      const seriesId = seriesData.series.entity_id;
+      const seriesData = (await seriesResponse.json()) as { series: { entityId: number } };
+      const seriesId = seriesData.series.entityId;
 
       // Create a book with both person and series references
       const bookReq = new Request("http://localhost:3000/books", {
@@ -492,16 +434,10 @@ describe("Phase 5 Integration Tests", () => {
         } as Partial<PhysicalBook>),
       });
 
-      const bookCtx: RequestContext = createContext(bookReq);
-      const bookMiddleware = compose(router.middleware);
-      const bookResponse = await bookMiddleware(bookCtx, async () => {
-        const handler = router.match("POST", "/books");
-        if (!handler) throw new Error("Route not found");
-        return handler.handler(bookCtx, bookReq);
-      });
+      const bookResponse = await executeRequest(router, sql, "POST", bookReq);
 
-      const bookData = (await bookResponse.json()) as { book: { entity_id: number } };
-      const bookId = bookData.book.entity_id;
+      const bookData = (await bookResponse.json()) as { book: { entityId: number } };
+      const bookId = bookData.book.entityId;
 
       // Export books
       const exportReq = new Request("http://localhost:3000/books/export?format=json", {
@@ -511,18 +447,12 @@ describe("Phase 5 Integration Tests", () => {
         },
       });
 
-      const exportCtx: RequestContext = createContext(exportReq);
-      const exportMiddleware = compose(router.middleware);
-      const exportResponse = await exportMiddleware(exportCtx, async () => {
-        const handler = router.match("GET", "/books/export");
-        if (!handler) throw new Error("Route not found");
-        return handler.handler(exportCtx, exportReq);
-      });
+      const exportResponse = await executeRequest(router, sql, "GET", exportReq);
 
       expect(exportResponse.status).toBe(200);
       const exportedBooks = (await exportResponse.json()) as any[];
 
-      // Find the exported book
+      // Find the exported book (note: exported format uses entity_id, not entityId)
       const exportedBook = exportedBooks.find((b: any) => b.entity_id === bookId);
 
       expect(exportedBook).toBeDefined();
@@ -550,16 +480,10 @@ describe("Phase 5 Integration Tests", () => {
         } as Partial<PersonEntitySnapshot>),
       });
 
-      const personCtx: RequestContext = createContext(personReq);
-      const personMiddleware = compose(router.middleware);
-      const personResponse = await personMiddleware(personCtx, async () => {
-        const handler = router.match("POST", "/people");
-        if (!handler) throw new Error("Route not found");
-        return handler.handler(personCtx, personReq);
-      });
+      const personResponse = await executeRequest(router, sql, "POST", personReq);
 
-      const personData = (await personResponse.json()) as { person: { entity_id: number } };
-      const personId = personData.person.entity_id;
+      const personData = (await personResponse.json()) as { person: { entityId: number } };
+      const personId = personData.person.entityId;
 
       // Create a series
       const seriesReq = new Request("http://localhost:3000/series", {
@@ -574,16 +498,10 @@ describe("Phase 5 Integration Tests", () => {
         } as Partial<SeriesEntitySnapshot>),
       });
 
-      const seriesCtx: RequestContext = createContext(seriesReq);
-      const seriesMiddleware = compose(router.middleware);
-      const seriesResponse = await seriesMiddleware(seriesCtx, async () => {
-        const handler = router.match("POST", "/series");
-        if (!handler) throw new Error("Route not found");
-        return handler.handler(seriesCtx, seriesReq);
-      });
+      const seriesResponse = await executeRequest(router, sql, "POST", seriesReq);
 
-      const seriesData = (await seriesResponse.json()) as { series: { entity_id: number } };
-      const seriesId = seriesData.series.entity_id;
+      const seriesData = (await seriesResponse.json()) as { series: { entityId: number } };
+      const seriesId = seriesData.series.entityId;
 
       // Create 2 books in the series, given by the person
       const volumes = [
@@ -611,13 +529,7 @@ describe("Phase 5 Integration Tests", () => {
           } as Partial<PhysicalBook>),
         });
 
-        const bookCtx: RequestContext = createContext(bookReq);
-        const bookMiddleware = compose(router.middleware);
-        const bookResponse = await bookMiddleware(bookCtx, async () => {
-          const handler = router.match("POST", "/books");
-          if (!handler) throw new Error("Route not found");
-          return handler.handler(bookCtx, bookReq);
-        });
+        const bookResponse = await executeRequest(router, sql, "POST", bookReq);
 
         expect(bookResponse.status).toBe(201);
       }
@@ -630,14 +542,7 @@ describe("Phase 5 Integration Tests", () => {
         },
       });
 
-      const personBooksCtx: RequestContext = createContext(personBooksReq);
-      personBooksCtx.params = { id: String(personId) };
-      const personBooksMiddleware = compose(router.middleware);
-      const personBooksResponse = await personBooksMiddleware(personBooksCtx, async () => {
-        const handler = router.match("GET", `/people/${personId}/books`);
-        if (!handler) throw new Error("Route not found");
-        return handler.handler(personBooksCtx, personBooksReq);
-      });
+      const personBooksResponse = await executeRequest(router, sql, "GET", personBooksReq);
 
       const personBooksData = (await personBooksResponse.json()) as { books: any[] };
       expect(personBooksData.books.length).toBe(2);
@@ -650,14 +555,7 @@ describe("Phase 5 Integration Tests", () => {
         },
       });
 
-      const seriesBooksCtx: RequestContext = createContext(seriesBooksReq);
-      seriesBooksCtx.params = { id: String(seriesId) };
-      const seriesBooksMiddleware = compose(router.middleware);
-      const seriesBooksResponse = await seriesBooksMiddleware(seriesBooksCtx, async () => {
-        const handler = router.match("GET", `/series/${seriesId}/books`);
-        if (!handler) throw new Error("Route not found");
-        return handler.handler(seriesBooksCtx, seriesBooksReq);
-      });
+      const seriesBooksResponse = await executeRequest(router, sql, "GET", seriesBooksReq);
 
       const seriesBooksData = (await seriesBooksResponse.json()) as { books: any[] };
       expect(seriesBooksData.books.length).toBe(2);

@@ -84,6 +84,87 @@ export function registerBookRoutes(router: Router, sql: Sql): void {
     [requireAuth]
   );
 
+  // GET /books/export - Export books (must be before /books/:id to avoid matching "export" as an ID)
+  router.get(
+    "/books/export",
+    async (ctx, req) => {
+      if (!ctx.user) {
+        return Response.json(
+          { error: "Authentication required" },
+          { status: 401 }
+        );
+      }
+
+      const url = new URL(req.url);
+      const format = (url.searchParams.get("format") ?? "json").toLowerCase();
+
+      if (!["csv", "json", "xlsx"].includes(format)) {
+        return Response.json(
+          {
+            error: "Invalid format. Must be: csv, json, or xlsx",
+            code: "INVALID_FORMAT",
+          },
+          { status: 400 }
+        );
+      }
+
+      // Get all books
+      const allBooks = await entities.getByType<BookEntitySnapshot>(BOOK_TYPE);
+
+      // Filter by authorization
+      const accessibleEntities = await authzService.listAccessibleEntities(
+        ctx.user.userId
+      );
+      const accessibleIds = new Set(accessibleEntities.map((e) => e.entityId));
+
+      const accessibleBooks = allBooks.filter((book) =>
+        accessibleIds.has(book.entityId)
+      );
+
+      let content: string | Buffer;
+      let contentType: string;
+      let filename: string;
+
+      try {
+        if (format === "csv") {
+          content = exportCSV(accessibleBooks);
+          contentType = "text/csv";
+          filename = `books-${Date.now()}.csv`;
+        } else if (format === "json") {
+          content = exportJSON(accessibleBooks);
+          contentType = "application/json";
+          filename = `books-${Date.now()}.json`;
+        } else {
+          // xlsx
+          content = await exportXLSX(accessibleBooks);
+          contentType =
+            "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
+          filename = `books-${Date.now()}.xlsx`;
+        }
+      } catch (err) {
+        const message = err instanceof Error ? err.message : "Export error";
+        ctx.log.error("Failed to export books", { error: message });
+        return Response.json(
+          { error: `Failed to export: ${message}`, code: "EXPORT_ERROR" },
+          { status: 500 }
+        );
+      }
+
+      ctx.log.info("Books exported", {
+        format,
+        count: accessibleBooks.length,
+      });
+
+      return new Response(content, {
+        headers: {
+          "Content-Type": contentType,
+          "Content-Disposition": `attachment; filename="${filename}"`,
+        },
+      });
+    },
+    [requireAuth]
+  );
+
   // GET /books/:id - Get single book
   router.get(
     "/books/:id",
@@ -499,87 +580,6 @@ export function registerBookRoutes(router: Router, sql: Sql): void {
         },
         { status: 201 }
       );
-    },
-    [requireAuth]
-  );
-
-  // GET /books/export - Export books
-  router.get(
-    "/books/export",
-    async (ctx, req) => {
-      if (!ctx.user) {
-        return Response.json(
-          { error: "Authentication required" },
-          { status: 401 }
-        );
-      }
-
-      const url = new URL(req.url);
-      const format = (url.searchParams.get("format") ?? "json").toLowerCase();
-
-      if (!["csv", "json", "xlsx"].includes(format)) {
-        return Response.json(
-          {
-            error: "Invalid format. Must be: csv, json, or xlsx",
-            code: "INVALID_FORMAT",
-          },
-          { status: 400 }
-        );
-      }
-
-      // Get all books
-      const allBooks = await entities.getByType<BookEntitySnapshot>(BOOK_TYPE);
-
-      // Filter by authorization
-      const accessibleEntities = await authzService.listAccessibleEntities(
-        ctx.user.userId
-      );
-      const accessibleIds = new Set(accessibleEntities.map((e) => e.entityId));
-
-      const accessibleBooks = allBooks.filter((book) =>
-        accessibleIds.has(book.entityId)
-      );
-
-      let content: string | Buffer;
-      let contentType: string;
-      let filename: string;
-
-      try {
-        if (format === "csv") {
-          content = exportCSV(accessibleBooks);
-          contentType = "text/csv";
-          filename = `books-${Date.now()}.csv`;
-        } else if (format === "json") {
-          content = exportJSON(accessibleBooks);
-          contentType = "application/json";
-          filename = `books-${Date.now()}.json`;
-        } else {
-          // xlsx
-          content = await exportXLSX(accessibleBooks);
-          contentType =
-            "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
-          filename = `books-${Date.now()}.xlsx`;
-        }
-      } catch (err) {
-        const message = err instanceof Error ? err.message : "Export error";
-        ctx.log.error("Failed to export books", { error: message });
-        return Response.json(
-          { error: `Failed to export: ${message}`, code: "EXPORT_ERROR" },
-          { status: 500 }
-        );
-      }
-
-      ctx.log.info("Books exported", {
-        format,
-        count: accessibleBooks.length,
-      });
-
-      return new Response(content, {
-        headers: {
-          "Content-Type": contentType,
-          "Content-Disposition": `attachment; filename="${filename}"`,
-        },
-      });
     },
     [requireAuth]
   );
