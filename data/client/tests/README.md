@@ -4,10 +4,13 @@ Integration tests for database clients.
 
 ## Files
 
+- [`config.test.ts`](config.test.ts) - Tests for database configuration and environment variables
+- [`connection.test.ts`](connection.test.ts) - Tests for database connection management
 - [`entities.test.ts`](entities.test.ts) - Tests for `EntitiesClient` (CRUD operations)
+- [`errors.test.ts`](errors.test.ts) - Tests for database error handling and parsing
 - [`events.test.ts`](events.test.ts) - Tests for `EventsClient` (append-only events)
-- [`types.test.ts`](types.test.ts) - Tests for core type definitions
 - [`properties.test.ts`](properties.test.ts) - Property-based tests using fast-check to verify invariants
+- [`types.test.ts`](types.test.ts) - Tests for type definitions and typed repositories
 
 ## Running Tests
 
