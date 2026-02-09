@@ -1,21 +1,22 @@
 {
+  "extends": "../tsconfig.base.json",
   "compilerOptions": {
-    "target": "ES2022",
-    "module": "ESNext",
-    "moduleResolution": "bundler",
-    "strict": true,
+    "composite": true,
+    "rootDir": ".",
+    "outDir": "./dist-types",
     "jsx": "preserve",
-    "resolveJsonModule": true,
-    "isolatedModules": true,
-    "esModuleInterop": true,
     "lib": ["ES2022", "DOM", "DOM.Iterable"],
-    "skipLibCheck": true,
     "noEmit": true,
+    "baseUrl": ".",
     "paths": {
       "@/*": ["./src/*"],
-      "@domains/*": ["../domains/*"]
+      "@domains/types/*": ["../domains/dist/*"]
     }
   },
   "include": ["src/**/*.ts", "src/**/*.vue", "env.d.ts"],
-  "references": [{ "path": "./tsconfig.node.json" }]
+  "exclude": ["node_modules", "dist", "dist-types"],
+  "references": [
+    { "path": "./tsconfig.node.json" },
+    { "path": "../domains" }
+  ]
 }

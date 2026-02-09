@@ -72,7 +72,7 @@ export function createLibraryOfCongressProvider(
           );
         }
 
-        const data: LOCSearchResponse = await response.json();
+        const data = (await response.json()) as LOCSearchResponse;
 
         if (!data.results || data.results.length === 0) {
           return null;

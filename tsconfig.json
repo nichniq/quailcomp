@@ -1,18 +1,11 @@
 {
-  "compilerOptions": {
-    "target": "ES2022",
-    "module": "ESNext",
-    "lib": ["ES2022"],
-    "moduleResolution": "bundler",
-    "types": ["bun-types"],
-    "strict": true,
-    "esModuleInterop": true,
-    "skipLibCheck": true,
-    "forceConsistentCasingInFileNames": true,
-    "resolveJsonModule": true,
-    "isolatedModules": true,
-    "noEmit": true
-  },
-  "include": ["**/*.ts"],
-  "exclude": ["node_modules", "dist", "**/node_modules", "**/dist"]
+  "files": [],
+  "references": [
+    { "path": "./domains" },
+    { "path": "./data/client" },
+    { "path": "./services/book-metadata" },
+    { "path": "./server" },
+    { "path": "./cli" },
+    { "path": "./frontend" }
+  ]
 }

@@ -87,7 +87,7 @@ export function createGoogleBooksProvider(
           );
         }
 
-        const data: GoogleBooksResponse = await response.json();
+        const data = (await response.json()) as GoogleBooksResponse;
 
         if (!data.items || data.items.length === 0) {
           return null;

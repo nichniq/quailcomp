@@ -1,11 +1,11 @@
-import type { Sql } from "bun";
+import type { SQL } from "bun";
 import type { EntitiesClient, EventsClient } from "@quailcomp/data";
 
 /**
  * Context passed to all CLI commands
  */
 export interface CLIContext {
-  sql: Sql;
+  sql: SQL;
   entities: EntitiesClient;
   events: EventsClient;
   args: string[];

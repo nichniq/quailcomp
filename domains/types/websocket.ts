@@ -43,7 +43,7 @@ export interface BroadcastMessage {
   timestamp: string;
 }
 
-export function broadcastUpdate(message: BroadcastMessage): void;
+export declare function broadcastUpdate(message: BroadcastMessage): void;
 
-export function getActiveConnectionCount(): number;
-export function getAuthenticatedConnectionCount(): number;
+export declare function getActiveConnectionCount(): number;
+export declare function getAuthenticatedConnectionCount(): number;

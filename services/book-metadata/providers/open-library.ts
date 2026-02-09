@@ -78,7 +78,7 @@ export function createOpenLibraryProvider(
           );
         }
 
-        const data: OpenLibraryEdition = await response.json();
+        const data = (await response.json()) as OpenLibraryEdition;
 
         // Fetch author names if we have author references
         const authorNames = await fetchAuthorNames(data.authors ?? [], timeout);
@@ -131,7 +131,7 @@ async function fetchAuthorNames(
       clear();
 
       if (response.ok) {
-        const author: OpenLibraryAuthor = await response.json();
+        const author = (await response.json()) as OpenLibraryAuthor;
         if (author.name) {
           names.push(author.name);
         }

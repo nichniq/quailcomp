@@ -1,24 +1,21 @@
 {
+  "extends": "../tsconfig.base.json",
   "compilerOptions": {
-    "target": "ES2022",
-    "module": "ESNext",
-    "moduleResolution": "bundler",
-    "strict": true,
-    "skipLibCheck": true,
-    "noEmit": true,
-    "esModuleInterop": true,
-    "allowSyntheticDefaultImports": true,
-    "resolveJsonModule": true,
-    "isolatedModules": true,
-    "declaration": true,
+    "composite": true,
+    "rootDir": ".",
     "outDir": "./dist",
-    "rootDir": "..",
     "baseUrl": ".",
     "paths": {
       "@/*": ["./src/*"],
-      "@domains/*": ["../domains/*"]
-    }
+      "@domains/types/*": ["../domains/dist/*"]
+    },
+    "noEmit": true
   },
-  "include": ["src/**/*", "tests/**/*", "scripts/**/*", "../domains/**/*"],
-  "exclude": ["node_modules", "dist", "../services", "../domains/types"]
+  "include": ["src/**/*", "tests/**/*", "scripts/**/*"],
+  "exclude": ["node_modules", "dist"],
+  "references": [
+    { "path": "../domains" },
+    { "path": "../data/client" },
+    { "path": "../services/book-metadata" }
+  ]
 }

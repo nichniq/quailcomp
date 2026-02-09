@@ -144,7 +144,7 @@ describe("Resilient Provider", () => {
   });
 
   test("opens circuit after failure threshold", async () => {
-    const failingProvider = createFailingMockProvider("Service down");
+    const failingProvider = createFailingMockProvider();
 
     const resilient = createResilientProvider(failingProvider, {
       failureThreshold: 3,
@@ -228,7 +228,7 @@ describe("Resilient Provider", () => {
   });
 
   test("converts CircuitOpenError to ServiceUnavailableError", async () => {
-    const failingProvider = createFailingMockProvider("Service down");
+    const failingProvider = createFailingMockProvider();
 
     const resilient = createResilientProvider(failingProvider, {
       failureThreshold: 1,
@@ -284,7 +284,7 @@ describe("Combined Wrappers", () => {
   });
 
   test("circuit breaker protects rate limiter from excessive waits", async () => {
-    const failingProvider = createFailingMockProvider("Service down");
+    const failingProvider = createFailingMockProvider();
 
     // Rate limit is very restrictive
     const rateLimited = createRateLimitedProvider(failingProvider, {

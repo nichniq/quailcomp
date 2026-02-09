@@ -9,6 +9,11 @@ node_modules/
 # Build output
 dist/
 
+# TypeScript build artifacts
+*.tsbuildinfo
+dist-types/
+dist-types-node/
+
 # Bun
 bun.lockb
 

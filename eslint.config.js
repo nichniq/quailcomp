@@ -10,6 +10,8 @@ export default [
     ignores: [
       '**/node_modules/**',
       '**/dist/**',
+      '**/dist-types/**',
+      '**/dist-types-node/**',
       '**/.bun/**',
       '**/coverage/**',
       'data/postgres/**', // SQL files, not JS/TS

@@ -129,7 +129,7 @@ export function createHardcoverProvider(
           );
         }
 
-        const data: HardcoverResponse = await response.json();
+        const data = (await response.json()) as HardcoverResponse;
 
         // Check for GraphQL errors
         if (data.errors && data.errors.length > 0) {
