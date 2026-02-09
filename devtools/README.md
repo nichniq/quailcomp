@@ -24,6 +24,8 @@ The DevTools system provides:
     /src/           # Vue 3 application
     server.ts       # API + static file server
   /tests/           # Tests for devtools infrastructure
+  logger.ts         # Shared logging infrastructure
+  api-keys.ts       # API key management module
 ```
 
 ### Watch System
@@ -59,8 +61,11 @@ A Vue 3 web application for monitoring and controlling the watch system.
 **Pages:**
 
 - **Watcher** - Real-time status monitoring of all watch rules, manual task triggering, execution history with logs
-- **Specs** - Browse and search test specifications from `TEST_SPECIFICATIONS.md`
+- **Specs** - Browse and search test specifications from `TEST_SPECIFICATIONS.md`, with test result badges
 - **Coverage** - View and generate HTML test coverage reports
+- **Logs** - Live stream of server logs with filtering and search
+- **Events** - Debug monitor for Server-Sent Events activity
+- **API Keys** - Create and manage API keys for external access
 
 **Features:**
 
@@ -71,6 +76,9 @@ A Vue 3 web application for monitoring and controlling the watch system.
 - Status indicators (success, error, warning, running, idle)
 - Test coverage report generation and viewing
 - Test specification browsing with search
+- Live server log streaming with color-coded levels
+- SSE connection monitoring and debugging
+- Secure API key management with SHA-256 hashing
 
 **Ports:**
 
@@ -234,9 +242,28 @@ Returns the combined test specification markdown file.
 - `Content-Type: text/markdown`
 - `X-Last-Modified: <timestamp>` - Milliseconds since epoch
 
+### GET /api/specs/results
+
+Returns test results summary (if available).
+
+**Response:**
+
+```json
+{
+  "timestamp": 1234567890,
+  "summary": {
+    "passed": 42,
+    "failed": 0,
+    "skipped": 3,
+    "total": 45
+  },
+  "files": [...]
+}
+```
+
 ### GET /api/coverage
 
-Returns the HTML coverage report from `coverage/index.html`.
+Returns the HTML coverage report parsed from `coverage/lcov.info`.
 
 **Response Headers:**
 
@@ -274,6 +301,114 @@ Generates a new coverage report by running `bun test --coverage`.
 }
 ```
 
+### GET /api/logs/stream
+
+Server-Sent Events stream for real-time server logs.
+
+**Events:**
+
+- `buffer` - Initial buffered logs (last 1000 entries)
+- `log` - New log entry
+
+### GET /api/debug/events
+
+Server-Sent Events stream for debugging SSE connections.
+
+**Events:**
+
+- `buffer` - Initial buffered events (last 500 entries)
+- `event` - New server event (connection, disconnection, message, error)
+
+### GET /api/keys
+
+List all API keys (without full key values).
+
+**Response:**
+
+```json
+[
+  {
+    "id": "abc123",
+    "name": "Production API Key",
+    "keyPreview": "xyz9",
+    "createdAt": 1234567890,
+    "lastUsedAt": 1234567900,
+    "permissions": ["read", "write"],
+    "isActive": true
+  }
+]
+```
+
+### POST /api/keys
+
+Create a new API key.
+
+**Request Body:**
+
+```json
+{
+  "name": "My API Key",
+  "permissions": ["read", "write"]
+}
+```
+
+**Response:**
+
+```json
+{
+  "id": "abc123",
+  "key": "qc_full_key_value_shown_only_once",
+  "name": "My API Key",
+  "createdAt": 1234567890,
+  "permissions": ["read", "write"]
+}
+```
+
+### PUT /api/keys/:id
+
+Update an API key's name and permissions.
+
+### DELETE /api/keys/:id
+
+Revoke an API key (soft delete - marks as inactive).
+
+## Logging Infrastructure
+
+The `logger.ts` module provides centralized logging with:
+
+- Circular buffer (last 1000 entries)
+- Real-time streaming to connected SSE clients
+- Color-coded console output
+- Log levels: info, warn, error, debug
+- Automatic timestamps and source tracking
+
+**Usage:**
+
+```typescript
+import { logger } from './logger'
+
+logger.info('my-module', 'Operation completed successfully')
+logger.warn('my-module', 'Something unexpected happened', { details: '...' })
+logger.error('my-module', 'Operation failed', { error })
+```
+
+## API Key Management
+
+The `api-keys.ts` module provides secure API key management:
+
+- SHA-256 hashed storage in `.devtools/api-keys.json`
+- Full key shown only once at creation
+- Permission-based access control
+- Last used tracking
+- Revocation support
+
+**Security Features:**
+
+- Keys are hashed before storage (never stored in plaintext)
+- Storage directory (`.devtools/`) is gitignored
+- Keys use crypto.randomBytes for secure generation
+- Format: `qc_` prefix + 64 hex characters
+
 ## Relationship to Git Hooks
 
 The pre-commit hook (`.githooks/pre-commit`) remains unchanged and serves as a **safety net**.
@@ -291,13 +426,13 @@ Planned features (not yet implemented):
 - **Request/Response Logging** - Telescope-style HTTP request monitoring
 - **Database Query Monitoring** - Track query performance and N+1 issues
 - **Performance Metrics** - P95/P99 response times, endpoint analytics
-- **API Key Management** - Generate and manage API keys via UI
 - **Git Workflow Visualization** - Branch status, PR checks, commit history
 - **Scheduled Tasks** - Cron-like scheduled maintenance tasks
 - **Task Dependencies** - Chain tasks together with dependencies
 - **Notification System** - Desktop/email notifications for failures
-- **Search & Filtering** - Search through execution history
 - **Export Logs** - Download execution logs as JSON/CSV
+- **Enhanced Test Results** - Map individual tests to specification sections
+- **Test Result Storage** - Automatic storage of test runs in `.devtools/test-results.json`
 
 ## Testing
 

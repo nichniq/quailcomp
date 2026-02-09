@@ -3,12 +3,18 @@ import { ref } from 'vue'
 import WatcherStatus from './components/WatcherStatus.vue'
 import TestSpecs from './components/TestSpecs.vue'
 import CoverageReport from './components/CoverageReport.vue'
+import ServerLogs from './components/ServerLogs.vue'
+import ServerEvents from './components/ServerEvents.vue'
+import ApiKeys from './components/ApiKeys.vue'
 
 const activeTab = ref('watcher')
 const tabs = [
   { id: 'watcher', label: 'Watcher' },
   { id: 'specs', label: 'Specs' },
   { id: 'coverage', label: 'Coverage' },
+  { id: 'logs', label: 'Logs' },
+  { id: 'events', label: 'Events' },
+  { id: 'api-keys', label: 'API Keys' },
 ]
 </script>
 
@@ -34,6 +40,9 @@ const tabs = [
       <WatcherStatus v-if="activeTab === 'watcher'" />
       <TestSpecs v-else-if="activeTab === 'specs'" />
       <CoverageReport v-else-if="activeTab === 'coverage'" />
+      <ServerLogs v-else-if="activeTab === 'logs'" />
+      <ServerEvents v-else-if="activeTab === 'events'" />
+      <ApiKeys v-else-if="activeTab === 'api-keys'" />
       <div v-else class="devtools__coming-soon">
         <h2>{{ tabs.find((t) => t.id === activeTab)?.label }}</h2>
         <p>Coming soon...</p>

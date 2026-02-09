@@ -28,3 +28,6 @@ coverage/
 
 # ESLint test temp directory
 .eslint-test-temp/
+
+# DevTools storage (API keys, etc.)
+.devtools/

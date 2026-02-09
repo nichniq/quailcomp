@@ -12,14 +12,58 @@ import { join, extname } from 'path'
 import { readdir, readFile, stat } from 'fs/promises'
 import { watcherState, onStateChange, triggerRule } from '../watch/index'
 import { parseLcov, generateHtml } from './lcov-to-html'
+import { logger } from '../logger'
+import type { LogEntry } from '../logger'
+import { listKeys, createKey, updateKey, revokeKey } from '../api-keys'
+
+// Server event tracking
+interface ServerEvent {
+  id: string
+  timestamp: number
+  type: 'connection' | 'disconnection' | 'message' | 'error'
+  endpoint: string
+  clientCount?: number
+  payload?: unknown
+  message?: string
+}
+
+let eventIdCounter = 0
+const eventBuffer: ServerEvent[] = []
+const MAX_EVENT_BUFFER = 500
+
+function trackEvent(event: Omit<ServerEvent, 'id' | 'timestamp'>): void {
+  const fullEvent: ServerEvent = {
+    ...event,
+    id: `evt-${++eventIdCounter}`,
+    timestamp: Date.now(),
+  }
+
+  eventBuffer.push(fullEvent)
+  if (eventBuffer.length > MAX_EVENT_BUFFER) {
+    eventBuffer.shift()
+  }
+
+  // Broadcast to debug clients
+  const message = `event: event\ndata: ${JSON.stringify(fullEvent)}\n\n`
+  for (const controller of debugClients) {
+    try {
+      controller.enqueue(message)
+    } catch {
+      debugClients.delete(controller)
+    }
+  }
+}
 
 const PORT = 3001
 const isDev = process.env.NODE_ENV !== 'production'
 const distDir = join(import.meta.dir, 'dist')
 const projectRoot = join(import.meta.dir, '../..')
+const STORAGE_DIR = join(projectRoot, '.devtools')
 
 // SSE clients
 const sseClients = new Set<ReadableStreamDefaultController>()
+const logClients = new Set<ReadableStreamDefaultController>()
+const debugClients = new Set<ReadableStreamDefaultController>()
 
 // Broadcast state changes to all SSE clients
 onStateChange((state) => {
@@ -35,6 +79,20 @@ onStateChange((state) => {
     } catch (error) {
       // Client disconnected, remove from set
       sseClients.delete(controller)
+    }
+  }
+})
+
+// Broadcast logs to all log clients
+logger.subscribe((entry: LogEntry) => {
+  const message = `event: log\ndata: ${JSON.stringify(entry)}\n\n`
+
+  for (const controller of logClients) {
+    try {
+      controller.enqueue(message)
+    } catch (error) {
+      // Client disconnected, remove from set
+      logClients.delete(controller)
     }
   }
 })
@@ -151,6 +209,14 @@ const server = Bun.serve({
             // Add client to set
             sseClients.add(controller)
 
+            // Track connection
+            trackEvent({
+              type: 'connection',
+              endpoint: '/api/watcher/events',
+              clientCount: sseClients.size,
+              message: 'Client connected to watcher events',
+            })
+
             // Send initial state
             controller.enqueue(
               `data: ${JSON.stringify({
@@ -172,6 +238,14 @@ const server = Bun.serve({
           },
           cancel(controller) {
             sseClients.delete(controller)
+
+            // Track disconnection
+            trackEvent({
+              type: 'disconnection',
+              endpoint: '/api/watcher/events',
+              clientCount: sseClients.size,
+              message: 'Client disconnected from watcher events',
+            })
           },
         })
 
@@ -201,6 +275,23 @@ const server = Bun.serve({
           })
         } catch (error) {
           return Response.json({ error: 'Specification file not found' }, { status: 404, headers: corsHeaders })
+        }
+      }
+
+      // GET /api/specs/results - Get test results
+      if (url.pathname === '/api/specs/results' && req.method === 'GET') {
+        try {
+          const resultsPath = join(STORAGE_DIR, 'test-results.json')
+          const content = await readFile(resultsPath, 'utf-8')
+          const results = JSON.parse(content)
+
+          return Response.json(results, { headers: corsHeaders })
+        } catch (error) {
+          // Test results not available yet
+          return Response.json(
+            { error: 'Test results not available. Run tests to generate results.' },
+            { status: 404, headers: corsHeaders }
+          )
         }
       }
 
@@ -261,6 +352,194 @@ const server = Bun.serve({
         }
       }
 
+      // GET /api/logs/stream (SSE)
+      if (url.pathname === '/api/logs/stream' && req.method === 'GET') {
+        const stream = new ReadableStream({
+          start(controller) {
+            // Add client to set
+            logClients.add(controller)
+
+            // Track connection
+            trackEvent({
+              type: 'connection',
+              endpoint: '/api/logs/stream',
+              clientCount: logClients.size,
+              message: 'Client connected to log stream',
+            })
+
+            // Send buffered logs first
+            const buffer = logger.getBuffer()
+            controller.enqueue(
+              `event: buffer\ndata: ${JSON.stringify(buffer)}\n\n`
+            )
+
+            // Send keepalive every 30 seconds
+            const keepalive = setInterval(() => {
+              try {
+                controller.enqueue(': keepalive\n\n')
+              } catch {
+                clearInterval(keepalive)
+                logClients.delete(controller)
+              }
+            }, 30000)
+          },
+          cancel(controller) {
+            logClients.delete(controller)
+
+            // Track disconnection
+            trackEvent({
+              type: 'disconnection',
+              endpoint: '/api/logs/stream',
+              clientCount: logClients.size,
+              message: 'Client disconnected from log stream',
+            })
+          },
+        })
+
+        return new Response(stream, {
+          headers: {
+            'Content-Type': 'text/event-stream',
+            'Cache-Control': 'no-cache',
+            Connection: 'keep-alive',
+            ...corsHeaders,
+          },
+        })
+      }
+
+      // GET /api/debug/events (SSE)
+      if (url.pathname === '/api/debug/events' && req.method === 'GET') {
+        const stream = new ReadableStream({
+          start(controller) {
+            // Add client to set
+            debugClients.add(controller)
+
+            // Track connection
+            trackEvent({
+              type: 'connection',
+              endpoint: '/api/debug/events',
+              clientCount: debugClients.size,
+              message: 'Client connected to debug events',
+            })
+
+            // Send buffered events first
+            controller.enqueue(
+              `event: buffer\ndata: ${JSON.stringify(eventBuffer)}\n\n`
+            )
+
+            // Send keepalive every 30 seconds
+            const keepalive = setInterval(() => {
+              try {
+                controller.enqueue(': keepalive\n\n')
+              } catch {
+                clearInterval(keepalive)
+                debugClients.delete(controller)
+              }
+            }, 30000)
+          },
+          cancel(controller) {
+            debugClients.delete(controller)
+
+            // Track disconnection
+            trackEvent({
+              type: 'disconnection',
+              endpoint: '/api/debug/events',
+              clientCount: debugClients.size,
+              message: 'Client disconnected from debug events',
+            })
+          },
+        })
+
+        return new Response(stream, {
+          headers: {
+            'Content-Type': 'text/event-stream',
+            'Cache-Control': 'no-cache',
+            Connection: 'keep-alive',
+            ...corsHeaders,
+          },
+        })
+      }
+
+      // GET /api/keys - List all API keys
+      if (url.pathname === '/api/keys' && req.method === 'GET') {
+        try {
+          const keys = await listKeys()
+          return Response.json(keys, { headers: corsHeaders })
+        } catch (error) {
+          return Response.json(
+            { error: String(error) },
+            { status: 500, headers: corsHeaders }
+          )
+        }
+      }
+
+      // POST /api/keys - Create a new API key
+      if (url.pathname === '/api/keys' && req.method === 'POST') {
+        try {
+          const body = await req.json()
+          const { name, permissions } = body
+
+          if (!name || typeof name !== 'string') {
+            return Response.json(
+              { error: 'Name is required' },
+              { status: 400, headers: corsHeaders }
+            )
+          }
+
+          const key = await createKey(name, permissions || [])
+          logger.info('api-keys', `API key created: ${name}`)
+
+          return Response.json(key, { headers: corsHeaders })
+        } catch (error) {
+          return Response.json(
+            { error: String(error) },
+            { status: 500, headers: corsHeaders }
+          )
+        }
+      }
+
+      // PUT /api/keys/:id - Update an API key
+      if (url.pathname.startsWith('/api/keys/') && req.method === 'PUT') {
+        const id = url.pathname.split('/').pop()
+        if (!id) {
+          return Response.json({ error: 'Key ID required' }, { status: 400, headers: corsHeaders })
+        }
+
+        try {
+          const body = await req.json()
+          const { name, permissions } = body
+
+          await updateKey(id, { name, permissions })
+          logger.info('api-keys', `API key updated: ${id}`)
+
+          return Response.json({ success: true }, { headers: corsHeaders })
+        } catch (error) {
+          return Response.json(
+            { error: String(error) },
+            { status: 500, headers: corsHeaders }
+          )
+        }
+      }
+
+      // DELETE /api/keys/:id - Revoke an API key
+      if (url.pathname.startsWith('/api/keys/') && req.method === 'DELETE') {
+        const id = url.pathname.split('/').pop()
+        if (!id) {
+          return Response.json({ error: 'Key ID required' }, { status: 400, headers: corsHeaders })
+        }
+
+        try {
+          await revokeKey(id)
+          logger.info('api-keys', `API key revoked: ${id}`)
+
+          return Response.json({ success: true }, { headers: corsHeaders })
+        } catch (error) {
+          return Response.json(
+            { error: String(error) },
+            { status: 500, headers: corsHeaders }
+          )
+        }
+      }
+
       return Response.json({ error: 'Not found' }, { status: 404, headers: corsHeaders })
     }
 
@@ -307,3 +586,7 @@ if (isDev) {
 } else {
   console.log('🌐 Production mode: Serving API and static files')
 }
+
+// Log server startup
+logger.info('devtools-server', `Server started on port ${PORT}`)
+logger.debug('devtools-server', `Mode: ${isDev ? 'development' : 'production'}`)

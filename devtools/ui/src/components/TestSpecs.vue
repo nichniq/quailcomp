@@ -1,12 +1,15 @@
 <script setup lang="ts">
 import { ref, onMounted, computed } from 'vue'
 import { marked } from 'marked'
+import type { TestResults } from '../types'
 
 const specContent = ref<string>('')
 const loading = ref(true)
 const error = ref<string | null>(null)
 const searchQuery = ref('')
 const lastModified = ref<Date | null>(null)
+const testResults = ref<TestResults | null>(null)
+const loadingResults = ref(false)
 
 // Filtered content based on search
 const filteredContent = ref<string>('')
@@ -90,9 +93,29 @@ function filterContent() {
   filteredContent.value = filtered.join('\n')
 }
 
-// Refresh spec file
+// Load test results
+async function loadTestResults() {
+  try {
+    loadingResults.value = true
+    const response = await fetch('http://localhost:3001/api/specs/results')
+
+    if (response.ok) {
+      testResults.value = await response.json()
+    } else {
+      // Results not available, that's okay
+      testResults.value = null
+    }
+  } catch (err) {
+    // Silently fail if results aren't available
+    testResults.value = null
+  } finally {
+    loadingResults.value = false
+  }
+}
+
+// Refresh spec file and test results
 async function refresh() {
-  await loadSpec()
+  await Promise.all([loadSpec(), loadTestResults()])
 }
 
 // Watch search query changes
@@ -100,8 +123,14 @@ function onSearchChange() {
   filterContent()
 }
 
+// Format test results timestamp
+function formatResultsTime(timestamp: number): string {
+  return new Date(timestamp).toLocaleString()
+}
+
 onMounted(() => {
   loadSpec()
+  loadTestResults()
 })
 </script>
 
@@ -123,6 +152,28 @@ onMounted(() => {
           @input="onSearchChange"
         />
         <button @click="refresh" class="test-specs__refresh">Refresh</button>
+      </div>
+    </div>
+
+    <!-- Test Results Summary -->
+    <div v-if="testResults" class="test-specs__results">
+      <div class="test-specs__results-header">
+        <span class="test-specs__results-title">Test Results</span>
+        <span class="test-specs__results-time">{{ formatResultsTime(testResults.timestamp) }}</span>
+      </div>
+      <div class="test-specs__results-badges">
+        <span class="test-specs__badge test-specs__badge--passed">
+          ✓ {{ testResults.summary.passed }} passed
+        </span>
+        <span v-if="testResults.summary.failed > 0" class="test-specs__badge test-specs__badge--failed">
+          ✗ {{ testResults.summary.failed }} failed
+        </span>
+        <span v-if="testResults.summary.skipped > 0" class="test-specs__badge test-specs__badge--skipped">
+          ⊘ {{ testResults.summary.skipped }} skipped
+        </span>
+        <span class="test-specs__badge test-specs__badge--total">
+          {{ testResults.summary.total }} total
+        </span>
       </div>
     </div>
 
@@ -343,5 +394,64 @@ onMounted(() => {
   flex: 1;
   color: #999;
   font-size: 1.1rem;
+}
+
+.test-specs__results {
+  background: white;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  padding: 1rem;
+  margin-bottom: 1rem;
+}
+
+.test-specs__results-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.75rem;
+}
+
+.test-specs__results-title {
+  font-weight: 600;
+  font-size: 1rem;
+  color: #333;
+}
+
+.test-specs__results-time {
+  font-size: 0.85rem;
+  color: #666;
+}
+
+.test-specs__results-badges {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.test-specs__badge {
+  padding: 0.25rem 0.75rem;
+  border-radius: 12px;
+  font-size: 0.85rem;
+  font-weight: 500;
+}
+
+.test-specs__badge--passed {
+  background: #d4edda;
+  color: #155724;
+}
+
+.test-specs__badge--failed {
+  background: #f8d7da;
+  color: #721c24;
+}
+
+.test-specs__badge--skipped {
+  background: #fff3cd;
+  color: #856404;
+}
+
+.test-specs__badge--total {
+  background: #e7f3ff;
+  color: #004085;
 }
 </style>
