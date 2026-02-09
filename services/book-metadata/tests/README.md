@@ -2,13 +2,17 @@
 
 Unit and integration tests for metadata providers.
 
-## Test Files
+## Test Organization
 
 Tests are organized by functionality:
 
+### Directories
+
+- [`helpers/`](./helpers/) - Shared test utilities, mock functions, and sample data
+- [`providers/`](./providers/) - Provider-specific test suites
+
 ### Provider Tests
 
-- Provider-specific tests (e.g., `google-books.test.ts`)
 - [`composite.test.ts`](./composite.test.ts) - Composite provider with fallback
 - [`mock.test.ts`](./mock.test.ts) - Mock provider for testing
 
