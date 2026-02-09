@@ -254,4 +254,68 @@ describe("Generic Type Parameters", () => {
 
     expect(full.data.optionalField).toBe(123);
   });
+
+  it("should support getById operation", async () => {
+    const uniqueSuffix = Date.now();
+    const userRepo = new TypedEntityRepository<UserData>(
+      sql,
+      `getbyid_user_${uniqueSuffix}`
+    );
+
+    const created = await userRepo.create({
+      name: "GetById Test",
+      email: "getbyid@example.com",
+      role: "user",
+    });
+
+    const fetched = await userRepo.getById(created.entityId);
+
+    expect(fetched).not.toBeNull();
+    expect(fetched!.entityId).toBe(created.entityId);
+    expect(fetched!.data.name).toBe("GetById Test");
+  });
+
+  it("should support delete operation", async () => {
+    const uniqueSuffix = Date.now();
+    const userRepo = new TypedEntityRepository<UserData>(
+      sql,
+      `delete_user_${uniqueSuffix}`
+    );
+
+    const created = await userRepo.create({
+      name: "Delete Test",
+      email: "delete@example.com",
+      role: "user",
+    });
+
+    const deleted = await userRepo.delete(created.entityId, created.data);
+
+    expect(deleted.deletedAt).not.toBeNull();
+    expect(deleted.entityId).toBe(created.entityId);
+
+    // Verify it's actually deleted (not returned by default)
+    const shouldBeNull = await userRepo.getById(created.entityId);
+    expect(shouldBeNull).toBeNull();
+  });
+});
+
+// =============================================================================
+// Additional Versioned Types Tests
+// =============================================================================
+
+describe("Versioned Types - Additional Cases", () => {
+  it("should return v3 data unchanged", () => {
+    const v3Data = {
+      _version: 3 as const,
+      firstName: "Alice",
+      lastName: "Johnson",
+      email: "alice@example.com",
+      role: "admin" as const,
+    };
+
+    const upgraded = upgradeUserData(v3Data);
+
+    expect(upgraded).toEqual(v3Data);
+    expect(upgraded._version).toBe(3);
+  });
 });

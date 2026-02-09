@@ -808,6 +808,216 @@ describe("Advanced Time Range Queries", () => {
 });
 
 // =============================================================================
+// Query Options Tests (limit/offset for all methods)
+// =============================================================================
+
+describe("Query Options", () => {
+  it("should apply limit to getHistory", async () => {
+    const uniqueType = `history_limit_${Date.now()}`;
+
+    const original = await client.record({
+      eventType: uniqueType,
+      occurredAt: new Date(),
+      data: { version: 1 },
+    });
+
+    // Create multiple enrichments
+    for (let i = 2; i <= 5; i++) {
+      await client.enrich({
+        eventId: original.eventId,
+        eventType: uniqueType,
+        occurredAt: original.occurredAt,
+        data: { version: i },
+      });
+    }
+
+    const limitedHistory = await client.getHistory(original.eventId, { limit: 3 });
+    expect(limitedHistory.length).toBe(3);
+    expect((limitedHistory[0].data as any).version).toBe(1);
+    expect((limitedHistory[2].data as any).version).toBe(3);
+  });
+
+  it("should apply offset to getHistory", async () => {
+    const uniqueType = `history_offset_${Date.now()}`;
+
+    const original = await client.record({
+      eventType: uniqueType,
+      occurredAt: new Date(),
+      data: { version: 1 },
+    });
+
+    // Create multiple enrichments
+    for (let i = 2; i <= 5; i++) {
+      await client.enrich({
+        eventId: original.eventId,
+        eventType: uniqueType,
+        occurredAt: original.occurredAt,
+        data: { version: i },
+      });
+    }
+
+    const offsetHistory = await client.getHistory(original.eventId, { offset: 2 });
+    expect(offsetHistory.length).toBe(3); // Should skip first 2 entries
+    expect((offsetHistory[0].data as any).version).toBe(3);
+  });
+
+  it("should exclude voided from getHistory when requested", async () => {
+    const uniqueType = `history_no_voided_${Date.now()}`;
+
+    const original = await client.record({
+      eventType: uniqueType,
+      occurredAt: new Date(),
+      data: { version: 1 },
+    });
+
+    await client.enrich({
+      eventId: original.eventId,
+      eventType: uniqueType,
+      occurredAt: original.occurredAt,
+      data: { version: 2 },
+    });
+
+    // Void the event
+    await client.void({
+      eventId: original.eventId,
+      eventType: uniqueType,
+      occurredAt: original.occurredAt,
+      data: { version: 2 },
+    });
+
+    // With includeVoided: false, should only get non-voided entries
+    const historyWithoutVoided = await client.getHistory(original.eventId, { includeVoided: false });
+    expect(historyWithoutVoided.length).toBe(2); // Original + enrich, not the void
+    expect(historyWithoutVoided.every((e) => e.voidedAt === null)).toBe(true);
+  });
+
+  it("should apply limit/offset to getByType", async () => {
+    const uniqueType = `type_pagination_${Date.now()}`;
+
+    await client.recordMany(
+      Array.from({ length: 10 }, (_, i) => ({
+        eventType: uniqueType,
+        occurredAt: new Date(Date.now() - (9 - i) * 1000), // Most recent last
+        data: { index: i },
+      }))
+    );
+
+    const page1 = await client.getByType(uniqueType, { limit: 3 });
+    const page2 = await client.getByType(uniqueType, { limit: 3, offset: 3 });
+
+    expect(page1.length).toBe(3);
+    expect(page2.length).toBe(3);
+    expect(page1[0].eventId).not.toBe(page2[0].eventId);
+  });
+
+  it("should apply limit/offset to getByTimeRange", async () => {
+    const start = new Date("2024-10-01");
+    const end = new Date("2024-10-31");
+    const uniqueType = `timerange_pagination_${Date.now()}`;
+
+    await client.recordMany(
+      Array.from({ length: 10 }, (_, i) => ({
+        eventType: uniqueType,
+        occurredAt: new Date(`2024-10-${String(i + 1).padStart(2, "0")}`),
+        data: { day: i + 1 },
+      }))
+    );
+
+    const page1 = await client.getByTimeRange(start, end, { limit: 4 });
+    const page2 = await client.getByTimeRange(start, end, { limit: 4, offset: 4 });
+
+    expect(page1.length).toBe(4);
+    expect(page2.length).toBe(4);
+  });
+
+  it("should apply limit/offset to findByData", async () => {
+    const uniqueType = `finddata_pagination_${Date.now()}`;
+
+    await client.recordMany(
+      Array.from({ length: 10 }, (_, i) => ({
+        eventType: uniqueType,
+        occurredAt: new Date(),
+        data: { category: "books", index: i },
+      }))
+    );
+
+    const page1 = await client.findByData(uniqueType, { category: "books" }, { limit: 3 });
+    const page2 = await client.findByData(uniqueType, { category: "books" }, { limit: 3, offset: 3 });
+
+    expect(page1.length).toBe(3);
+    expect(page2.length).toBe(3);
+  });
+
+  it("should apply limit/offset to findForEntity", async () => {
+    const bookId = 7777;
+
+    await client.recordMany(
+      Array.from({ length: 10 }, (_, i) => ({
+        eventType: `event_${i}`,
+        occurredAt: new Date(),
+        data: { book_id: bookId, action: `action_${i}` },
+      }))
+    );
+
+    const page1 = await client.findForEntity("book_id", bookId, { limit: 4 });
+    const page2 = await client.findForEntity("book_id", bookId, { limit: 4, offset: 4 });
+
+    expect(page1.length).toBe(4);
+    expect(page2.length).toBe(4);
+  });
+
+  it("should count voided events when requested", async () => {
+    const uniqueType = `count_voided_${Date.now()}`;
+
+    const event1 = await client.record({
+      eventType: uniqueType,
+      occurredAt: new Date(),
+      data: { status: "active" },
+    });
+
+    const event2 = await client.record({
+      eventType: uniqueType,
+      occurredAt: new Date(),
+      data: { status: "active" },
+    });
+
+    // Void one event
+    await client.void({
+      eventId: event1.eventId,
+      eventType: uniqueType,
+      occurredAt: event1.occurredAt,
+      data: event1.data,
+    });
+
+    const countWithoutVoided = await client.countByType(uniqueType);
+    const countWithVoided = await client.countByType(uniqueType, { includeVoided: true });
+
+    expect(countWithoutVoided).toBe(1); // Only the non-voided one
+    expect(countWithVoided).toBe(2); // Both events
+  });
+});
+
+// =============================================================================
+// Factory Function Test
+// =============================================================================
+
+describe("Factory Function", () => {
+  it("should create EventsClient using factory", async () => {
+    const { createEventsClient } = await import("@/db/events");
+    const factoryClient = createEventsClient(sql);
+
+    const entry = await factoryClient.record({
+      eventType: `factory_test_${Date.now()}`,
+      occurredAt: new Date(),
+      data: { test: "factory" },
+    });
+
+    expect(entry.eventId).toBeGreaterThan(0);
+    expect((entry.data as any).test).toBe("factory");
+  });
+});
+
+// =============================================================================
 // Concurrent Operations Tests
 // =============================================================================
 

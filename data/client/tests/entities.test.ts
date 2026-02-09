@@ -742,6 +742,173 @@ describe("Pagination", () => {
 });
 
 // =============================================================================
+// Query Options Tests (limit/offset for getHistory)
+// =============================================================================
+
+describe("Query Options for getHistory", () => {
+  it("should apply limit to getHistory", async () => {
+    const uniqueType = `history_limit_${Date.now()}`;
+
+    const created = await client.create({
+      type: uniqueType,
+      data: { version: 1 },
+    });
+
+    // Create multiple updates
+    for (let i = 2; i <= 5; i++) {
+      await client.update({
+        entityId: created.entityId,
+        type: uniqueType,
+        data: { version: i },
+      });
+    }
+
+    const limitedHistory = await client.getHistory(created.entityId, { limit: 3 });
+    expect(limitedHistory.length).toBe(3);
+    expect((limitedHistory[0].data as any).version).toBe(1);
+    expect((limitedHistory[2].data as any).version).toBe(3);
+  });
+
+  it("should apply offset to getHistory", async () => {
+    const uniqueType = `history_offset_${Date.now()}`;
+
+    const created = await client.create({
+      type: uniqueType,
+      data: { version: 1 },
+    });
+
+    // Create multiple updates
+    for (let i = 2; i <= 5; i++) {
+      await client.update({
+        entityId: created.entityId,
+        type: uniqueType,
+        data: { version: i },
+      });
+    }
+
+    const offsetHistory = await client.getHistory(created.entityId, { offset: 2 });
+    expect(offsetHistory.length).toBe(3); // Should skip first 2 entries
+    expect((offsetHistory[0].data as any).version).toBe(3);
+  });
+
+  it("should exclude deleted from getHistory when requested", async () => {
+    const uniqueType = `history_no_deleted_${Date.now()}`;
+
+    const created = await client.create({
+      type: uniqueType,
+      data: { version: 1 },
+    });
+
+    await client.update({
+      entityId: created.entityId,
+      type: uniqueType,
+      data: { version: 2 },
+    });
+
+    // Delete the entity
+    await client.delete({
+      entityId: created.entityId,
+      type: uniqueType,
+      data: { version: 2 },
+    });
+
+    // With includeDeleted: false, should only get non-deleted entries
+    const historyWithoutDeleted = await client.getHistory(created.entityId, { includeDeleted: false });
+    expect(historyWithoutDeleted.length).toBe(2); // Original + update, not the delete
+    expect(historyWithoutDeleted.every((e) => e.deletedAt === null)).toBe(true);
+  });
+});
+
+// =============================================================================
+// Query Options Tests (limit/offset for findByData)
+// =============================================================================
+
+describe("Query Options for findByData", () => {
+  it("should apply limit/offset to findByData", async () => {
+    const uniqueType = `finddata_pagination_${Date.now()}`;
+
+    await client.createMany(
+      Array.from({ length: 10 }, (_, i) => ({
+        type: uniqueType,
+        data: { category: "books", index: i },
+      }))
+    );
+
+    const page1 = await client.findByData(uniqueType, { category: "books" }, { limit: 3 });
+    const page2 = await client.findByData(uniqueType, { category: "books" }, { limit: 3, offset: 3 });
+
+    expect(page1.length).toBe(3);
+    expect(page2.length).toBe(3);
+    expect(page1[0].entityId).not.toBe(page2[0].entityId);
+  });
+});
+
+// =============================================================================
+// Count with includeDeleted Tests
+// =============================================================================
+
+describe("Count with includeDeleted", () => {
+  it("should count deleted entities when requested", async () => {
+    const uniqueType = `count_deleted_${Date.now()}`;
+
+    const entity1 = await client.create({
+      type: uniqueType,
+      data: { status: "active" },
+    });
+
+    const entity2 = await client.create({
+      type: uniqueType,
+      data: { status: "active" },
+    });
+
+    // Delete one entity
+    await client.delete({
+      entityId: entity1.entityId,
+      type: uniqueType,
+      data: entity1.data,
+    });
+
+    const countWithoutDeleted = await client.countByType(uniqueType);
+    const countWithDeleted = await client.countByType(uniqueType, { includeDeleted: true });
+
+    expect(countWithoutDeleted).toBe(1); // Only the non-deleted one
+    expect(countWithDeleted).toBe(2); // Both entities
+  });
+});
+
+// =============================================================================
+// Error Handling for getById
+// =============================================================================
+
+describe("Error Handling for getById", () => {
+  it("should handle database errors in getById gracefully", async () => {
+    // Test with an invalid entity ID that would cause a database error
+    // Use a negative number which is invalid but won't cause issues in our test
+    const result = await client.getById(-1);
+    expect(result).toBeNull();
+  });
+});
+
+// =============================================================================
+// Factory Function Test
+// =============================================================================
+
+describe("Factory Function", () => {
+  it("should create EntitiesClient using factory", async () => {
+    const { createEntitiesClient } = await import("@/db/entities");
+    const factoryClient = createEntitiesClient(sql);
+
+    const entry = await factoryClient.create({
+      type: `factory_test_${Date.now()}`,
+      data: { test: "factory" },
+    });
+
+    expect(entry.entityId).toBeGreaterThan(0);
+    expect((entry.data as any).test).toBe("factory");
+  });
+});
+
+// =============================================================================
 // Transaction Tests
 // =============================================================================
 
