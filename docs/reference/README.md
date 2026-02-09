@@ -8,9 +8,9 @@ Technical reference documentation for the Quailcomp project.
 
 Complete reference of all environment variables used across the application, including database configuration, authentication settings, and service URLs.
 
-### [TypeScript Limitations](typescript-limitations.md)
+### [TypeScript Configuration](typescript-limitations.md)
 
-Known limitations and issues with the TypeScript configuration in the monorepo, including workspace package type-checking conflicts and recommended workarounds.
+TypeScript Project References configuration for the monorepo, including composite packages, declaration file generation, and cross-package type-checking.
 
 ## Purpose
 
