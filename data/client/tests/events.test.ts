@@ -702,3 +702,193 @@ describe("Trigger Validation", () => {
     expect(enriched.eventId).toBe(original.eventId);
   });
 });
+
+// =============================================================================
+// Additional Time Range Tests
+// =============================================================================
+
+describe("Advanced Time Range Queries", () => {
+  it("should respect time range boundaries", async () => {
+    const start = new Date("2024-06-01T00:00:00Z");
+    const middle = new Date("2024-06-15T12:00:00Z");
+    const end = new Date("2024-06-30T23:59:59Z");
+    const before = new Date("2024-05-31T23:59:59Z");
+    const after = new Date("2024-07-01T00:00:01Z");
+
+    const uniqueType = `time_range_boundary_${Date.now()}`;
+
+    await client.recordMany([
+      { eventType: uniqueType, occurredAt: before, data: { position: "before" } },
+      { eventType: uniqueType, occurredAt: start, data: { position: "start" } },
+      { eventType: uniqueType, occurredAt: middle, data: { position: "middle" } },
+      { eventType: uniqueType, occurredAt: end, data: { position: "end" } },
+      { eventType: uniqueType, occurredAt: after, data: { position: "after" } },
+    ]);
+
+    const allResults = await client.getByTimeRange(start, end);
+    const results = allResults.filter((e) => e.eventType === uniqueType);
+
+    // Should include start, middle, and end, but not before or after
+    expect(results.length).toBeGreaterThanOrEqual(3);
+    const positions = results.map((e) => (e.data as any).position);
+    expect(positions).toContain("start");
+    expect(positions).toContain("middle");
+    expect(positions).toContain("end");
+    expect(positions).not.toContain("before");
+    expect(positions).not.toContain("after");
+  });
+
+  it("should return events from different types in time range", async () => {
+    const start = new Date("2024-07-01");
+    const end = new Date("2024-07-31");
+    const uniqueType = `time_range_filter_${Date.now()}`;
+    const otherType = `other_${Date.now()}`;
+
+    await client.recordMany([
+      { eventType: uniqueType, occurredAt: new Date("2024-07-15"), data: { type: "target" } },
+      { eventType: otherType, occurredAt: new Date("2024-07-15"), data: { type: "other" } },
+    ]);
+
+    const allResults = await client.getByTimeRange(start, end);
+
+    // Should include events of both types
+    const targetEvents = allResults.filter((e) => e.eventType === uniqueType);
+    const otherEvents = allResults.filter((e) => e.eventType === otherType);
+
+    expect(targetEvents.length).toBeGreaterThanOrEqual(1);
+    expect(otherEvents.length).toBeGreaterThanOrEqual(1);
+  });
+
+  it("should include voided events when requested", async () => {
+    const start = new Date("2024-08-01");
+    const end = new Date("2024-08-31");
+    const uniqueType = `time_range_voided_${Date.now()}`;
+
+    const event1 = await client.record({
+      eventType: uniqueType,
+      occurredAt: new Date("2024-08-15"),
+      data: { status: "active" },
+    });
+
+    await client.void({
+      eventId: event1.eventId,
+      eventType: event1.eventType,
+      occurredAt: event1.occurredAt,
+      data: event1.data,
+    });
+
+    // Without includeVoided, should not appear
+    const withoutVoidedAll = await client.getByTimeRange(start, end);
+    const withoutVoided = withoutVoidedAll.filter((e) => e.eventType === uniqueType);
+    expect(withoutVoided.length).toBe(0);
+
+    // With includeVoided, should appear
+    const withVoidedAll = await client.getByTimeRange(start, end, { includeVoided: true });
+    const withVoided = withVoidedAll.filter((e) => e.eventType === uniqueType);
+    expect(withVoided.length).toBeGreaterThanOrEqual(1);
+    expect(withVoided.some((e) => e.eventId === event1.eventId)).toBe(true);
+  });
+
+  it("should handle empty time ranges", async () => {
+    const start = new Date("2024-09-01");
+    const end = new Date("2024-09-02");
+    const uniqueType = `time_range_empty_${Date.now()}`;
+
+    // Create event outside the range
+    await client.record({
+      eventType: uniqueType,
+      occurredAt: new Date("2024-10-01"),
+      data: { test: true },
+    });
+
+    const allResults = await client.getByTimeRange(start, end);
+    const results = allResults.filter((e) => e.eventType === uniqueType);
+    expect(results.length).toBe(0);
+  });
+});
+
+// =============================================================================
+// Concurrent Operations Tests
+// =============================================================================
+
+describe("Concurrent Operations", () => {
+  it("should handle parallel record operations", async () => {
+    const uniqueType = `concurrent_records_${Date.now()}`;
+
+    // Create 10 events in parallel
+    const promises = Array.from({ length: 10 }, (_, i) =>
+      client.record({
+        eventType: uniqueType,
+        occurredAt: new Date(),
+        data: { index: i },
+      })
+    );
+
+    const results = await Promise.all(promises);
+
+    // All should succeed with unique event IDs
+    expect(results.length).toBe(10);
+    const eventIds = results.map((r) => r.eventId);
+    const uniqueIds = new Set(eventIds);
+    expect(uniqueIds.size).toBe(10); // All IDs should be unique
+  });
+
+  it("should handle parallel enrichment operations", async () => {
+    const uniqueType = `concurrent_enrich_${Date.now()}`;
+
+    // Create a base event
+    const original = await client.record({
+      eventType: uniqueType,
+      occurredAt: new Date(),
+      data: { original: true },
+    });
+
+    // Enrich it 5 times in parallel
+    const promises = Array.from({ length: 5 }, (_, i) =>
+      client.enrich({
+        eventId: original.eventId,
+        eventType: uniqueType,
+        occurredAt: original.occurredAt,
+        data: { enrichment: i },
+      })
+    );
+
+    const results = await Promise.all(promises);
+
+    // All should succeed with the same event ID
+    expect(results.length).toBe(5);
+    expect(results.every((r) => r.eventId === original.eventId)).toBe(true);
+
+    // Should have multiple entries for this event
+    const history = await client.getHistory(original.eventId);
+    expect(history.length).toBeGreaterThanOrEqual(6); // original + 5 enrichments
+  });
+
+  it("should handle parallel recordMany operations", async () => {
+    const uniqueType = `concurrent_recordMany_${Date.now()}`;
+
+    // Create multiple batches in parallel
+    const promises = Array.from({ length: 3 }, (batchIndex) =>
+      client.recordMany(
+        Array.from({ length: 5 }, (_, i) => ({
+          eventType: uniqueType,
+          occurredAt: new Date(),
+          data: { batch: batchIndex, index: i },
+        }))
+      )
+    );
+
+    const results = await Promise.all(promises);
+
+    // All batches should succeed
+    expect(results.length).toBe(3);
+    expect(results[0].length).toBe(5);
+    expect(results[1].length).toBe(5);
+    expect(results[2].length).toBe(5);
+
+    // All event IDs should be unique
+    const allEventIds = results.flat().map((e) => e.eventId);
+    const uniqueIds = new Set(allEventIds);
+    expect(uniqueIds.size).toBe(15);
+  });
+});

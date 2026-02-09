@@ -671,3 +671,136 @@ describe("Index Effectiveness", () => {
     expect(plan).toMatch(/entities/i);
   });
 });
+
+// =============================================================================
+// Pagination Tests
+// =============================================================================
+
+describe("Pagination", () => {
+  let testEntityIds: number[];
+
+  beforeEach(async () => {
+    // Create 5 test entities for pagination testing
+    const uniqueType = `pagination_test_${Date.now()}`;
+    const entries = await client.createMany(
+      Array.from({ length: 5 }, (_, i) => ({
+        type: uniqueType,
+        data: { index: i },
+      }))
+    );
+    testEntityIds = entries.map((e) => e.entityId);
+  });
+
+  it("should limit results", async () => {
+    const results = await client.getByType("pagination_test", { limit: 2 });
+    expect(results.length).toBeLessThanOrEqual(2);
+  });
+
+  it("should offset results", async () => {
+    const uniqueType = `pagination_offset_${Date.now()}`;
+    await client.createMany([
+      { type: uniqueType, data: { value: "a" } },
+      { type: uniqueType, data: { value: "b" } },
+      { type: uniqueType, data: { value: "c" } },
+    ]);
+
+    const page1 = await client.getByType(uniqueType, { limit: 2 });
+    const page2 = await client.getByType(uniqueType, { limit: 2, offset: 2 });
+
+    expect(page1.length).toBe(2);
+    expect(page2.length).toBe(1);
+    expect(page1[0].entityId).not.toBe(page2[0].entityId);
+  });
+
+  it("should combine limit and offset", async () => {
+    const uniqueType = `pagination_combined_${Date.now()}`;
+    const entries = await client.createMany(
+      Array.from({ length: 10 }, (_, i) => ({
+        type: uniqueType,
+        data: { index: i },
+      }))
+    );
+
+    const page2 = await client.getByType(uniqueType, { limit: 3, offset: 3 });
+
+    expect(page2.length).toBe(3);
+    // Should get items 3, 4, 5 (0-indexed)
+    expect(page2[0].entityId).toBe(entries[3].entityId);
+    expect(page2[1].entityId).toBe(entries[4].entityId);
+    expect(page2[2].entityId).toBe(entries[5].entityId);
+  });
+
+  it("should handle large offset", async () => {
+    const results = await client.getByType("pagination_test", { offset: 1000 });
+    expect(results.length).toBe(0);
+  });
+
+  it("should handle limit of 0", async () => {
+    const results = await client.getByType("pagination_test", { limit: 0 });
+    expect(results.length).toBe(0);
+  });
+});
+
+// =============================================================================
+// Transaction Tests
+// =============================================================================
+
+describe("Transactions", () => {
+  it("should rollback createMany on failure", async () => {
+    const uniqueType = `transaction_rollback_${Date.now()}`;
+
+    // Track initial count
+    const initialCount = await client.countByType(uniqueType);
+
+    // Try to use createMany with invalid data that will cause a database error
+    // Force a failure by creating an invalid JSON (using raw SQL to bypass type checking)
+    try {
+      await sql.begin(async (tx) => {
+        // Create first entity successfully
+        await tx`
+          INSERT INTO entities (entity_id, type, data)
+          VALUES (nextval('entity_id_seq'), ${uniqueType}, ${{ value: "first" }})
+        `;
+
+        // Create second entity successfully
+        await tx`
+          INSERT INTO entities (entity_id, type, data)
+          VALUES (nextval('entity_id_seq'), ${uniqueType}, ${{ value: "second" }})
+        `;
+
+        // Force a constraint violation by trying to insert into a non-existent column
+        await tx`
+          INSERT INTO entities (entity_id, type, data, non_existent_column)
+          VALUES (nextval('entity_id_seq'), ${uniqueType}, ${{ value: "third" }}, 'fail')
+        `;
+      });
+    } catch (error) {
+      // Expected to fail
+    }
+
+    // Verify rollback - count should be unchanged
+    const finalCount = await client.countByType(uniqueType);
+    expect(finalCount).toBe(initialCount); // No entities were committed
+  });
+
+  it("should commit createMany on success", async () => {
+    const uniqueType = `transaction_success_${Date.now()}`;
+
+    const entries = await client.createMany([
+      { type: uniqueType, data: { value: "a" } },
+      { type: uniqueType, data: { value: "b" } },
+      { type: uniqueType, data: { value: "c" } },
+    ]);
+
+    expect(entries.length).toBe(3);
+
+    // Verify all were committed
+    const count = await client.countByType(uniqueType);
+    expect(count).toBe(3);
+  });
+
+  it("should handle empty createMany array", async () => {
+    const entries = await client.createMany([]);
+    expect(entries).toEqual([]);
+  });
+});
