@@ -7,9 +7,6 @@ const activeTab = ref('watcher')
 const tabs = [
   { id: 'watcher', label: 'Watcher' },
   { id: 'specs', label: 'Specs' },
-  { id: 'metrics', label: 'Metrics' },
-  { id: 'admin', label: 'Admin' },
-  { id: 'git', label: 'Git' },
 ]
 </script>
 
