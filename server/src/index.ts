@@ -50,8 +50,9 @@ function gracefulShutdown(signal: string): void {
 
   console.log(`${signal} received, shutting down gracefully...`);
 
-  // Stop accepting new connections
-  server.stop();
+  // Stop accepting new connections and force-close existing ones
+  // Pass true to immediately terminate all connections and release the port
+  server.stop(true);
 
   // Wait for in-flight requests to complete (max 10 seconds)
   const shutdownTimeout = setTimeout(() => {
