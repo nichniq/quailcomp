@@ -43,15 +43,6 @@ import LoadingSpinner from '@/components/common/LoadingSpinner.vue'
 </template>
 ```
 
-## Storybook
-
-Each component has a corresponding `.stories.ts` file for Storybook documentation:
-
-```bash
-# Run Storybook
-npm run storybook
-```
-
 ## Documentation
 
 - [Frontend README](../../README.md)
