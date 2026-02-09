@@ -228,11 +228,11 @@ const server = Bun.serve({
       // POST /api/coverage/generate - Generate coverage report
       if (url.pathname === '/api/coverage/generate' && req.method === 'POST') {
         try {
-          // Run tests with coverage in the background
+          // Run tests with coverage
           const proc = Bun.spawn(['bun', 'test', '--coverage'], {
             cwd: projectRoot,
-            stdout: 'pipe',
-            stderr: 'pipe',
+            stdout: 'inherit', // Inherit stdout/stderr so we can see test output
+            stderr: 'inherit',
           })
 
           // Wait for process to complete
@@ -241,9 +241,8 @@ const server = Bun.serve({
           if (exitCode === 0) {
             return Response.json({ success: true, message: 'Coverage report generated' }, { headers: corsHeaders })
           } else {
-            const stderr = await new Response(proc.stderr).text()
             return Response.json(
-              { success: false, error: 'Tests failed', stderr },
+              { success: false, error: `Tests failed with exit code ${exitCode}` },
               { status: 500, headers: corsHeaders }
             )
           }

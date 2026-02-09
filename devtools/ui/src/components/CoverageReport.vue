@@ -46,9 +46,22 @@ async function generateCoverage() {
 
   try {
     const response = await fetch('/api/coverage/generate', { method: 'POST' })
+
+    if (!response.ok) {
+      // Try to parse error as JSON
+      try {
+        const data = await response.json()
+        error.value = data.error || `Failed to generate coverage: HTTP ${response.status}`
+      } catch {
+        error.value = `Failed to generate coverage: HTTP ${response.status}`
+      }
+      generating.value = false
+      return
+    }
+
     const data = await response.json()
 
-    if (!response.ok || !data.success) {
+    if (!data.success) {
       error.value = data.error || 'Failed to generate coverage'
       generating.value = false
       return
