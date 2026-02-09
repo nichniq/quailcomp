@@ -7,10 +7,11 @@ Web-based user interface for monitoring and managing the QuailComp development t
 This is a Vue 3 + Vite application that provides a visual interface for:
 
 - **Watcher Status**: Real-time monitoring of file watchers and automated tasks
-- **Test Specifications**: Browse and search auto-generated test specifications
-- **Metrics** (planned): System performance and code metrics
-- **Admin** (planned): Configuration and management tools
-- **Git** (planned): Git operations and status
+- **Test Specifications**: Browse and search auto-generated test specifications with test result badges
+- **Coverage**: View and generate HTML test coverage reports
+- **Server Logs**: Live stream of server logs with filtering and search
+- **Server Events**: Debug monitor for Server-Sent Events activity
+- **API Keys**: Create and manage API keys for external access
 
 ## Architecture
 
@@ -73,6 +74,27 @@ bun run preview
 ### Specs APIs
 
 - `GET /api/specs/combined` - Get combined test specification markdown
+- `GET /api/specs/results` - Get test results summary (if available)
+
+### Coverage APIs
+
+- `GET /api/coverage` - Get HTML coverage report
+- `POST /api/coverage/generate` - Generate new coverage report
+
+### Logging APIs
+
+- `GET /api/logs/stream` - Server-Sent Events stream for real-time logs
+
+### Debug APIs
+
+- `GET /api/debug/events` - Server-Sent Events stream for SSE debugging
+
+### API Key Management
+
+- `GET /api/keys` - List all API keys
+- `POST /api/keys` - Create a new API key
+- `PUT /api/keys/:id` - Update an API key
+- `DELETE /api/keys/:id` - Revoke an API key
 
 ## Dependencies
 
