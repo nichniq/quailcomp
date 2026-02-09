@@ -1,4 +1,4 @@
-import { describe, test, expect, beforeAll, afterAll } from "bun:test";
+import { describe, test, expect, beforeAll, afterAll, beforeEach, afterEach, vi } from "bun:test";
 import { getConnection, createEntitiesClient } from "@quailcomp/data";
 import type { CLIContext } from "@cli/types";
 import { booksCommand } from "@cli/commands/books";
@@ -19,6 +19,34 @@ function createTestContext(args: string[]): CLIContext {
     events,
     args,
   };
+}
+
+// Mock console output
+let consoleOutput: string[] = [];
+let consoleErrorOutput: string[] = [];
+let processExitCode: number | null = null;
+
+function mockConsoleAndExit() {
+  consoleOutput = [];
+  consoleErrorOutput = [];
+  processExitCode = null;
+
+  vi.spyOn(console, "log").mockImplementation((...args) => {
+    consoleOutput.push(args.join(" "));
+  });
+
+  vi.spyOn(console, "error").mockImplementation((...args) => {
+    consoleErrorOutput.push(args.join(" "));
+  });
+
+  vi.spyOn(process, "exit").mockImplementation((code?: string | number | null | undefined) => {
+    processExitCode = typeof code === "number" ? code : (code ? 1 : 0);
+    throw new Error("MOCK_EXIT");
+  });
+}
+
+function restoreConsoleAndExit() {
+  vi.restoreAllMocks();
 }
 
 describe("books commands", () => {
@@ -209,5 +237,359 @@ describe("books commands", () => {
       includeDeleted: true,
     });
     expect(deleted?.deletedAt).toBeTruthy();
+  });
+
+  describe("list command", () => {
+    beforeEach(() => {
+      mockConsoleAndExit();
+    });
+
+    afterEach(() => {
+      restoreConsoleAndExit();
+    });
+
+    test("displays books in table format", async () => {
+      const context = createTestContext([]);
+      const listHandler = booksCommand.subcommands!.get("list")!.handler;
+
+      await listHandler(context);
+
+      const output = consoleOutput.join("\n");
+      // Should contain table headers
+      expect(output).toContain("ID");
+      expect(output).toContain("Title");
+      expect(output).toContain("Author");
+      expect(output).toContain("ISBN-13");
+      // Should contain total count
+      expect(output).toContain("Total:");
+    });
+
+    test("shows empty state when no books exist", async () => {
+      // Create a fresh context with a unique type that has no books
+      const uniqueType = `book_empty_test_${Date.now()}`;
+      const context = createTestContext([]);
+
+      // Temporarily override getByType to return empty array
+      const originalGetByType = context.entities.getByType;
+      context.entities.getByType = async () => [];
+
+      const listHandler = booksCommand.subcommands!.get("list")!.handler;
+      await listHandler(context);
+
+      const output = consoleOutput.join("\n");
+      expect(output).toContain("No books found");
+
+      // Restore
+      context.entities.getByType = originalGetByType;
+    });
+
+    test("excludes deleted books", async () => {
+      // This is tested implicitly by the includeDeleted: false option
+      // We can verify by checking that a deleted book doesn't appear
+      const context = createTestContext([]);
+
+      // Create and delete a book
+      const entry = await context.entities.create<BookEntitySnapshot>({
+        type: "book",
+        data: { title: "Deleted Book" },
+      });
+      await context.entities.delete({
+        entityId: entry.entityId,
+        type: "book",
+        data: entry.data,
+      });
+
+      const listHandler = booksCommand.subcommands!.get("list")!.handler;
+      await listHandler(context);
+
+      const output = consoleOutput.join("\n");
+      // Should not contain the deleted book
+      expect(output).not.toContain("Deleted Book");
+    });
+
+    test("handles database errors gracefully", async () => {
+      const context = createTestContext([]);
+
+      // Mock getByType to throw error
+      const originalGetByType = context.entities.getByType;
+      context.entities.getByType = async () => {
+        throw new Error("Database connection failed");
+      };
+
+      const listHandler = booksCommand.subcommands!.get("list")!.handler;
+
+      try {
+        await listHandler(context);
+      } catch (err: any) {
+        expect(err.message).toBe("MOCK_EXIT");
+      }
+
+      expect(processExitCode).toBe(1);
+      expect(consoleErrorOutput.some((msg) => msg.includes("Failed to list books"))).toBe(true);
+
+      // Restore
+      context.entities.getByType = originalGetByType;
+    });
+  });
+
+  describe("error paths", () => {
+    beforeEach(() => {
+      mockConsoleAndExit();
+    });
+
+    afterEach(() => {
+      restoreConsoleAndExit();
+    });
+
+    test("main command without subcommand shows error", async () => {
+      const context = createTestContext([]);
+
+      try {
+        await booksCommand.handler(context);
+      } catch (err: any) {
+        expect(err.message).toBe("MOCK_EXIT");
+      }
+
+      expect(processExitCode).toBe(1);
+      expect(consoleErrorOutput.some((msg) => msg.includes("specify a subcommand"))).toBe(true);
+    });
+
+    test("show requires book ID", async () => {
+      const context = createTestContext([]);
+      const showHandler = booksCommand.subcommands!.get("show")!.handler;
+
+      try {
+        await showHandler(context);
+      } catch (err: any) {
+        expect(err.message).toBe("MOCK_EXIT");
+      }
+
+      expect(processExitCode).toBe(1);
+      expect(consoleErrorOutput.some((msg) => msg.includes("Book ID is required"))).toBe(true);
+    });
+
+    test("show rejects invalid ID format", async () => {
+      const context = createTestContext(["not-a-number"]);
+      const showHandler = booksCommand.subcommands!.get("show")!.handler;
+
+      try {
+        await showHandler(context);
+      } catch (err: any) {
+        expect(err.message).toBe("MOCK_EXIT");
+      }
+
+      expect(processExitCode).toBe(1);
+      expect(consoleErrorOutput.some((msg) => msg.includes("Invalid book ID"))).toBe(true);
+    });
+
+    test("show handles non-existent book", async () => {
+      const context = createTestContext(["999999999"]);
+      const showHandler = booksCommand.subcommands!.get("show")!.handler;
+
+      try {
+        await showHandler(context);
+      } catch (err: any) {
+        expect(err.message).toBe("MOCK_EXIT");
+      }
+
+      expect(processExitCode).toBe(1);
+      expect(consoleErrorOutput.some((msg) => msg.includes("Book not found"))).toBe(true);
+    });
+
+    test("add requires title", async () => {
+      const context = createTestContext(["--author", "Some Author"]);
+      const addHandler = booksCommand.subcommands!.get("add")!.handler;
+
+      try {
+        await addHandler(context);
+      } catch (err: any) {
+        expect(err.message).toBe("MOCK_EXIT");
+      }
+
+      expect(processExitCode).toBe(1);
+      expect(consoleErrorOutput.some((msg) => msg.includes("Title is required"))).toBe(true);
+    });
+
+    test("add rejects unknown options", async () => {
+      const context = createTestContext(["--unknown-option", "value"]);
+      const addHandler = booksCommand.subcommands!.get("add")!.handler;
+
+      try {
+        await addHandler(context);
+      } catch (err: any) {
+        expect(err.message).toBe("MOCK_EXIT");
+      }
+
+      expect(processExitCode).toBe(1);
+      expect(consoleErrorOutput.some((msg) => msg.includes("Unknown option"))).toBe(true);
+    });
+
+    test("update requires book ID", async () => {
+      const context = createTestContext([]);
+      const updateHandler = booksCommand.subcommands!.get("update")!.handler;
+
+      try {
+        await updateHandler(context);
+      } catch (err: any) {
+        expect(err.message).toBe("MOCK_EXIT");
+      }
+
+      expect(processExitCode).toBe(1);
+      expect(consoleErrorOutput.some((msg) => msg.includes("Book ID is required"))).toBe(true);
+    });
+
+    test("update rejects invalid ID format", async () => {
+      const context = createTestContext(["not-a-number", "--title", "New Title"]);
+      const updateHandler = booksCommand.subcommands!.get("update")!.handler;
+
+      try {
+        await updateHandler(context);
+      } catch (err: any) {
+        expect(err.message).toBe("MOCK_EXIT");
+      }
+
+      expect(processExitCode).toBe(1);
+      expect(consoleErrorOutput.some((msg) => msg.includes("Invalid book ID"))).toBe(true);
+    });
+
+    test("update handles non-existent book", async () => {
+      const context = createTestContext(["999999999", "--title", "New Title"]);
+      const updateHandler = booksCommand.subcommands!.get("update")!.handler;
+
+      try {
+        await updateHandler(context);
+      } catch (err: any) {
+        expect(err.message).toBe("MOCK_EXIT");
+      }
+
+      expect(processExitCode).toBe(1);
+      expect(consoleErrorOutput.some((msg) => msg.includes("Book not found"))).toBe(true);
+    });
+
+    test("update rejects unknown options", async () => {
+      const context = createTestContext([String(testBookId), "--unknown-option", "value"]);
+      const updateHandler = booksCommand.subcommands!.get("update")!.handler;
+
+      try {
+        await updateHandler(context);
+      } catch (err: any) {
+        expect(err.message).toBe("MOCK_EXIT");
+      }
+
+      expect(processExitCode).toBe(1);
+      expect(consoleErrorOutput.some((msg) => msg.includes("Unknown option"))).toBe(true);
+    });
+
+    test("delete requires book ID", async () => {
+      const context = createTestContext([]);
+      const deleteHandler = booksCommand.subcommands!.get("delete")!.handler;
+
+      try {
+        await deleteHandler(context);
+      } catch (err: any) {
+        expect(err.message).toBe("MOCK_EXIT");
+      }
+
+      expect(processExitCode).toBe(1);
+      expect(consoleErrorOutput.some((msg) => msg.includes("Book ID is required"))).toBe(true);
+    });
+
+    test("delete rejects invalid ID format", async () => {
+      const context = createTestContext(["not-a-number"]);
+      const deleteHandler = booksCommand.subcommands!.get("delete")!.handler;
+
+      try {
+        await deleteHandler(context);
+      } catch (err: any) {
+        expect(err.message).toBe("MOCK_EXIT");
+      }
+
+      expect(processExitCode).toBe(1);
+      expect(consoleErrorOutput.some((msg) => msg.includes("Invalid book ID"))).toBe(true);
+    });
+
+    test("delete handles non-existent book", async () => {
+      const context = createTestContext(["999999999"]);
+      const deleteHandler = booksCommand.subcommands!.get("delete")!.handler;
+
+      try {
+        await deleteHandler(context);
+      } catch (err: any) {
+        expect(err.message).toBe("MOCK_EXIT");
+      }
+
+      expect(processExitCode).toBe(1);
+      expect(consoleErrorOutput.some((msg) => msg.includes("Book not found"))).toBe(true);
+    });
+
+    test("delete rejects already deleted book", async () => {
+      // Create and delete a book
+      const context = createTestContext([]);
+      const entry = await context.entities.create<BookEntitySnapshot>({
+        type: "book",
+        data: { title: "Already Deleted" },
+      });
+      await context.entities.delete({
+        entityId: entry.entityId,
+        type: "book",
+        data: entry.data,
+      });
+
+      // Try to delete again
+      const deleteContext = createTestContext([String(entry.entityId)]);
+      const deleteHandler = booksCommand.subcommands!.get("delete")!.handler;
+
+      try {
+        await deleteHandler(deleteContext);
+      } catch (err: any) {
+        expect(err.message).toBe("MOCK_EXIT");
+      }
+
+      expect(processExitCode).toBe(1);
+      // getById returns null for deleted books by default, so it says "not found"
+      expect(consoleErrorOutput.some((msg) => msg.includes("Book not found"))).toBe(true);
+    });
+
+    test("history requires book ID", async () => {
+      const context = createTestContext([]);
+      const historyHandler = booksCommand.subcommands!.get("history")!.handler;
+
+      try {
+        await historyHandler(context);
+      } catch (err: any) {
+        expect(err.message).toBe("MOCK_EXIT");
+      }
+
+      expect(processExitCode).toBe(1);
+      expect(consoleErrorOutput.some((msg) => msg.includes("Book ID is required"))).toBe(true);
+    });
+
+    test("history rejects invalid ID format", async () => {
+      const context = createTestContext(["not-a-number"]);
+      const historyHandler = booksCommand.subcommands!.get("history")!.handler;
+
+      try {
+        await historyHandler(context);
+      } catch (err: any) {
+        expect(err.message).toBe("MOCK_EXIT");
+      }
+
+      expect(processExitCode).toBe(1);
+      expect(consoleErrorOutput.some((msg) => msg.includes("Invalid book ID"))).toBe(true);
+    });
+
+    test("history handles non-existent book", async () => {
+      const context = createTestContext(["999999999"]);
+      const historyHandler = booksCommand.subcommands!.get("history")!.handler;
+
+      try {
+        await historyHandler(context);
+      } catch (err: any) {
+        expect(err.message).toBe("MOCK_EXIT");
+      }
+
+      expect(processExitCode).toBe(1);
+      expect(consoleErrorOutput.some((msg) => msg.includes("Book not found"))).toBe(true);
+    });
   });
 });
