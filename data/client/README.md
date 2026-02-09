@@ -91,6 +91,20 @@ bun run setup
 bun run teardown
 ```
 
+## Type-Checking
+
+This package uses TypeScript Project References for proper cross-package type-checking:
+
+```bash
+# Type-check with incremental build
+bun run typecheck
+
+# Force rebuild all declarations
+bun run typecheck:force
+```
+
+**Note**: This package is a composite TypeScript project that generates declaration files in `dist/`. Other packages reference these declarations for type-checking.
+
 ## Database Schema
 
 The database schema (migrations, setup, teardown) lives in [`../postgres/`](../postgres/). This separation keeps the TypeScript client code separate from raw SQL infrastructure, while maintaining colocation for related concerns.

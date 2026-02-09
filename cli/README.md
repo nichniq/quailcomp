@@ -177,7 +177,16 @@ Build the CLI:
 
 ```bash
 cd cli
-bun run build
+bun run build  # Builds TypeScript declarations + bundles to dist/
+```
+
+**Note**: The build process first runs `tsc --build` to generate type declarations, then bundles the CLI with Bun. TypeScript declarations are output to `dist-types/`.
+
+Type-check without building:
+
+```bash
+bun run typecheck        # Incremental type-check
+bun run typecheck:force  # Full rebuild
 ```
 
 ## Future Enhancements

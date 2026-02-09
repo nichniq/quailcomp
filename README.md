@@ -210,10 +210,23 @@ quailcomp/
 ├── .claude/
 │   └── CLAUDE.md             # AI assistant instructions
 ├── .githooks/                # Git hook templates
+├── tsconfig.base.json        # Shared TypeScript config
+├── tsconfig.json             # Root project references
 ├── CONTRIBUTING.md           # Development guidelines
 ├── package.json              # Workspace configuration
 └── README.md                 # This file
 ```
+
+### TypeScript Configuration
+
+The monorepo uses [TypeScript Project References](https://www.typescriptlang.org/docs/handbook/project-references.html) for proper cross-package type-checking:
+
+- **Shared base**: `tsconfig.base.json` with common compiler options
+- **Composite packages**: Each workspace package generates declaration files
+- **Incremental builds**: `.tsbuildinfo` files enable smart rebuilds
+- **Isolated resolution**: Each package's `@/` aliases resolve independently
+
+See [TypeScript Configuration](docs/reference/typescript-limitations.md) for details.
 
 ## Development
 
@@ -225,6 +238,13 @@ bun test                      # Run all tests with linting
 bun run test:coverage         # Run tests with coverage report
 bun test:unit                 # Run tests without linting
 bun test:watch                # Watch mode for data/client
+
+# Type-Checking (Project References)
+bun run typecheck             # Build all packages with incremental compilation
+bun run typecheck:force       # Force rebuild all packages
+bun run typecheck:clean       # Clean build artifacts
+bun run typecheck:server      # Type-check server only
+bun run typecheck:data        # Type-check data package only
 
 # Database
 bun run db:migrate            # Apply pending migrations
