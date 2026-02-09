@@ -117,6 +117,8 @@ bun run devtools:ui:serve
 - **Task:** Extract TypeScript code blocks from domain docs
 - **Debounce:** 500ms
 - **Output:** `domains/types/*.ts` files
+- **Filtering:** Only extracts `export` statements and `import` statements; skips example code and function declarations without implementations
+- **Optimization:** Only writes files when content changes to prevent infinite watch loops
 
 ### 2. README Validation
 
@@ -269,6 +271,20 @@ bun test devtools/tests/misc.test.ts
 - Check task output in UI or console logs
 - Verify task has correct permissions
 - Ensure dependencies are installed
+
+### Infinite loop / Tasks running repeatedly
+
+This issue has been fixed as of the latest version. The type generation task now:
+
+- Only writes files when content actually changes
+- Skips cache writes when cache is unchanged
+- Filters out example code that doesn't need to be in generated files
+
+If you still see repeated executions, check that:
+
+- You're not manually modifying generated files in `domains/types/`
+- Your markdown files don't have syntax errors causing re-extraction
+- Task debounce settings are appropriate (default: 300-1000ms)
 
 ## Contributing
 

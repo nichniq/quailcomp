@@ -49,7 +49,82 @@ async function saveCache(cache: Cache): Promise<void> {
 }
 
 /**
+ * Filter code block to only include exported statements
+ * Preserves multi-line exports like interfaces, types, classes, etc.
+ */
+function filterExportedCode(code: string): string {
+  const lines = code.split('\n')
+  const exportedLines: string[] = []
+  let inStatement = false
+  let braceDepth = 0
+  let parenDepth = 0
+  let bracketDepth = 0
+
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i]
+    const trimmed = line.trim()
+
+    // Check if this line starts an export or import
+    const isExport = trimmed.startsWith('export ')
+    const isImport = trimmed.startsWith('import ')
+    // Skip function declarations (they end with semicolon and have no implementation)
+    const isFunctionDeclaration = isExport && /^export\s+function\s+\w+\([^)]*\):[^;{]+;$/.test(trimmed)
+
+    if ((isExport && !isFunctionDeclaration) || isImport) {
+      inStatement = true
+      exportedLines.push(line)
+
+      // Count opening/closing delimiters
+      braceDepth = (line.match(/{/g) || []).length - (line.match(/}/g) || []).length
+      parenDepth = (line.match(/\(/g) || []).length - (line.match(/\)/g) || []).length
+      bracketDepth = (line.match(/\[/g) || []).length - (line.match(/\]/g) || []).length
+
+      // Check if statement definitely ends on this line
+      // (semicolon AND all delimiters balanced)
+      if (trimmed.endsWith(';') && braceDepth === 0 && parenDepth === 0 && bracketDepth === 0) {
+        inStatement = false
+      }
+      // If all delimiters balanced (no semicolon), check if next line is a continuation
+      else if (braceDepth === 0 && parenDepth === 0 && bracketDepth === 0) {
+        // Check if next line is a continuation (starts with | or & or ,)
+        const nextLine = i + 1 < lines.length ? lines[i + 1].trim() : ''
+        if (!nextLine.startsWith('|') && !nextLine.startsWith('&') && !nextLine.startsWith(',')) {
+          inStatement = false
+        }
+      }
+      continue
+    }
+
+    // If we're inside a multi-line statement, continue collecting lines
+    if (inStatement) {
+      exportedLines.push(line)
+
+      // Update delimiter depths
+      braceDepth += (line.match(/{/g) || []).length - (line.match(/}/g) || []).length
+      parenDepth += (line.match(/\(/g) || []).length - (line.match(/\)/g) || []).length
+      bracketDepth += (line.match(/\[/g) || []).length - (line.match(/\]/g) || []).length
+
+      // Check if statement definitely ends (semicolon AND all delimiters balanced)
+      if (trimmed.endsWith(';') && braceDepth === 0 && parenDepth === 0 && bracketDepth === 0) {
+        inStatement = false
+      }
+      // If all delimiters balanced (no semicolon), check if next line is a continuation
+      else if (braceDepth === 0 && parenDepth === 0 && bracketDepth === 0) {
+        // Check if next line is a continuation (starts with | or & or ,)
+        const nextLine = i + 1 < lines.length ? lines[i + 1].trim() : ''
+        if (!nextLine.startsWith('|') && !nextLine.startsWith('&') && !nextLine.startsWith(',')) {
+          inStatement = false
+        }
+      }
+    }
+  }
+
+  return exportedLines.join('\n').trim()
+}
+
+/**
  * Extract TypeScript code blocks from markdown content
+ * Only extracts blocks that contain exported declarations
  */
 function extractTypeScriptBlocks(markdown: string): string {
   const codeBlockRegex = /```typescript\n([\s\S]*?)```/g
@@ -57,7 +132,18 @@ function extractTypeScriptBlocks(markdown: string): string {
 
   let match
   while ((match = codeBlockRegex.exec(markdown)) !== null) {
-    blocks.push(match[1].trim())
+    const codeBlock = match[1].trim()
+    // Check if this code block has ANY exports
+    const hasExports = /^\s*export\s+/m.test(codeBlock)
+
+    if (hasExports) {
+      // Filter to only include exports
+      const filtered = filterExportedCode(codeBlock)
+      if (filtered) {
+        blocks.push(filtered)
+      }
+    }
+    // If no exports in this block, skip it entirely (it's example code)
   }
 
   return blocks.join('\n\n')
@@ -133,6 +219,7 @@ export async function extractTypes(changed: string[]): Promise<TaskResult> {
 
     const newCache: Cache = {}
     const generatedFiles: string[] = []
+    const processedFiles: string[] = []
 
     for (const filename of domainFiles) {
       const filePath = join(DOMAINS_DIR, filename)
@@ -162,14 +249,29 @@ export async function extractTypes(changed: string[]): Promise<TaskResult> {
       // Generate file content
       const fileContent = generateHeader(domainName) + extractedTypes + '\n'
 
-      await writeFile(outputFile, fileContent, 'utf-8')
-      generatedFiles.push(outputFile)
+      // Only write if content has changed (prevents infinite watch loops)
+      let existingContent = ''
+      try {
+        existingContent = await readFile(outputFile, 'utf-8')
+      } catch {
+        // File doesn't exist yet, will write it
+      }
+
+      if (existingContent !== fileContent) {
+        await writeFile(outputFile, fileContent, 'utf-8')
+        generatedFiles.push(outputFile)
+        output.push(`  ${domainName}.ts: written`)
+      } else {
+        output.push(`  ${domainName}.ts: unchanged, skipped write`)
+      }
+
+      processedFiles.push(outputFile)
 
       // Update cache
       newCache[filename] = { hash, extracted: extractedTypes }
     }
 
-    if (generatedFiles.length === 0) {
+    if (processedFiles.length === 0) {
       errors.push('❌ No TypeScript code blocks extracted from any domain files')
       return {
         success: false,
@@ -179,10 +281,19 @@ export async function extractTypes(changed: string[]): Promise<TaskResult> {
       }
     }
 
-    output.push(`✓ Generated ${generatedFiles.length} type files in ${OUTPUT_DIR}`)
+    if (generatedFiles.length > 0) {
+      output.push(`✓ Generated ${generatedFiles.length} type file(s) in ${OUTPUT_DIR}`)
+    }
+    output.push(`✓ Processed ${processedFiles.length} total type file(s) (${processedFiles.length - generatedFiles.length} unchanged)`)
 
-    output.push('Saving cache...')
-    await saveCache(newCache)
+    // Only save cache if it changed (prevents unnecessary file writes and watch triggers)
+    const cacheChanged = JSON.stringify(cache) !== JSON.stringify(newCache)
+    if (cacheChanged) {
+      output.push('Saving cache...')
+      await saveCache(newCache)
+    } else {
+      output.push('Cache unchanged, skipped write')
+    }
 
     output.push('✓ Done!')
 
