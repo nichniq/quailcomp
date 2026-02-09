@@ -4,7 +4,7 @@ import { ref, onMounted } from 'vue'
 const loading = ref(true)
 const generating = ref(false)
 const error = ref<string | null>(null)
-const lcovData = ref<string>('')
+const coverageHtml = ref<string>('')
 const lastModified = ref<Date | null>(null)
 
 async function loadCoverage() {
@@ -25,11 +25,11 @@ async function loadCoverage() {
       return
     }
 
-    const data = await response.json()
-    lcovData.value = data.lcov
+    coverageHtml.value = await response.text()
 
-    if (data.lastModified) {
-      lastModified.value = new Date(data.lastModified)
+    const lastModifiedHeader = response.headers.get('X-Last-Modified')
+    if (lastModifiedHeader) {
+      lastModified.value = new Date(parseInt(lastModifiedHeader, 10))
     }
 
     error.value = null
@@ -127,13 +127,13 @@ onMounted(() => {
       </button>
     </div>
 
-    <div v-else-if="lcovData" class="coverage-report__content">
-      <div class="coverage-report__lcov">
-        <pre>{{ lcovData }}</pre>
-      </div>
-      <p class="coverage-report__note">
-        Note: Bun generates LCOV format coverage. HTML report generation coming soon.
-      </p>
+    <div v-else-if="coverageHtml" class="coverage-report__content">
+      <iframe
+        :srcdoc="coverageHtml"
+        class="coverage-report__iframe"
+        sandbox="allow-scripts allow-same-origin"
+        title="Coverage Report"
+      />
     </div>
   </div>
 </template>
@@ -229,30 +229,11 @@ onMounted(() => {
   min-height: 0;
 }
 
-.coverage-report__lcov {
+.coverage-report__iframe {
   flex: 1;
-  overflow: auto;
-  background: #f5f5f5;
+  width: 100%;
   border: 1px solid #ddd;
   border-radius: 4px;
-  padding: 1rem;
-}
-
-.coverage-report__lcov pre {
-  margin: 0;
-  font-family: 'Monaco', 'Menlo', 'Consolas', monospace;
-  font-size: 0.85rem;
-  line-height: 1.4;
-  white-space: pre;
-}
-
-.coverage-report__note {
-  margin-top: 1rem;
-  padding: 0.75rem;
-  background: #fff3cd;
-  border: 1px solid #ffc107;
-  border-radius: 4px;
-  color: #856404;
-  font-size: 0.9rem;
+  background: white;
 }
 </style>

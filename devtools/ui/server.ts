@@ -11,6 +11,7 @@
 import { join, extname } from 'path'
 import { readdir, readFile, stat } from 'fs/promises'
 import { watcherState, onStateChange, triggerRule } from '../watch/index'
+import { parseLcov, generateHtml } from './lcov-to-html'
 
 const PORT = 3001
 const isDev = process.env.NODE_ENV !== 'production'
@@ -203,21 +204,24 @@ const server = Bun.serve({
         }
       }
 
-      // GET /api/coverage - Get the coverage data (lcov format)
+      // GET /api/coverage - Get the HTML coverage report
       if (url.pathname === '/api/coverage' && req.method === 'GET') {
         try {
           const lcovPath = join(projectRoot, 'coverage/lcov.info')
           const lcovContent = await readFile(lcovPath, 'utf-8')
           const stats = await stat(lcovPath)
 
-          // Return as JSON for now - we'll parse and display in the UI
-          return Response.json(
-            {
-              lcov: lcovContent,
-              lastModified: stats.mtimeMs,
+          // Parse LCOV and generate HTML
+          const files = parseLcov(lcovContent)
+          const html = generateHtml(files)
+
+          return new Response(html, {
+            headers: {
+              'Content-Type': 'text/html',
+              'X-Last-Modified': stats.mtimeMs.toString(),
+              ...corsHeaders,
             },
-            { headers: corsHeaders }
-          )
+          })
         } catch (error) {
           return Response.json(
             { error: 'Coverage report not found. Run "bun test --coverage" to generate it.' },
