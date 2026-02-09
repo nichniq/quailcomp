@@ -41,6 +41,7 @@
     "test:coverage:merge": "bun run scripts/merge-coverage.ts",
     "test:coverage:report": "bun run scripts/coverage-report.ts",
     "test:coverage:clean": "rm -rf coverage data/client/coverage server/coverage cli/coverage services/book-metadata/coverage",
+    "coverage:view": "bun run test:coverage:generate && bun run test:coverage:report && open coverage/index.html",
     "type-check": "bun run scripts/type-check.ts",
     "dev:server": "bun run --cwd server dev",
     "dev:frontend": "bun run --cwd frontend dev",
