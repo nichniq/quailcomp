@@ -1,7 +1,5 @@
 # Quailcomp
 
-[![codecov](https://codecov.io/gh/USERNAME/quailcomp/branch/main/graph/badge.svg?token=YOUR_TOKEN)](https://codecov.io/gh/USERNAME/quailcomp)
-
 A personal data management system using event-sourced append-only storage with domain-driven design.
 
 ## Overview
