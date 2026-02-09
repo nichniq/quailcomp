@@ -2,11 +2,13 @@
 import { ref } from 'vue'
 import WatcherStatus from './components/WatcherStatus.vue'
 import TestSpecs from './components/TestSpecs.vue'
+import CoverageReport from './components/CoverageReport.vue'
 
 const activeTab = ref('watcher')
 const tabs = [
   { id: 'watcher', label: 'Watcher' },
   { id: 'specs', label: 'Specs' },
+  { id: 'coverage', label: 'Coverage' },
 ]
 </script>
 
@@ -31,6 +33,7 @@ const tabs = [
     <main class="devtools__content">
       <WatcherStatus v-if="activeTab === 'watcher'" />
       <TestSpecs v-else-if="activeTab === 'specs'" />
+      <CoverageReport v-else-if="activeTab === 'coverage'" />
       <div v-else class="devtools__coming-soon">
         <h2>{{ tabs.find((t) => t.id === activeTab)?.label }}</h2>
         <p>Coming soon...</p>

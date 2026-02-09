@@ -203,6 +203,58 @@ const server = Bun.serve({
         }
       }
 
+      // GET /api/coverage - Get the HTML coverage report
+      if (url.pathname === '/api/coverage' && req.method === 'GET') {
+        try {
+          const coveragePath = join(projectRoot, 'coverage/index.html')
+          const content = await readFile(coveragePath, 'utf-8')
+          const stats = await stat(coveragePath)
+
+          return new Response(content, {
+            headers: {
+              'Content-Type': 'text/html',
+              'X-Last-Modified': stats.mtimeMs.toString(),
+              ...corsHeaders,
+            },
+          })
+        } catch (error) {
+          return Response.json(
+            { error: 'Coverage report not found. Run "bun test --coverage" to generate it.' },
+            { status: 404, headers: corsHeaders }
+          )
+        }
+      }
+
+      // POST /api/coverage/generate - Generate coverage report
+      if (url.pathname === '/api/coverage/generate' && req.method === 'POST') {
+        try {
+          // Run tests with coverage in the background
+          const proc = Bun.spawn(['bun', 'test', '--coverage'], {
+            cwd: projectRoot,
+            stdout: 'pipe',
+            stderr: 'pipe',
+          })
+
+          // Wait for process to complete
+          const exitCode = await proc.exited
+
+          if (exitCode === 0) {
+            return Response.json({ success: true, message: 'Coverage report generated' }, { headers: corsHeaders })
+          } else {
+            const stderr = await new Response(proc.stderr).text()
+            return Response.json(
+              { success: false, error: 'Tests failed', stderr },
+              { status: 500, headers: corsHeaders }
+            )
+          }
+        } catch (error) {
+          return Response.json(
+            { success: false, error: String(error) },
+            { status: 500, headers: corsHeaders }
+          )
+        }
+      }
+
       return Response.json({ error: 'Not found' }, { status: 404, headers: corsHeaders })
     }
 
