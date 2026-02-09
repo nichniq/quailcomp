@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted, computed } from 'vue'
+import { ref, onMounted, onUnmounted } from 'vue'
 import type { WatchRule, TaskExecution, WatcherStateResponse } from '../types'
 
 const rules = ref<WatchRule[]>([])
@@ -9,7 +9,7 @@ const expandedRule = ref<string | null>(null)
 const error = ref<string | null>(null)
 const loading = ref(true)
 
-let pollInterval: Timer | null = null
+let pollInterval: number | null = null
 let eventSource: EventSource | null = null
 
 // Get status for a rule
