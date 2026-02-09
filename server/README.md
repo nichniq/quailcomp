@@ -61,23 +61,32 @@ server/
 
 ## Database Configuration
 
-Configuration is loaded from environment variables:
-
-| Variable | Default | Description |
-|----------|---------|-------------|
-| `DB_HOST` | `localhost` | Database host |
-| `DB_PORT` | `5432` | Database port |
-| `DB_NAME` | `quailcomp` | Database name |
-| `DB_USER` | `quailcomp_app` | Database user |
-| `DB_PASSWORD` | (empty) | Database password |
-| `DB_TEST_NAME` | `quailcomp_test` | Test database name |
-| `DB_SUPERUSER` | `$USER` | Superuser for setup scripts |
-
-For local development with the default setup, you may need to set your password:
+Configuration is loaded from environment variables. The server uses the root `.env` file when run via workspace commands:
 
 ```bash
-export DB_PASSWORD="your_password"
+# From project root
+cp .env.example .env
 ```
+
+The main configuration variable is:
+
+| Variable | Description | Example |
+|----------|-------------|---------|
+| `DATABASE_URL` | PostgreSQL connection URL | `postgres://quailcomp_app@localhost:5432/quailcomp` |
+
+For local development with default PostgreSQL setup (no password):
+
+```bash
+DATABASE_URL=postgres://quailcomp_app@localhost:5432/quailcomp
+```
+
+Or with a password:
+
+```bash
+DATABASE_URL=postgres://quailcomp_app:your_password@localhost:5432/quailcomp
+```
+
+**Note:** A `server/.env` file is provided for convenience if you run commands directly from the `server/` directory, but it's not required when using workspace commands from the root.
 
 ## Usage Guide
 

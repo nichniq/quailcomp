@@ -147,15 +147,17 @@ cli/
 
 ## Database Access
 
-The CLI connects directly to the PostgreSQL database using the same configuration as the server. Ensure your environment variables are set:
+The CLI connects directly to the PostgreSQL database using the same configuration as the server. Set the `DATABASE_URL` environment variable:
 
 ```bash
-DB_HOST=localhost
-DB_PORT=5432
-DB_NAME=quailcomp
-DB_USER=quailcomp_app
-DB_PASSWORD=your_password
+# For local development with no password:
+DATABASE_URL=postgres://quailcomp_app@localhost:5432/quailcomp
+
+# Or with password:
+DATABASE_URL=postgres://quailcomp_app:your_password@localhost:5432/quailcomp
 ```
+
+Alternatively, you can use individual variables (`DB_HOST`, `DB_PORT`, `DB_NAME`, `DB_USER`, `DB_PASSWORD`), but `DATABASE_URL` takes precedence if set.
 
 The CLI uses the same event-sourced data model as the rest of the application:
 

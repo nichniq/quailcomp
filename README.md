@@ -56,6 +56,14 @@ cd quailcomp
 bun install
 ```
 
+### Configuration
+
+```bash
+cp .env.example .env  # Configure environment variables
+```
+
+Edit `.env` to set `DATABASE_URL` and `JWT_SECRET`. See [Environment Variables](docs/reference/environment-variables.md) for details.
+
 ### Database Setup
 
 ```bash
@@ -66,11 +74,9 @@ bun run db:migrate                   # Run migrations
 ### Running
 
 ```bash
-cd server && bun run dev     # Backend at http://localhost:3000
-cd frontend && bun run dev   # Frontend at http://localhost:5173
+bun run dev:server    # Backend at http://localhost:3000
+bun run dev:frontend  # Frontend at http://localhost:5173
 ```
-
-See [Environment Variables](docs/reference/environment-variables.md) for configuration.
 
 ## Architecture
 

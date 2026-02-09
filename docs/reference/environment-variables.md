@@ -53,11 +53,13 @@ Server configuration is validated using [Zod](https://zod.dev) schemas. Invalid 
 
 ## Environment File
 
-Copy `.env.example` to `.env` and fill in your values:
+Create a `.env` file in the **project root**:
 
 ```bash
 cp .env.example .env
 ```
+
+The root `.env` file is automatically loaded by Bun for all workspace commands. You don't need separate `.env` files in subdirectories unless you run commands directly from those directories.
 
 The `.env.example` file contains all available configuration options with documentation. See [.env.example](../../.env.example:1) for the complete template.
 

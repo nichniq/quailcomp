@@ -83,7 +83,7 @@ See [How to Run Migrations](run-migrations.md) for details.
 
 ## Environment Variables
 
-Create a `.env` file in the project root:
+Create a `.env` file in the **project root**:
 
 ```bash
 cp .env.example .env
@@ -93,24 +93,24 @@ Edit with your configuration:
 
 ```bash
 # Database (required)
-DB_HOST=localhost
-DB_PORT=5432
-DB_NAME=quailcomp
-DB_USER=quailcomp_app
-DB_PASSWORD=your_password
+# For local development with no password:
+DATABASE_URL=postgres://quailcomp_app@localhost:5432/quailcomp
+# Or with password:
+# DATABASE_URL=postgres://quailcomp_app:your_password@localhost:5432/quailcomp
 
-# Authentication (required for server)
-JWT_SECRET=your_jwt_secret_key
+# Authentication (required)
+JWT_SECRET=development-secret-change-me-in-production
 
 # Server (optional)
 PORT=3000
-HOSTNAME=0.0.0.0
+HOST=0.0.0.0
 LOG_LEVEL=info
 
 # Book Metadata Providers (optional)
 GOOGLE_BOOKS_API_KEY=your_google_books_key
-HARDCOVER_API_KEY=your_hardcover_key
 ```
+
+**Note:** The root `.env` file is automatically loaded by all workspace commands (e.g., `bun run dev:server`, `bun run test`). You don't need separate `.env` files in subdirectories unless you run commands directly from those directories.
 
 See [Environment Variables Reference](../reference/environment-variables.md) for the complete list.
 
