@@ -281,4 +281,66 @@ describe("RateLimiter", () => {
       expect(limiter.canAcquire()).toBe(false);
     });
   });
+
+  describe("Concurrent Token Requests", () => {
+    test("maintains fair ordering for concurrent requests", async () => {
+      const limiter = new RateLimiter({ maxTokens: 2, refillRate: 10 });
+
+      const acquisitionOrder: number[] = [];
+
+      // Launch 5 concurrent acquisitions that track order
+      const promises = Array.from({ length: 5 }, (_, index) =>
+        limiter.acquire().then(() => acquisitionOrder.push(index))
+      );
+
+      await Promise.all(promises);
+
+      // All should complete
+      expect(acquisitionOrder.length).toBe(5);
+      // Order should be preserved (FIFO)
+      expect(acquisitionOrder).toEqual([0, 1, 2, 3, 4]);
+    });
+  });
+
+  describe("Refill Timing Precision", () => {
+    test("refills accurately after partial consumption", async () => {
+      const limiter = new RateLimiter({ maxTokens: 10, refillRate: 10 });
+
+      // Use 3 tokens
+      await limiter.acquire();
+      await limiter.acquire();
+      await limiter.acquire();
+
+      // Wait 300ms (should refill 3 tokens at 10 tokens/sec)
+      await new Promise((resolve) => setTimeout(resolve, 300));
+
+      const tokenCount = limiter.getTokenCount();
+
+      // Should be back to 10 tokens (7 remaining + 3 refilled)
+      expect(tokenCount).toBeGreaterThanOrEqual(9.5);
+      expect(tokenCount).toBeLessThanOrEqual(10);
+    });
+
+    test("accumulates refill across multiple periods", async () => {
+      const limiter = new RateLimiter({ maxTokens: 10, refillRate: 10 });
+
+      // Exhaust tokens
+      for (let i = 0; i < 10; i++) {
+        await limiter.acquire();
+      }
+
+      // Wait 100ms, check, wait another 100ms
+      await new Promise((resolve) => setTimeout(resolve, 100));
+      const count1 = limiter.getTokenCount();
+
+      await new Promise((resolve) => setTimeout(resolve, 100));
+      const count2 = limiter.getTokenCount();
+
+      // Both periods should accumulate refill
+      expect(count1).toBeGreaterThanOrEqual(0.9);
+      expect(count1).toBeLessThan(1.5);
+      expect(count2).toBeGreaterThanOrEqual(1.9);
+      expect(count2).toBeLessThan(2.5);
+    });
+  });
 });
