@@ -1,5 +1,6 @@
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, computed } from 'vue'
+import { marked } from 'marked'
 
 const specContent = ref<string>('')
 const loading = ref(true)
@@ -9,6 +10,12 @@ const lastModified = ref<Date | null>(null)
 
 // Filtered content based on search
 const filteredContent = ref<string>('')
+
+// Rendered HTML from markdown
+const renderedHtml = computed(() => {
+  if (!filteredContent.value) return ''
+  return marked(filteredContent.value)
+})
 
 // Load the combined spec file
 async function loadSpec() {
@@ -28,10 +35,10 @@ async function loadSpec() {
     specContent.value = await response.text()
     filteredContent.value = specContent.value
 
-    // Get last modified time
-    const data = await response.json()
-    if (data.lastModified) {
-      lastModified.value = new Date(data.lastModified)
+    // Get last modified time from header
+    const lastModifiedHeader = response.headers.get('X-Last-Modified')
+    if (lastModifiedHeader) {
+      lastModified.value = new Date(parseInt(lastModifiedHeader, 10))
     }
   } catch (err) {
     error.value = String(err)
@@ -128,7 +135,7 @@ onMounted(() => {
 
     <div v-else class="test-specs__viewer">
       <div class="test-specs__viewer-content">
-        <pre class="test-specs__markdown">{{ filteredContent }}</pre>
+        <div class="test-specs__markdown" v-html="renderedHtml"></div>
       </div>
     </div>
   </div>
@@ -246,13 +253,87 @@ onMounted(() => {
 }
 
 .test-specs__markdown {
-  font-family: 'Courier New', monospace;
-  font-size: 0.9rem;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif;
+  font-size: 1rem;
   line-height: 1.6;
-  white-space: pre-wrap;
-  word-wrap: break-word;
+  color: #24292e;
   margin: 0;
-  color: #333;
+}
+
+.test-specs__markdown h1 {
+  font-size: 2rem;
+  font-weight: 600;
+  margin: 0 0 1rem 0;
+  padding-bottom: 0.3rem;
+  border-bottom: 1px solid #eaecef;
+}
+
+.test-specs__markdown h2 {
+  font-size: 1.5rem;
+  font-weight: 600;
+  margin: 1.5rem 0 1rem 0;
+  padding-bottom: 0.3rem;
+  border-bottom: 1px solid #eaecef;
+}
+
+.test-specs__markdown h3 {
+  font-size: 1.25rem;
+  font-weight: 600;
+  margin: 1.25rem 0 0.75rem 0;
+}
+
+.test-specs__markdown h4 {
+  font-size: 1rem;
+  font-weight: 600;
+  margin: 1rem 0 0.5rem 0;
+}
+
+.test-specs__markdown p {
+  margin: 0 0 1rem 0;
+}
+
+.test-specs__markdown ul,
+.test-specs__markdown ol {
+  margin: 0 0 1rem 0;
+  padding-left: 2rem;
+}
+
+.test-specs__markdown li {
+  margin: 0.25rem 0;
+}
+
+.test-specs__markdown code {
+  background: #f6f8fa;
+  padding: 0.2rem 0.4rem;
+  border-radius: 3px;
+  font-family: 'Courier New', monospace;
+  font-size: 0.85rem;
+}
+
+.test-specs__markdown pre {
+  background: #f6f8fa;
+  padding: 1rem;
+  border-radius: 6px;
+  overflow-x: auto;
+  margin: 0 0 1rem 0;
+}
+
+.test-specs__markdown pre code {
+  background: transparent;
+  padding: 0;
+  font-size: 0.85rem;
+}
+
+.test-specs__markdown hr {
+  height: 0.25rem;
+  padding: 0;
+  margin: 1.5rem 0;
+  background-color: #e1e4e8;
+  border: 0;
+}
+
+.test-specs__markdown strong {
+  font-weight: 600;
 }
 
 .test-specs__no-selection {
