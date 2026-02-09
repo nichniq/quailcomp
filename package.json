@@ -45,7 +45,7 @@
     "type-check": "bun run scripts/type-check.ts",
     "dev:server": "bun run --cwd server dev",
     "dev:frontend": "bun run --cwd frontend dev",
-    "devtools": "concurrently \"bun run devtools:watch\" \"bun run devtools/ui/server.ts\" \"bun run devtools:ui:dev\" \"bun run dev:server\" \"bun run dev:frontend\"",
+    "devtools": "concurrently --kill-others-on-fail --kill-signal SIGTERM --kill-timeout 3000 \"bun run devtools:watch\" \"bun run devtools:ui:dev\" \"bun run dev:server\" \"bun run dev:frontend\"",
     "devtools:watch": "bun run devtools/watch/index.ts",
     "devtools:ui:dev": "cd devtools/ui && bun run dev",
     "devtools:ui:build": "cd devtools/ui && bun run build",
