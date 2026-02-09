@@ -382,3 +382,74 @@ describe('ESLint Custom Rules', () => {
     await $`rm -rf .eslint-test-temp`.quiet()
   })
 })
+
+describe('Test Spec Generator', () => {
+  test('generator script exists and exports generateSpecs function', async () => {
+    const taskFile = Bun.file('devtools/watch/tasks/specs-from-tests.ts')
+    expect(await taskFile.exists()).toBe(true)
+
+    const content = await taskFile.text()
+    expect(content).toContain('export async function generateSpecs')
+    expect(content).toContain('parseTestStructure')
+    expect(content).toContain('generateMarkdown')
+  })
+
+  test('generates combined spec file at project root', async () => {
+    // Run the generator
+    const result = await $`bun run devtools/watch/tasks/specs-from-tests.ts`.nothrow()
+
+    // Check that the generator ran successfully
+    expect(result.exitCode).toBe(0)
+
+    // Check that combined spec file was generated
+    const specFile = Bun.file('TEST_SPECIFICATIONS.md')
+    expect(await specFile.exists()).toBe(true)
+
+    const specContent = await specFile.text()
+
+    // Verify combined spec structure
+    expect(specContent).toContain('# Test Specifications')
+    expect(specContent).toContain('**Generated:**')
+    expect(specContent).toContain('**Total Test Files:**')
+
+    // Should contain sections from various test files
+    expect(specContent.length).toBeGreaterThan(1000) // Should have substantial content
+  })
+
+  test('cache prevents unnecessary file writes', async () => {
+    // Run generator first time
+    await $`bun run devtools/watch/tasks/specs-from-tests.ts`.quiet()
+
+    // Get the combined spec file modification time
+    const specPath = 'TEST_SPECIFICATIONS.md'
+    const firstStat = await $`stat -f "%m" ${specPath}`.text()
+
+    // Wait a moment
+    await Bun.sleep(100)
+
+    // Run generator again without changing any test files
+    await $`bun run devtools/watch/tasks/specs-from-tests.ts`.quiet()
+
+    // Get the spec file modification time again
+    const secondStat = await $`stat -f "%m" ${specPath}`.text()
+
+    // File modification time should be the same (not rewritten)
+    expect(firstStat).toBe(secondStat)
+  })
+
+  test('combined spec includes test structure details', async () => {
+    await $`bun run devtools/watch/tasks/specs-from-tests.ts`.quiet()
+
+    const specFile = Bun.file('TEST_SPECIFICATIONS.md')
+    const specContent = await specFile.text()
+
+    // Should have directory groupings
+    expect(specContent).toMatch(/## .+\/tests/)
+
+    // Should have test file sections
+    expect(specContent).toMatch(/### \w+/)
+
+    // Should have test cases
+    expect(specContent).toMatch(/- .+/)
+  })
+})

@@ -9,11 +9,13 @@
  */
 
 import { join, extname } from 'path'
+import { readdir, readFile, stat } from 'fs/promises'
 import { watcherState, onStateChange, triggerRule } from '../watch/index'
 
 const PORT = 3001
 const isDev = process.env.NODE_ENV !== 'production'
 const distDir = join(import.meta.dir, 'dist')
+const projectRoot = join(import.meta.dir, '../..')
 
 // SSE clients
 const sseClients = new Set<ReadableStreamDefaultController>()
@@ -46,6 +48,38 @@ const mimeTypes: Record<string, string> = {
   '.jpg': 'image/jpeg',
   '.svg': 'image/svg+xml',
   '.ico': 'image/x-icon',
+  '.md': 'text/markdown',
+}
+
+/**
+ * Recursively find all .spec.md files
+ */
+async function findSpecFiles(dir: string, depth = 0): Promise<string[]> {
+  if (depth > 10) return []
+
+  try {
+    const entries = await readdir(dir, { withFileTypes: true })
+    const files: string[] = []
+
+    for (const entry of entries) {
+      const fullPath = join(dir, entry.name)
+
+      if (entry.isDirectory()) {
+        // Skip ignored directories
+        if (entry.name === 'node_modules' || entry.name === '.git' || entry.name === 'dist' || entry.name === 'coverage') {
+          continue
+        }
+        const subFiles = await findSpecFiles(fullPath, depth + 1)
+        files.push(...subFiles)
+      } else if (entry.isFile() && entry.name.endsWith('.spec.md')) {
+        files.push(fullPath)
+      }
+    }
+
+    return files
+  } catch {
+    return []
+  }
 }
 
 const server = Bun.serve({
@@ -148,6 +182,25 @@ const server = Bun.serve({
             ...corsHeaders,
           },
         })
+      }
+
+      // GET /api/specs/combined - Get the combined test specification file
+      if (url.pathname === '/api/specs/combined' && req.method === 'GET') {
+        try {
+          const specPath = join(projectRoot, 'TEST_SPECIFICATIONS.md')
+          const content = await readFile(specPath, 'utf-8')
+          const stats = await stat(specPath)
+
+          return new Response(content, {
+            headers: {
+              'Content-Type': 'text/markdown',
+              'X-Last-Modified': stats.mtimeMs.toString(),
+              ...corsHeaders,
+            },
+          })
+        } catch (error) {
+          return Response.json({ error: 'Specification file not found' }, { status: 404, headers: corsHeaders })
+        }
       }
 
       return Response.json({ error: 'Not found' }, { status: 404, headers: corsHeaders })

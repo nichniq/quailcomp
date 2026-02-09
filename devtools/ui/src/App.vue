@@ -1,10 +1,12 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import WatcherStatus from './components/WatcherStatus.vue'
+import TestSpecs from './components/TestSpecs.vue'
 
 const activeTab = ref('watcher')
 const tabs = [
   { id: 'watcher', label: 'Watcher' },
+  { id: 'specs', label: 'Specs' },
   { id: 'metrics', label: 'Metrics' },
   { id: 'admin', label: 'Admin' },
   { id: 'git', label: 'Git' },
@@ -31,6 +33,7 @@ const tabs = [
 
     <main class="devtools__content">
       <WatcherStatus v-if="activeTab === 'watcher'" />
+      <TestSpecs v-else-if="activeTab === 'specs'" />
       <div v-else class="devtools__coming-soon">
         <h2>{{ tabs.find((t) => t.id === activeTab)?.label }}</h2>
         <p>Coming soon...</p>

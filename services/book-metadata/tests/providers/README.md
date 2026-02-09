@@ -17,23 +17,27 @@ Each file tests a specific provider's functionality:
 Each provider test suite covers:
 
 ### Happy Path
+
 - ISBN lookup returns valid metadata
 - Title search returns results
 - API-specific features (e.g., API keys, special parameters)
 
 ### Response Mapping
+
 - Correct parsing of API responses
 - Field transformations (e.g., date formats, language codes)
 - Handling optional fields
 - Array vs. single value normalization
 
 ### Error Handling
+
 - 404 Not Found responses
 - Network errors and timeouts
 - Service unavailable (5xx) responses
 - Invalid API responses
 
 ### Edge Cases
+
 - ISBN normalization (hyphens, spaces)
 - Missing or malformed data
 - Rate limiting

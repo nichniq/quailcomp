@@ -12,6 +12,7 @@ import { extractTypes } from './tasks/types-from-docs'
 import { checkReadmes } from './tasks/check-readmes'
 import { typecheckDomains } from './tasks/typecheck-domains'
 import { lintStaged } from './tasks/lint-staged'
+import { generateSpecs } from './tasks/specs-from-tests'
 
 export const rules: WatchRule[] = [
   {
@@ -21,6 +22,14 @@ export const rules: WatchRule[] = [
     run: extractTypes,
     debounce: 500,
     runOnStart: false,
+  },
+  {
+    name: 'test-spec-generation',
+    description: 'Generate markdown specifications from test files',
+    watch: ['**/*.test.ts', '!**/node_modules/**', '!**/dist/**'],
+    run: generateSpecs,
+    debounce: 500,
+    runOnStart: true,
   },
   {
     name: 'readme-validation',
