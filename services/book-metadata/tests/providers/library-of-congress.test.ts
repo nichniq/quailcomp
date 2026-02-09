@@ -326,13 +326,15 @@ describe("Library of Congress Provider", () => {
     test("normalizes ISBN before lookup", async () => {
       let capturedUrl = "";
 
-      global.fetch = async (url: string | URL | Request) => {
+      const mockFn = async (url: string | URL | Request) => {
         capturedUrl = url.toString();
         return {
           ok: true,
           json: async () => ({ results: [] }),
         } as Response;
       };
+      (mockFn as any).preconnect = () => {};
+      global.fetch = mockFn as typeof fetch;
 
       const provider = createLibraryOfCongressProvider();
       await provider.lookup(sampleISBNs.withHyphens);

@@ -85,13 +85,15 @@ describe("Google Books Provider", () => {
     test("normalizes ISBN before lookup", async () => {
       let capturedUrl = "";
 
-      global.fetch = async (url: string | URL | Request) => {
+      const mockFn = async (url: string | URL | Request) => {
         capturedUrl = url.toString();
         return {
           ok: true,
           json: async () => ({ totalItems: 0 }),
         } as Response;
       };
+      (mockFn as any).preconnect = () => {};
+      global.fetch = mockFn as typeof fetch;
 
       const provider = createGoogleBooksProvider();
       await provider.lookup(sampleISBNs.withHyphens);
@@ -105,13 +107,15 @@ describe("Google Books Provider", () => {
     test("includes API key when provided", async () => {
       let capturedUrl = "";
 
-      global.fetch = async (url: string | URL | Request) => {
+      const mockFn = async (url: string | URL | Request) => {
         capturedUrl = url.toString();
         return {
           ok: true,
           json: async () => ({ totalItems: 0 }),
         } as Response;
       };
+      (mockFn as any).preconnect = () => {};
+      global.fetch = mockFn as typeof fetch;
 
       const provider = createGoogleBooksProvider({ apiKey: "test-key-123" });
       await provider.lookup(sampleISBNs.effectiveJava);
@@ -122,13 +126,15 @@ describe("Google Books Provider", () => {
     test("works without API key", async () => {
       let capturedUrl = "";
 
-      global.fetch = async (url: string | URL | Request) => {
+      const mockFn = async (url: string | URL | Request) => {
         capturedUrl = url.toString();
         return {
           ok: true,
           json: async () => ({ totalItems: 0 }),
         } as Response;
       };
+      (mockFn as any).preconnect = () => {};
+      global.fetch = mockFn as typeof fetch;
 
       const provider = createGoogleBooksProvider();
       await provider.lookup(sampleISBNs.effectiveJava);

@@ -74,7 +74,7 @@ export const sampleBookMetadata: Omit<BookMetadata, "source"> = {
 export function createMockFetch(
   responses: Map<string, Partial<Response> | Error>
 ): typeof fetch {
-  return async (url: string | URL | Request): Promise<Response> => {
+  const mockFn = async (url: string | URL | Request): Promise<Response> => {
     const urlString = url.toString();
 
     for (const [pattern, response] of responses.entries()) {
@@ -103,26 +103,41 @@ export function createMockFetch(
       text: async () => "",
     } as Response;
   };
+
+  // Add preconnect method to satisfy typeof fetch
+  (mockFn as typeof fetch).preconnect = () => {};
+
+  return mockFn as typeof fetch;
 }
 
 /**
  * Creates a mock fetch that simulates an AbortError (timeout)
  */
 export function createTimeoutFetch(): typeof fetch {
-  return async () => {
+  const mockFn = async () => {
     const error = new Error("The operation was aborted");
     error.name = "AbortError";
     throw error;
   };
+
+  // Add preconnect method to satisfy typeof fetch
+  (mockFn as any).preconnect = () => {};
+
+  return mockFn as unknown as typeof fetch;
 }
 
 /**
  * Creates a mock fetch that simulates a network error
  */
 export function createNetworkErrorFetch(): typeof fetch {
-  return async () => {
+  const mockFn = async () => {
     throw new Error("Network request failed");
   };
+
+  // Add preconnect method to satisfy typeof fetch
+  (mockFn as any).preconnect = () => {};
+
+  return mockFn as unknown as typeof fetch;
 }
 
 // =============================================================================

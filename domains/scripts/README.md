@@ -5,6 +5,8 @@ Utilities for domain documentation processing.
 ## Files
 
 - [`extract-types.ts`](extract-types.ts) - Extracts TypeScript types from domain Markdown files
+- [`extract-types.test.ts`](extract-types.test.ts) - Test suite for type extraction
+- [`tsconfig.json`](tsconfig.json) - TypeScript configuration for this directory
 
 ## Extract Types
 

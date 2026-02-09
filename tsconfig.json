@@ -2,6 +2,7 @@
   "files": [],
   "references": [
     { "path": "./domains" },
+    { "path": "./domains/scripts" },
     { "path": "./data/client" },
     { "path": "./services/book-metadata" },
     { "path": "./server" },

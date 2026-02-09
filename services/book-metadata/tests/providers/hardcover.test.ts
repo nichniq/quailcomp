@@ -51,15 +51,17 @@ describe("Hardcover Provider", () => {
         },
       };
 
-      let capturedHeaders: HeadersInit | undefined;
+      let capturedHeaders: RequestInit['headers'] | undefined;
 
-      global.fetch = async (url: string | URL | Request, options?: RequestInit) => {
+      const mockFn = async (url: string | URL | Request, options?: RequestInit) => {
         capturedHeaders = options?.headers;
         return {
           ok: true,
           json: async () => mockResponse,
         } as Response;
       };
+      (mockFn as typeof fetch).preconnect = () => {};
+      global.fetch = mockFn as typeof fetch;
 
       const provider = createHardcoverProvider({ apiKey: "test-key-123" });
       const result = await provider.lookup(sampleISBNs.effectiveJava);
@@ -89,7 +91,7 @@ describe("Hardcover Provider", () => {
       let capturedMethod = "";
       let capturedBody = "";
 
-      global.fetch = async (url: string | URL | Request, options?: RequestInit) => {
+      const mockFn = async (url: string | URL | Request, options?: RequestInit) => {
         capturedMethod = options?.method || "GET";
         capturedBody = options?.body as string;
         return {
@@ -97,6 +99,8 @@ describe("Hardcover Provider", () => {
           json: async () => ({ data: { books: [] } }),
         } as Response;
       };
+      (mockFn as typeof fetch).preconnect = () => {};
+      global.fetch = mockFn as typeof fetch;
 
       const provider = createHardcoverProvider({ apiKey: "test-key" });
       await provider.lookup(sampleISBNs.effectiveJava);

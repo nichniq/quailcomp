@@ -319,13 +319,15 @@ describe("WorldCat Classify Provider", () => {
     test("normalizes ISBN before lookup", async () => {
       let capturedUrl = "";
 
-      global.fetch = async (url: string | URL | Request) => {
+      const mockFn = async (url: string | URL | Request) => {
         capturedUrl = url.toString();
         return {
           ok: true,
           text: async () => `<?xml version="1.0"?><classify><response code="102"/></classify>`,
         } as Response;
       };
+      (mockFn as any).preconnect = () => {};
+      global.fetch = mockFn as typeof fetch;
 
       const provider = createWorldCatClassifyProvider();
       await provider.lookup(sampleISBNs.withHyphens);

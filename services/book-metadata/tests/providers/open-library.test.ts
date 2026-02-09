@@ -50,7 +50,7 @@ describe("OpenLibrary Provider", () => {
         name: "Joshua Bloch",
       };
 
-      global.fetch = async (url: string | URL | Request) => {
+      const mockFn = async (url: string | URL | Request) => {
         const urlString = url.toString();
 
         if (urlString.includes("/isbn/")) {
@@ -70,6 +70,8 @@ describe("OpenLibrary Provider", () => {
 
         return { ok: false, status: 404 } as Response;
       };
+      (mockFn as any).preconnect = () => {};
+      global.fetch = mockFn as typeof fetch;
 
       const provider = createOpenLibraryProvider();
       const result = await provider.lookup(sampleISBNs.effectiveJava);
@@ -104,7 +106,7 @@ describe("OpenLibrary Provider", () => {
 
       const fetchedUrls: string[] = [];
 
-      global.fetch = async (url: string | URL | Request) => {
+      const mockFn = async (url: string | URL | Request) => {
         const urlString = url.toString();
         fetchedUrls.push(urlString);
 
@@ -122,6 +124,8 @@ describe("OpenLibrary Provider", () => {
 
         return { ok: false, status: 404 } as Response;
       };
+      (mockFn as any).preconnect = () => {};
+      global.fetch = mockFn as typeof fetch;
 
       const provider = createOpenLibraryProvider();
       const result = await provider.lookup(sampleISBNs.effectiveJava);
@@ -154,7 +158,7 @@ describe("OpenLibrary Provider", () => {
 
       const fetchedUrls: string[] = [];
 
-      global.fetch = async (url: string | URL | Request) => {
+      const mockFn = async (url: string | URL | Request) => {
         const urlString = url.toString();
         fetchedUrls.push(urlString);
 
@@ -170,6 +174,8 @@ describe("OpenLibrary Provider", () => {
 
         return { ok: false, status: 404 } as Response;
       };
+      (mockFn as any).preconnect = () => {};
+      global.fetch = mockFn as typeof fetch;
 
       const provider = createOpenLibraryProvider();
       const result = await provider.lookup(sampleISBNs.effectiveJava);
@@ -390,7 +396,7 @@ describe("OpenLibrary Provider", () => {
         authors: [{ key: "/authors/OL1A" }],
       };
 
-      global.fetch = async (url: string | URL | Request) => {
+      const mockFn = async (url: string | URL | Request) => {
         const urlString = url.toString();
 
         if (urlString.includes("/isbn/")) {
@@ -404,6 +410,8 @@ describe("OpenLibrary Provider", () => {
 
         return { ok: false, status: 404 } as Response;
       };
+      (mockFn as any).preconnect = () => {};
+      global.fetch = mockFn as typeof fetch;
 
       const provider = createOpenLibraryProvider();
       const result = await provider.lookup(sampleISBNs.effectiveJava);
@@ -425,7 +433,7 @@ describe("OpenLibrary Provider", () => {
         ],
       };
 
-      global.fetch = async (url: string | URL | Request) => {
+      const mockFn = async (url: string | URL | Request) => {
         const urlString = url.toString();
 
         if (urlString.includes("/isbn/")) {
@@ -447,6 +455,8 @@ describe("OpenLibrary Provider", () => {
 
         return { ok: false, status: 404 } as Response;
       };
+      (mockFn as any).preconnect = () => {};
+      global.fetch = mockFn as typeof fetch;
 
       const provider = createOpenLibraryProvider();
       const result = await provider.lookup(sampleISBNs.effectiveJava);
@@ -497,7 +507,7 @@ describe("OpenLibrary Provider", () => {
         authors: [{ key: "/authors/OL1A" }],
       };
 
-      global.fetch = async (url: string | URL | Request) => {
+      const mockFn = async (url: string | URL | Request) => {
         const urlString = url.toString();
 
         if (urlString.includes("/isbn/")) {
@@ -511,6 +521,8 @@ describe("OpenLibrary Provider", () => {
 
         return { ok: false, status: 404 } as Response;
       };
+      (mockFn as any).preconnect = () => {};
+      global.fetch = mockFn as typeof fetch;
 
       const provider = createOpenLibraryProvider();
       const result = await provider.lookup(sampleISBNs.effectiveJava);
