@@ -203,20 +203,21 @@ const server = Bun.serve({
         }
       }
 
-      // GET /api/coverage - Get the HTML coverage report
+      // GET /api/coverage - Get the coverage data (lcov format)
       if (url.pathname === '/api/coverage' && req.method === 'GET') {
         try {
-          const coveragePath = join(projectRoot, 'coverage/index.html')
-          const content = await readFile(coveragePath, 'utf-8')
-          const stats = await stat(coveragePath)
+          const lcovPath = join(projectRoot, 'coverage/lcov.info')
+          const lcovContent = await readFile(lcovPath, 'utf-8')
+          const stats = await stat(lcovPath)
 
-          return new Response(content, {
-            headers: {
-              'Content-Type': 'text/html',
-              'X-Last-Modified': stats.mtimeMs.toString(),
-              ...corsHeaders,
+          // Return as JSON for now - we'll parse and display in the UI
+          return Response.json(
+            {
+              lcov: lcovContent,
+              lastModified: stats.mtimeMs,
             },
-          })
+            { headers: corsHeaders }
+          )
         } catch (error) {
           return Response.json(
             { error: 'Coverage report not found. Run "bun test --coverage" to generate it.' },
@@ -238,12 +239,14 @@ const server = Bun.serve({
           // Wait for process to complete
           const exitCode = await proc.exited
 
+          // Coverage is generated even if tests fail, so always return success
+          // Just include a note if tests failed
           if (exitCode === 0) {
-            return Response.json({ success: true, message: 'Coverage report generated' }, { headers: corsHeaders })
+            return Response.json({ success: true, message: 'Coverage report generated - all tests passed' }, { headers: corsHeaders })
           } else {
             return Response.json(
-              { success: false, error: `Tests failed with exit code ${exitCode}` },
-              { status: 500, headers: corsHeaders }
+              { success: true, message: `Coverage generated but ${exitCode} tests failed`, testsFailedCount: exitCode },
+              { headers: corsHeaders }
             )
           }
         } catch (error) {
