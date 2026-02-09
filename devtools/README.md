@@ -56,6 +56,12 @@ A Vue 3 web application for monitoring and controlling the watch system.
 - TypeScript
 - Server-Sent Events (SSE) for real-time updates
 
+**Pages:**
+
+- **Watcher** - Real-time status monitoring of all watch rules, manual task triggering, execution history with logs
+- **Specs** - Browse and search test specifications from `TEST_SPECIFICATIONS.md`
+- **Coverage** - View and generate HTML test coverage reports
+
 **Features:**
 
 - Real-time status monitoring of all watch rules
@@ -63,6 +69,8 @@ A Vue 3 web application for monitoring and controlling the watch system.
 - Execution history with logs
 - Relative timestamps ("2s ago")
 - Status indicators (success, error, warning, running, idle)
+- Test coverage report generation and viewing
+- Test specification browsing with search
 
 **Ports:**
 
@@ -216,6 +224,55 @@ Manually trigger a watch rule.
 ### GET /api/watcher/events
 
 Server-Sent Events stream for real-time updates.
+
+### GET /api/specs/combined
+
+Returns the combined test specification markdown file.
+
+**Response Headers:**
+
+- `Content-Type: text/markdown`
+- `X-Last-Modified: <timestamp>` - Milliseconds since epoch
+
+### GET /api/coverage
+
+Returns the HTML coverage report from `coverage/index.html`.
+
+**Response Headers:**
+
+- `Content-Type: text/html`
+- `X-Last-Modified: <timestamp>` - Milliseconds since epoch
+
+**Error Response (404):**
+
+```json
+{
+  "error": "Coverage report not found. Run \"bun test --coverage\" to generate it."
+}
+```
+
+### POST /api/coverage/generate
+
+Generates a new coverage report by running `bun test --coverage`.
+
+**Success Response:**
+
+```json
+{
+  "success": true,
+  "message": "Coverage report generated"
+}
+```
+
+**Error Response (500):**
+
+```json
+{
+  "success": false,
+  "error": "Tests failed",
+  "stderr": "..."
+}
+```
 
 ## Relationship to Git Hooks
 
