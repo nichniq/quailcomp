@@ -7,10 +7,12 @@
 Running `bun run typecheck` shows TypeScript errors in workspace packages (`@quailcomp/data` and `@quailcomp/book-metadata`) when type-checked from the server package.
 
 **Example errors:**
+
 ```
 ../data/client/src/db/entities.ts(10,36): error TS2307: Cannot find module '@/errors'
 ../services/book-metadata/providers/composite.ts(13,8): error TS2307: Cannot find module '@/types'
 ```
+
 
 ### Root Cause
 
@@ -54,10 +56,12 @@ This is a significant refactoring that affects the build pipeline and is out of 
 This is a known limitation of the current TypeScript configuration. Since it doesn't affect runtime behavior or individual package development, it can be safely ignored until TypeScript Project References are implemented project-wide.
 
 **For development:**
+
 - Use individual package typecheck commands: `bun run typecheck:server`, `typecheck:data`, etc.
 - These run correctly and catch real type errors
 - Only the cross-package monorepo-wide check has issues
 
 **For CI:**
+
 - Consider running individual package typechecks instead of the monorepo-wide check
 - Or accept the known cross-package errors (they're consistent and not real bugs)
