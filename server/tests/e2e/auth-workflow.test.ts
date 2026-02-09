@@ -12,6 +12,8 @@ import { describe, test, expect, beforeAll, afterAll } from "bun:test";
 import { createServer, type ServerInstance } from "@/server";
 import { getConnection } from "@quailcomp/data";
 import type { Sql } from "@quailcomp/data";
+import type { AuthResponse, User } from "@domains/types/authentication";
+import type { ErrorResponse } from "@/middleware/error-types";
 
 let server: ServerInstance;
 let baseUrl: string;
@@ -43,7 +45,7 @@ describe("E2E Authentication Workflow", () => {
 
     expect(response.status).toBe(201);
 
-    const data = await response.json();
+    const data = (await response.json()) as AuthResponse;
     expect(data.user.email).toBe(email);
     expect(data.user.username).toBe(username);
     expect(data.user.userId).toBeGreaterThan(0);
@@ -74,7 +76,7 @@ describe("E2E Authentication Workflow", () => {
     });
     expect(response2.status).toBe(400);
 
-    const error = await response2.json();
+    const error = (await response2.json()) as ErrorResponse;
     expect(error.error).toContain("Email already registered");
   });
 
@@ -90,7 +92,7 @@ describe("E2E Authentication Workflow", () => {
 
     expect(response.status).toBe(400);
 
-    const error = await response.json();
+    const error = (await response.json()) as ErrorResponse;
     expect(error.error).toContain("at least 12 characters");
   });
 
@@ -106,7 +108,7 @@ describe("E2E Authentication Workflow", () => {
 
     expect(response.status).toBe(400);
 
-    const error = await response.json();
+    const error = (await response.json()) as ErrorResponse;
     expect(error.error).toContain("Invalid email");
   });
 
@@ -133,7 +135,7 @@ describe("E2E Authentication Workflow", () => {
 
     expect(response.status).toBe(200);
 
-    const data = await response.json();
+    const data = (await response.json()) as AuthResponse;
     expect(data.user.email).toBe(email);
     expect(data.token).toBeDefined();
     expect(data.expiresAt).toBeDefined();
@@ -160,7 +162,7 @@ describe("E2E Authentication Workflow", () => {
 
     expect(response.status).toBe(200);
 
-    const data = await response.json();
+    const data = (await response.json()) as AuthResponse;
     expect(data.user.username).toBe(username);
     expect(data.token).toBeDefined();
   });
@@ -185,7 +187,7 @@ describe("E2E Authentication Workflow", () => {
 
     expect(response.status).toBe(401);
 
-    const error = await response.json();
+    const error = (await response.json()) as ErrorResponse;
     expect(error.error).toContain("Invalid credentials");
   });
 
@@ -201,7 +203,7 @@ describe("E2E Authentication Workflow", () => {
 
     expect(response.status).toBe(401);
 
-    const error = await response.json();
+    const error = (await response.json()) as ErrorResponse;
     expect(error.error).toContain("Invalid credentials");
   });
 
@@ -216,7 +218,7 @@ describe("E2E Authentication Workflow", () => {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ email, password, username }),
     });
-    const { token } = await registerResponse.json();
+    const { token } = (await registerResponse.json()) as AuthResponse;
 
     // Get current user info
     const response = await fetch(`${baseUrl}/auth/me`, {
@@ -225,7 +227,7 @@ describe("E2E Authentication Workflow", () => {
 
     expect(response.status).toBe(200);
 
-    const { user } = await response.json();
+    const { user } = (await response.json()) as { user: User };
     expect(user.email).toBe(email);
     expect(user.username).toBe(username);
     expect(user.userId).toBeGreaterThan(0);
@@ -236,7 +238,7 @@ describe("E2E Authentication Workflow", () => {
 
     expect(response.status).toBe(401);
 
-    const error = await response.json();
+    const error = (await response.json()) as ErrorResponse;
     expect(error.error).toContain("Authentication required");
   });
 
@@ -247,7 +249,7 @@ describe("E2E Authentication Workflow", () => {
 
     expect(response.status).toBe(401);
 
-    const error = await response.json();
+    const error = (await response.json()) as ErrorResponse;
     expect(error.error).toContain("Invalid or expired token");
   });
 
@@ -258,7 +260,7 @@ describe("E2E Authentication Workflow", () => {
 
     expect(response.status).toBe(401);
 
-    const error = await response.json();
+    const error = (await response.json()) as ErrorResponse;
     expect(error.error).toContain("Authentication required");
   });
 
@@ -274,7 +276,7 @@ describe("E2E Authentication Workflow", () => {
       body: JSON.stringify({ email, password, username }),
     });
     expect(registerResponse.status).toBe(201);
-    const registerData = await registerResponse.json();
+    const registerData = (await registerResponse.json()) as AuthResponse;
     const registeredUserId = registerData.user.userId;
 
     // Step 2: Login
@@ -285,7 +287,7 @@ describe("E2E Authentication Workflow", () => {
       body: JSON.stringify({ identifier: email, password }),
     });
     expect(loginResponse.status).toBe(200);
-    const loginData = await loginResponse.json();
+    const loginData = (await loginResponse.json()) as AuthResponse;
     const loginToken = loginData.token;
 
     // Step 3: Get current user
@@ -293,7 +295,7 @@ describe("E2E Authentication Workflow", () => {
       headers: { Authorization: `Bearer ${loginToken}` },
     });
     expect(meResponse.status).toBe(200);
-    const meData = await meResponse.json();
+    const meData = (await meResponse.json()) as { user: User };
     expect(meData.user.userId).toBe(registeredUserId);
     expect(meData.user.email).toBe(email);
     expect(meData.user.username).toBe(username);

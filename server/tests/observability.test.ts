@@ -6,7 +6,8 @@
 
 import { describe, expect, test, beforeAll, afterAll } from "bun:test";
 import { createServer, type ServerInstance } from "@/server";
-import { metrics } from "@/metrics/collector";
+import { metrics, type MetricsSnapshot } from "@/metrics/collector";
+import type { ErrorResponse } from "@/middleware/error-types";
 
 describe("Observability", () => {
   let server: ServerInstance;
@@ -49,7 +50,7 @@ describe("Observability", () => {
     expect(response.status).toBe(200);
     expect(response.headers.get("content-type")).toContain("application/json");
 
-    const data = await response.json();
+    const data = (await response.json()) as MetricsSnapshot;
 
     // Should have metrics structure
     expect(data).toHaveProperty("counters");

@@ -122,7 +122,7 @@ export function registerBookRoutes(router: Router, sql: Sql): void {
         accessibleIds.has(book.entityId)
       );
 
-      let content: BodyInit;
+      let content: string | Blob | Uint8Array;
       let contentType: string;
       let filename: string;
 
@@ -475,7 +475,7 @@ export function registerBookRoutes(router: Router, sql: Sql): void {
         );
       }
 
-      let formData: FormData;
+      let formData: Awaited<ReturnType<Request["formData"]>>;
 
       try {
         formData = await req.formData();

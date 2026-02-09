@@ -257,14 +257,14 @@ describe('Auth Store', () => {
 
     test('returns false when only user exists', () => {
       const store = useAuthStore();
-      store.user = { userId: 1, email: 'test@example.com' };
+      store.user = { userId: 1, email: 'test@example.com', username: null };
 
       expect(store.isAuthenticated).toBe(false);
     });
 
     test('returns true when both user and token exist', () => {
       const store = useAuthStore();
-      store.user = { userId: 1, email: 'test@example.com' };
+      store.user = { userId: 1, email: 'test@example.com', username: null };
       store.token = 'token';
 
       expect(store.isAuthenticated).toBe(true);

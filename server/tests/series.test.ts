@@ -20,6 +20,8 @@ import { compose } from "@/middleware/compose";
 import { createContext, type RequestContext } from "@/context";
 import type { SeriesEntitySnapshot } from "@domains/types/series";
 import type { BookEntitySnapshot } from "@domains/types/books";
+import type { Entry } from "@domains/types/entities";
+import type { ErrorResponse } from "@domains/types/errors";
 import { signToken } from "@/auth/jwt";
 import { AuthService } from "@/auth/service";
 
@@ -111,7 +113,7 @@ describe("Series Routes", () => {
       const response = await callRoute("GET", "/series", ctx, request);
 
       expect(response.status).toBe(200);
-      const data = await response.json();
+      const data = (await response.json()) as { series: Entry<SeriesEntitySnapshot>[] };
       expect(data.series).toBeDefined();
       expect(Array.isArray(data.series)).toBe(true);
     });
@@ -142,13 +144,13 @@ describe("Series Routes", () => {
       const response = await callRoute("GET", "/series", ctx, request);
 
       expect(response.status).toBe(200);
-      const data = await response.json();
+      const data = (await response.json()) as { series: Entry<SeriesEntitySnapshot>[] };
       expect(data.series.length).toBeGreaterThanOrEqual(1);
 
       // Find our test series
-      const testSeries = data.series.find((s: any) => s.entityId === Number(series.entity_id));
+      const testSeries = data.series.find((s) => s.entityId === Number(series.entity_id));
       expect(testSeries).toBeDefined();
-      expect(testSeries.data.name).toBe(seriesData.name);
+      expect(testSeries?.data.name).toBe(seriesData.name);
 
       // Clean up
       await sql`DELETE FROM entity_access WHERE entity_id = ${series.entity_id}`;
@@ -179,10 +181,10 @@ describe("Series Routes", () => {
       const response = await callRoute("GET", "/series", ctx, request);
 
       expect(response.status).toBe(200);
-      const data = await response.json();
+      const data = (await response.json()) as { series: Entry<SeriesEntitySnapshot>[] };
 
       // Deleted series should not appear in results
-      const deletedSeries = data.series.find((s: any) => s.entityId === series.entity_id);
+      const deletedSeries = data.series.find((s) => s.entityId === series.entity_id);
       expect(deletedSeries).toBeUndefined();
 
       // Clean up
@@ -197,7 +199,7 @@ describe("Series Routes", () => {
       const response = await callRoute("GET", "/series", ctx, request);
 
       expect(response.status).toBe(401);
-      const data = await response.json();
+      const data = (await response.json()) as ErrorResponse;
       expect(data.error).toBe("Authentication required");
     });
   });
@@ -228,7 +230,7 @@ describe("Series Routes", () => {
       const response = await callRoute("GET", `/series/${series.entity_id}`, ctx, request);
 
       expect(response.status).toBe(200);
-      const data = await response.json();
+      const data = (await response.json()) as { series: Entry<SeriesEntitySnapshot> };
       expect(data.series).toBeDefined();
       expect(data.series.entityId).toBe(Number(series.entity_id));
       expect(data.series.data.name).toBe(seriesData.name);
@@ -247,7 +249,7 @@ describe("Series Routes", () => {
       const response = await callRoute("GET", `/series/${nonExistentId}`, ctx, request);
 
       expect(response.status).toBe(404);
-      const data = await response.json();
+      const data = (await response.json()) as ErrorResponse;
       expect(data.error).toBe("Not found");
     });
 
@@ -299,7 +301,7 @@ describe("Series Routes", () => {
       const response = await callRoute("POST", "/series", ctx, request);
 
       expect(response.status).toBe(201);
-      const data = await response.json();
+      const data = (await response.json()) as { series: Entry<SeriesEntitySnapshot> };
       expect(data.series).toBeDefined();
       expect(data.series.entityId).toBeDefined();
       expect(data.series.data.name).toBe(seriesData.name);
@@ -324,7 +326,7 @@ describe("Series Routes", () => {
       const response = await callRoute("POST", "/series", ctx, request);
 
       expect(response.status).toBe(201);
-      const data = await response.json();
+      const data = (await response.json()) as { series: Entry<SeriesEntitySnapshot> };
       expect(data.series).toBeDefined();
       expect(data.series.data.name).toBe(seriesData.name);
       expect(data.series.data.total_volumes).toBeUndefined();
@@ -351,7 +353,7 @@ describe("Series Routes", () => {
       const response = await callRoute("POST", "/series", ctx, request);
 
       expect(response.status).toBe(201);
-      const data = await response.json();
+      const data = (await response.json()) as { series: Entry<SeriesEntitySnapshot> };
       const seriesId = data.series.entityId;
 
       // Verify owner access was granted
@@ -383,7 +385,7 @@ describe("Series Routes", () => {
       const response = await callRoute("POST", "/series", ctx, request);
 
       expect(response.status).toBe(400);
-      const data = await response.json();
+      const data = (await response.json()) as ErrorResponse;
       expect(data.error).toBe("Name is required");
       expect(data.code).toBe("MISSING_NAME");
     });
@@ -404,7 +406,7 @@ describe("Series Routes", () => {
       const response = await callRoute("POST", "/series", ctx, request);
 
       expect(response.status).toBe(400);
-      const data = await response.json();
+      const data = (await response.json()) as ErrorResponse;
       expect(data.error).toBe("Total volumes must be a positive integer");
       expect(data.code).toBe("INVALID_TOTAL_VOLUMES");
     });
@@ -463,7 +465,7 @@ describe("Series Routes", () => {
       const response = await callRoute("PUT", `/series/${series.entity_id}`, ctx, request);
 
       expect(response.status).toBe(200);
-      const data = await response.json();
+      const data = (await response.json()) as { series: Entry<SeriesEntitySnapshot> };
       expect(data.series.data.name).toBe(originalData.name); // Unchanged
       expect(data.series.data.total_volumes).toBe(originalData.total_volumes); // Unchanged
       expect(data.series.data.notes).toBe("Updated notes"); // Changed
@@ -506,7 +508,7 @@ describe("Series Routes", () => {
       const response = await callRoute("PUT", `/series/${series.entity_id}`, ctx, request);
 
       expect(response.status).toBe(200);
-      const data = await response.json();
+      const data = (await response.json()) as { series: Entry<SeriesEntitySnapshot> };
       expect(data.series.data.name).toBe(updateData.name);
       expect(data.series.data.total_volumes).toBe(originalData.total_volumes);
       expect(data.series.data.notes).toBe(originalData.notes);
@@ -757,7 +759,9 @@ describe("Series Routes", () => {
       const response = await callRoute("GET", `/series/${series.entity_id}/books`, ctx, request);
 
       expect(response.status).toBe(200);
-      const data = await response.json();
+      const data = (await response.json()) as {
+        books: Array<Entry<BookEntitySnapshot> & { volume_number?: number; volume_name?: string }>
+      };
       expect(data.books).toBeDefined();
       expect(data.books.length).toBe(3);
 
@@ -798,7 +802,9 @@ describe("Series Routes", () => {
       const response = await callRoute("GET", `/series/${series.entity_id}/books`, ctx, request);
 
       expect(response.status).toBe(200);
-      const data = await response.json();
+      const data = (await response.json()) as {
+        books: Array<Entry<BookEntitySnapshot> & { volume_number?: number; volume_name?: string }>
+      };
       expect(data.books).toEqual([]);
 
       // Clean up
@@ -860,7 +866,9 @@ describe("Series Routes", () => {
       const response = await callRoute("GET", `/series/${series.entity_id}/books`, ctx, request);
 
       expect(response.status).toBe(200);
-      const data = await response.json();
+      const data = (await response.json()) as {
+        books: Array<Entry<BookEntitySnapshot> & { volume_number?: number; volume_name?: string }>
+      };
       expect(data.books.length).toBe(2);
 
       // Book with volume number should come first

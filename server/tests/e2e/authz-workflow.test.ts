@@ -12,6 +12,10 @@ import { describe, test, expect, beforeAll, afterAll } from "bun:test";
 import { createServer, type ServerInstance } from "@/server";
 import { getConnection } from "@quailcomp/data";
 import type { Sql } from "@quailcomp/data";
+import type { AuthResponse } from "@domains/types/authentication";
+import type { ErrorResponse } from "@/middleware/error-types";
+import type { Entry } from "@quailcomp/data";
+import type { BookEntitySnapshot } from "@domains/types/books";
 
 let server: ServerInstance;
 let baseUrl: string;
@@ -37,14 +41,14 @@ async function registerUser(email: string, password: string): Promise<{ userId: 
     body: JSON.stringify({ email, password }),
   });
 
-  const data = await response.json();
+  const data = (await response.json()) as AuthResponse;
   return { userId: data.user.userId, token: data.token };
 }
 
 /**
  * Helper to create a book (entity) and return its ID
  */
-async function createBook(token: string, bookData: any): Promise<number> {
+async function createBook(token: string, bookData: Record<string, unknown>): Promise<number> {
   const response = await fetch(`${baseUrl}/books`, {
     method: "POST",
     headers: {
@@ -54,7 +58,7 @@ async function createBook(token: string, bookData: any): Promise<number> {
     body: JSON.stringify(bookData),
   });
 
-  const { book } = await response.json();
+  const { book } = (await response.json()) as { book: Entry<BookEntitySnapshot> };
   return book.entityId;
 }
 
@@ -113,7 +117,7 @@ describe("E2E Authorization Workflow", () => {
     });
 
     expect(response.status).toBe(403);
-    const error = await response.json();
+    const error = (await response.json()) as ErrorResponse;
     expect(error.error).toBe("Access denied");
   });
 
@@ -523,11 +527,16 @@ describe("E2E Authorization Workflow", () => {
     });
     expect(response.status).toBe(200);
 
-    const { accessors } = await response.json();
+    interface Accessor {
+      userId: number;
+      accessLevel: string;
+    }
+
+    const { accessors } = (await response.json()) as { accessors: Accessor[] };
     expect(accessors.length).toBe(3); // owner, reader, writer
-    expect(accessors.some((a: any) => a.userId === owner.userId && a.accessLevel === "owner")).toBe(true);
-    expect(accessors.some((a: any) => a.userId === reader.userId && a.accessLevel === "read")).toBe(true);
-    expect(accessors.some((a: any) => a.userId === writer.userId && a.accessLevel === "write")).toBe(true);
+    expect(accessors.some((a) => a.userId === owner.userId && a.accessLevel === "owner")).toBe(true);
+    expect(accessors.some((a) => a.userId === reader.userId && a.accessLevel === "read")).toBe(true);
+    expect(accessors.some((a) => a.userId === writer.userId && a.accessLevel === "write")).toBe(true);
   });
 
   test("user without access cannot list accessors", async () => {
@@ -564,16 +573,16 @@ describe("E2E Authorization Workflow", () => {
     const user1Response = await fetch(`${baseUrl}/books`, {
       headers: { Authorization: `Bearer ${user1.token}` },
     });
-    const { books: user1Books } = await user1Response.json();
-    expect(user1Books.some((b: any) => b.entityId === book1Id)).toBe(true);
-    expect(user1Books.some((b: any) => b.entityId === book2Id)).toBe(false);
+    const { books: user1Books } = (await user1Response.json()) as { books: Entry<BookEntitySnapshot>[] };
+    expect(user1Books.some((b) => b.entityId === book1Id)).toBe(true);
+    expect(user1Books.some((b) => b.entityId === book2Id)).toBe(false);
 
     // User 2 lists books
     const user2Response = await fetch(`${baseUrl}/books`, {
       headers: { Authorization: `Bearer ${user2.token}` },
     });
-    const { books: user2Books } = await user2Response.json();
-    expect(user2Books.some((b: any) => b.entityId === book2Id)).toBe(true);
-    expect(user2Books.some((b: any) => b.entityId === book1Id)).toBe(false);
+    const { books: user2Books } = (await user2Response.json()) as { books: Entry<BookEntitySnapshot>[] };
+    expect(user2Books.some((b) => b.entityId === book2Id)).toBe(true);
+    expect(user2Books.some((b) => b.entityId === book1Id)).toBe(false);
   });
 });

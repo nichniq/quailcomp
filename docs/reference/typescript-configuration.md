@@ -7,10 +7,13 @@ The monorepo uses [TypeScript Project References](https://www.typescriptlang.org
 ### Architecture
 
 **Shared Base Configuration:**
+
 - `tsconfig.base.json` - Common compiler options for all packages
 
 **Composite Packages:**
+
 All workspace packages use `composite: true` mode:
+
 - `domains/` - Domain type definitions
 - `data/client/` - Data layer (@quailcomp/data)
 - `services/book-metadata/` - Book metadata service
@@ -19,6 +22,7 @@ All workspace packages use `composite: true` mode:
 - `frontend/` - Vue frontend
 
 **Dependency Graph:**
+
 ```
 domains (base types)
   ↓
@@ -40,6 +44,7 @@ frontend → domains
 ### Usage
 
 **Monorepo-wide typecheck:**
+
 ```bash
 bun run typecheck          # Build all packages in dependency order
 bun run typecheck:force    # Clean rebuild
@@ -47,6 +52,7 @@ bun run typecheck:clean    # Remove build artifacts
 ```
 
 **Individual package typecheck:**
+
 ```bash
 bun run typecheck:data
 bun run typecheck:server
@@ -58,6 +64,7 @@ bun run typecheck:metadata
 ### Build Artifacts
 
 TypeScript generates these files (gitignored):
+
 - `*.tsbuildinfo` - Incremental build cache
 - `dist/` - Declaration files for library packages
 - `dist-types/` - Declaration files for CLI/frontend (separate from bundle output)
@@ -68,16 +75,19 @@ TypeScript generates these files (gitignored):
 Packages use different path mapping strategies:
 
 **Standard packages** (data, server):
+
 - `@/*` → local `./src/*`
 - `@domains/types/*` → `../domains/dist/*` (declaration files)
 
 **CLI** (unique style):
+
 - `@quailcomp/data` → `../data/client/src`
 - `@quailcomp/book-metadata` → `../services/book-metadata`
 - `@domains/types/*` → `../domains/dist/*`
 - `@cli/*` → `./src/*`
 
 **Frontend**:
+
 - `@/*` → `./src/*`
 - `@domains/types/*` → `../domains/dist/*`
 

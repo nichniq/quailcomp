@@ -18,6 +18,8 @@ import { registerBookRoutes } from "@/routes/books";
 import { compose } from "@/middleware/compose";
 import { errorHandler } from "@/middleware/error-handler";
 import type { BookEntitySnapshot } from "@domains/types/books";
+import type { Entry } from "@domains/types/entities";
+import type { ErrorResponse } from "@domains/types/errors";
 import { signToken } from "@/auth/jwt";
 
 // Test database setup
@@ -39,7 +41,7 @@ describe("healthHandler", () => {
     const response = await healthHandler(ctx, request);
 
     expect(response.status).toBe(200);
-    const data = await response.json();
+    const data = (await response.json()) as { status: string; database: string; timestamp: string };
     expect(data.status).toBe("healthy");
     expect(data.database).toBe("connected");
     expect(data.timestamp).toBeDefined();
@@ -72,7 +74,7 @@ describe("healthHandler", () => {
     const response = await healthHandler(ctx, request);
 
     expect(response.status).toBe(503);
-    const data = await response.json();
+    const data = (await response.json()) as { status: string; database: string };
     expect(data.status).toBe("unhealthy");
     expect(data.database).toBe("disconnected");
   });
@@ -176,7 +178,7 @@ describe("Books routes", () => {
       const response = await callRoute("GET", "/books", ctx, request);
 
       expect(response.status).toBe(200);
-      const data = await response.json();
+      const data = (await response.json()) as { books: Entry<BookEntitySnapshot>[] };
       expect(data.books).toBeDefined();
       expect(Array.isArray(data.books)).toBe(true);
     });
@@ -209,7 +211,7 @@ describe("Books routes", () => {
       const response = await callRoute("POST", "/books", ctx, request);
 
       expect(response.status).toBe(201);
-      const data = await response.json();
+      const data = (await response.json()) as { book: Entry<BookEntitySnapshot> };
       expect(data.book).toBeDefined();
       expect(data.book.entityId).toBeDefined();
       expect(data.book.data.title).toBe("Test Book");
@@ -229,7 +231,7 @@ describe("Books routes", () => {
       const response = await callRoute("POST", "/books", ctx, request);
 
       expect(response.status).toBe(400);
-      const data = await response.json();
+      const data = (await response.json()) as ErrorResponse;
       expect(data.error).toBe("Invalid JSON body");
       expect(data.code).toBe("INVALID_BODY");
     });
@@ -260,7 +262,7 @@ describe("Books routes", () => {
       const response = await callRoute("GET", `/books/${testBookId}`, ctx, request);
 
       expect(response.status).toBe(200);
-      const data = await response.json();
+      const data = (await response.json()) as { book: Entry<BookEntitySnapshot> };
       expect(data.book).toBeDefined();
       expect(data.book.entityId).toBe(testBookId);
       expect(data.book.data.title).toBe("Test Book");
@@ -273,7 +275,7 @@ describe("Books routes", () => {
       const response = await callRoute("GET", "/books/invalid", ctx, request);
 
       expect(response.status).toBe(400);
-      const data = await response.json();
+      const data = (await response.json()) as ErrorResponse;
       expect(data.error).toBe("Invalid book ID");
       expect(data.code).toBe("INVALID_ID");
     });
@@ -286,7 +288,7 @@ describe("Books routes", () => {
       const response = await callRoute("GET", `/books/${nonExistentId}`, ctx, request);
 
       expect(response.status).toBe(404);
-      const data = await response.json();
+      const data = (await response.json()) as ErrorResponse;
       expect(data.error).toBe("Not found");
       expect(data.code).toBe("NOT_FOUND");
     });
@@ -319,7 +321,7 @@ describe("Books routes", () => {
       const response = await callRoute("PUT", `/books/${testBookId}`, ctx, request);
 
       expect(response.status).toBe(200);
-      const data = await response.json();
+      const data = (await response.json()) as { book: Entry<BookEntitySnapshot> };
       expect(data.book.data.title).toBe("Updated Test Book");
       expect(data.book.data.author).toBe("Updated Author");
     });
@@ -334,7 +336,7 @@ describe("Books routes", () => {
       const response = await callRoute("PUT", "/books/invalid", ctx, request);
 
       expect(response.status).toBe(400);
-      const data = await response.json();
+      const data = (await response.json()) as ErrorResponse;
       expect(data.code).toBe("INVALID_ID");
     });
 
@@ -349,7 +351,7 @@ describe("Books routes", () => {
       const response = await callRoute("PUT", `/books/${nonExistentId}`, ctx, request);
 
       expect(response.status).toBe(404);
-      const data = await response.json();
+      const data = (await response.json()) as ErrorResponse;
       expect(data.code).toBe("NOT_FOUND");
     });
 
@@ -363,7 +365,7 @@ describe("Books routes", () => {
       const response = await callRoute("PUT", `/books/${testBookId}`, ctx, request);
 
       expect(response.status).toBe(400);
-      const data = await response.json();
+      const data = (await response.json()) as ErrorResponse;
       expect(data.code).toBe("INVALID_BODY");
     });
 
@@ -390,7 +392,7 @@ describe("Books routes", () => {
       const response = await callRoute("DELETE", `/books/${testBookId}`, ctx, request);
 
       expect(response.status).toBe(200);
-      const { book } = await response.json();
+      const { book } = (await response.json()) as { book: Entry<BookEntitySnapshot> };
       expect(book.deletedAt).not.toBeNull();
 
       // Verify book is soft deleted (deleted_at is set in the latest entry)
@@ -412,7 +414,7 @@ describe("Books routes", () => {
       const response = await callRoute("DELETE", "/books/invalid", ctx, request);
 
       expect(response.status).toBe(400);
-      const data = await response.json();
+      const data = (await response.json()) as ErrorResponse;
       expect(data.code).toBe("INVALID_ID");
     });
 
@@ -426,7 +428,7 @@ describe("Books routes", () => {
       const response = await callRoute("DELETE", `/books/${nonExistentId}`, ctx, request);
 
       expect(response.status).toBe(404);
-      const data = await response.json();
+      const data = (await response.json()) as ErrorResponse;
       expect(data.code).toBe("NOT_FOUND");
     });
 
@@ -467,7 +469,7 @@ describe("Books routes", () => {
       const response = await callRoute("POST", "/books/metadata/lookup", ctx, request);
 
       expect(response.status).toBe(400);
-      const data = await response.json();
+      const data = (await response.json()) as ErrorResponse;
       expect(data.error).toBe("Invalid ISBN format");
       expect(data.code).toBe("INVALID_ISBN");
     });
@@ -483,7 +485,7 @@ describe("Books routes", () => {
       const response = await callRoute("POST", "/books/metadata/lookup", ctx, request);
 
       expect(response.status).toBe(400);
-      const data = await response.json();
+      const data = (await response.json()) as ErrorResponse;
       expect(data.code).toBe("MISSING_FIELDS");
     });
 
@@ -498,7 +500,7 @@ describe("Books routes", () => {
       const response = await callRoute("POST", "/books/metadata/lookup", ctx, request);
 
       expect(response.status).toBe(400);
-      const data = await response.json();
+      const data = (await response.json()) as ErrorResponse;
       expect(data.code).toBe("INVALID_BODY");
     });
 

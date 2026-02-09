@@ -6,7 +6,7 @@
 
 import { describe, test, expect, beforeAll, afterAll, beforeEach } from "bun:test";
 import { createEntitiesClient, getConnection } from "@quailcomp/data";
-import type { Sql } from "@quailcomp/data";
+import type { Sql, Entry } from "@quailcomp/data";
 import { createServer } from "@/server";
 import type { ServerInstance } from "@/server";
 import { AuthService } from "@/auth/service";
@@ -457,7 +457,7 @@ describe("WebSocket", () => {
               }),
             });
 
-            const result = await response.json();
+            const result = (await response.json()) as { book: Entry<BookEntitySnapshot> };
             newBookId = result.book.entityId;
 
             // Subscribe to the newly created book

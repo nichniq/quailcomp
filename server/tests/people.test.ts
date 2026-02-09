@@ -12,7 +12,7 @@
 
 import { describe, test, expect, beforeAll, afterAll } from "bun:test";
 import { getConnection } from "@quailcomp/data";
-import type { Sql } from "@quailcomp/data";
+import type { Sql, Entry } from "@quailcomp/data";
 
 import { Router } from "@/router";
 import { registerPeopleRoutes } from "@/routes/people";
@@ -22,6 +22,13 @@ import type { PersonEntitySnapshot } from "@domains/types/people";
 import { signToken } from "@/auth/jwt";
 import { AuthService } from "@/auth/service";
 import { errorHandler } from "@/middleware/error-handler";
+import type { ErrorResponse } from "@/middleware/error-types";
+
+// Response types for API endpoints
+type PersonEntry = Entry<PersonEntitySnapshot>;
+type PeopleListResponse = { people: PersonEntry[] };
+type PersonResponse = { person: PersonEntry };
+type BooksResponse = { books: unknown[] }; // Books type TBD
 
 let sql: Sql;
 
@@ -111,7 +118,7 @@ describe("People Routes", () => {
       const response = await callRoute("GET", "/people", ctx, request);
 
       expect(response.status).toBe(200);
-      const data = await response.json();
+      const data = (await response.json()) as PeopleListResponse;
       expect(data.people).toBeDefined();
       expect(Array.isArray(data.people)).toBe(true);
     });
@@ -142,13 +149,13 @@ describe("People Routes", () => {
       const response = await callRoute("GET", "/people", ctx, request);
 
       expect(response.status).toBe(200);
-      const data = await response.json();
+      const data = (await response.json()) as PeopleListResponse;
       expect(data.people.length).toBeGreaterThanOrEqual(1);
 
       // Find our test person (compare as numbers)
-      const testPerson = data.people.find((p: any) => p.entityId === Number(person.entity_id));
+      const testPerson = data.people.find((p) => p.entityId === Number(person.entity_id));
       expect(testPerson).toBeDefined();
-      expect(testPerson.data.name).toBe(personData.name);
+      expect(testPerson?.data.name).toBe(personData.name);
 
       // Clean up
       await sql`DELETE FROM entity_access WHERE entity_id = ${person.entity_id}`;
@@ -179,10 +186,10 @@ describe("People Routes", () => {
       const response = await callRoute("GET", "/people", ctx, request);
 
       expect(response.status).toBe(200);
-      const data = await response.json();
+      const data = (await response.json()) as PeopleListResponse;
 
       // Deleted person should not appear in results
-      const deletedPerson = data.people.find((p: any) => p.entityId === person.entity_id);
+      const deletedPerson = data.people.find((p) => p.entityId === person.entity_id);
       expect(deletedPerson).toBeUndefined();
 
       // Clean up
@@ -197,8 +204,8 @@ describe("People Routes", () => {
       const response = await callRoute("GET", "/people", ctx, request);
 
       expect(response.status).toBe(401);
-      const data = await response.json();
-      expect(data.error).toBe("Authentication required");
+      const error = (await response.json()) as ErrorResponse;
+      expect(error.error).toBe("Authentication required");
     });
   });
 
@@ -230,7 +237,7 @@ describe("People Routes", () => {
       const response = await callRoute("GET", `/people/${person.entity_id}`, ctx, request);
 
       expect(response.status).toBe(200);
-      const data = await response.json();
+      const data = (await response.json()) as PersonResponse;
       expect(data.person).toBeDefined();
       expect(data.person.entityId).toBe(Number(person.entity_id));
       expect(data.person.data.name).toBe(personData.name);
@@ -250,9 +257,9 @@ describe("People Routes", () => {
       const response = await callRoute("GET", `/people/${nonExistentId}`, ctx, request);
 
       expect(response.status).toBe(404);
-      const data = await response.json();
+      const error = (await response.json()) as ErrorResponse;
       // Middleware returns generic "Not found" for non-existent entities
-      expect(data.error).toBe("Not found");
+      expect(error.error).toBe("Not found");
     });
 
     test("returns 403 for inaccessible person", async () => {
@@ -305,7 +312,7 @@ describe("People Routes", () => {
       const response = await callRoute("POST", "/people", ctx, request);
 
       expect(response.status).toBe(201);
-      const data = await response.json();
+      const data = (await response.json()) as PersonResponse;
       expect(data.person).toBeDefined();
       expect(data.person.entityId).toBeDefined();
       expect(data.person.data.name).toBe(personData.name);
@@ -331,7 +338,7 @@ describe("People Routes", () => {
       const response = await callRoute("POST", "/people", ctx, request);
 
       expect(response.status).toBe(201);
-      const data = await response.json();
+      const data = (await response.json()) as PersonResponse;
       const personId = data.person.entityId;
 
       // Verify owner access was granted
@@ -364,10 +371,10 @@ describe("People Routes", () => {
       const response = await callRoute("POST", "/people", ctx, request);
 
       expect(response.status).toBe(400);
-      const data = await response.json();
-      expect(data.error).toBe("Invalid person data");
-      expect(data.code).toBe("VALIDATION_ERROR");
-      expect(data.details?.fields).toContainEqual(
+      const error = (await response.json()) as ErrorResponse;
+      expect(error.error).toBe("Invalid person data");
+      expect(error.code).toBe("VALIDATION_ERROR");
+      expect(error.details?.fields).toContainEqual(
         expect.objectContaining({
           field: "name",
           message: "name is required",
@@ -391,10 +398,10 @@ describe("People Routes", () => {
       const response = await callRoute("POST", "/people", ctx, request);
 
       expect(response.status).toBe(400);
-      const data = await response.json();
-      expect(data.error).toBe("Invalid person data");
-      expect(data.code).toBe("VALIDATION_ERROR");
-      expect(data.details?.fields).toContainEqual(
+      const error = (await response.json()) as ErrorResponse;
+      expect(error.error).toBe("Invalid person data");
+      expect(error.code).toBe("VALIDATION_ERROR");
+      expect(error.details?.fields).toContainEqual(
         expect.objectContaining({
           field: "relationships",
           message: "relationships must not be empty",
@@ -413,9 +420,9 @@ describe("People Routes", () => {
       const response = await callRoute("POST", "/people", ctx, request);
 
       expect(response.status).toBe(400);
-      const data = await response.json();
-      expect(data.error).toBe("Invalid JSON body");
-      expect(data.code).toBe("INVALID_BODY");
+      const error = (await response.json()) as ErrorResponse;
+      expect(error.error).toBe("Invalid JSON body");
+      expect(error.code).toBe("INVALID_BODY");
     });
 
     test("requires authentication", async () => {
@@ -454,7 +461,7 @@ describe("People Routes", () => {
       const response = await callRoute("PUT", `/people/${testPersonId}`, ctx, request);
 
       expect(response.status).toBe(200);
-      const data = await response.json();
+      const data = (await response.json()) as PersonResponse;
       expect(data.person.data.email).toBe(updateData.email);
       expect(data.person.data.notes).toBe(updateData.notes);
     });
@@ -481,7 +488,7 @@ describe("People Routes", () => {
       const response = await callRoute("PUT", `/people/${testPersonId}`, ctx, request);
 
       expect(response.status).toBe(200);
-      const data = await response.json();
+      const data = (await response.json()) as PersonResponse;
       expect(data.person.data.name).toBe(originalName); // Name should be unchanged
       expect(data.person.data.email).toBe(updateData.email);
     });
@@ -502,9 +509,9 @@ describe("People Routes", () => {
       const response = await callRoute("PUT", `/people/${nonExistentId}`, ctx, request);
 
       expect(response.status).toBe(404);
-      const data = await response.json();
+      const error = (await response.json()) as ErrorResponse;
       // Middleware returns generic "Not found" for non-existent entities
-      expect(data.error).toBe("Not found");
+      expect(error.error).toBe("Not found");
     });
 
     test("requires write access", async () => {
@@ -573,7 +580,7 @@ describe("People Routes", () => {
       const response = await callRoute("DELETE", `/people/${person.entity_id}`, ctx, request);
 
       expect(response.status).toBe(200);
-      const data = await response.json();
+      const data = (await response.json()) as PersonResponse;
       expect(data.person).toBeDefined();
 
       // Verify soft delete (deleted_at should be set on the latest entry)
@@ -686,7 +693,7 @@ describe("People Routes", () => {
       const response = await callRoute("GET", `/people/${person.entity_id}/books`, ctx, request);
 
       expect(response.status).toBe(200);
-      const data = await response.json();
+      const data = (await response.json()) as BooksResponse;
       expect(data.books).toBeDefined();
       expect(Array.isArray(data.books)).toBe(true);
 
@@ -718,7 +725,7 @@ describe("People Routes", () => {
       const response = await callRoute("GET", `/people/${person.entity_id}/books`, ctx, request);
 
       expect(response.status).toBe(200);
-      const data = await response.json();
+      const data = (await response.json()) as BooksResponse;
       expect(data.books).toEqual([]);
 
       // Clean up

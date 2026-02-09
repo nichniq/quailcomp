@@ -27,6 +27,7 @@ describe('Books Store', () => {
   });
 
   const mockBook = {
+    entryId: 1,
     entityId: 1,
     type: 'book',
     data: {
@@ -34,7 +35,7 @@ describe('Books Store', () => {
       isbn: '9780743273565',
       authors: ['Test Author'],
     },
-    enteredAt: new Date('2024-01-01'),
+    enteredAt: '2024-01-01T00:00:00.000Z',
     deletedAt: null,
   };
 
@@ -166,7 +167,7 @@ describe('Books Store', () => {
       const store = useBooksStore();
       const result = await store.createBook({
         title: 'New Book',
-        isbn: '9780451524935',
+        isbn13: '9780451524935',
       });
 
       expect(result).toBe(true);

@@ -14,6 +14,10 @@ import { describe, test, expect, beforeAll, afterAll } from "bun:test";
 import { createServer, type ServerInstance } from "@/server";
 import { getConnection } from "@quailcomp/data";
 import type { Sql } from "@quailcomp/data";
+import type { AuthResponse } from "@domains/types/authentication";
+import type { ErrorResponse } from "@/middleware/error-types";
+import type { Entry } from "@quailcomp/data";
+import type { BookEntitySnapshot } from "@domains/types/books";
 
 let server: ServerInstance;
 let baseUrl: string;
@@ -39,7 +43,7 @@ async function registerUser(email: string, password: string): Promise<string> {
     body: JSON.stringify({ email, password }),
   });
 
-  const data = await response.json();
+  const data = (await response.json()) as AuthResponse;
   return data.token;
 }
 
@@ -63,10 +67,10 @@ describe("E2E Book Workflow", () => {
 
     expect(response.status).toBe(201);
 
-    const { book } = await response.json();
+    const { book } = (await response.json()) as { book: Entry<BookEntitySnapshot> };
     expect(book.type).toBe("book");
     expect(book.data.title).toBe("Minimal Book");
-    expect(book.data.isbn).toBe(`978000100${timestamp}`);
+    expect((book.data as any).isbn).toBe(`978000100${timestamp}`);
     expect(book.entityId).toBeGreaterThan(0);
     expect(book.enteredAt).toBeDefined();
   });
@@ -97,11 +101,11 @@ describe("E2E Book Workflow", () => {
 
     expect(response.status).toBe(201);
 
-    const { book } = await response.json();
+    const { book } = (await response.json()) as { book: Entry<BookEntitySnapshot> };
     expect(book.data.title).toBe("Complete Book");
-    expect(book.data.authors).toEqual(["Author One", "Author Two"]);
-    expect(book.data.publisher).toBe("Test Publisher");
-    expect(book.data.pageCount).toBe(350);
+    expect((book.data as any).authors).toEqual(["Author One", "Author Two"]);
+    expect((book.data as any).publisher).toBe("Test Publisher");
+    expect((book.data as any).pageCount).toBe(350);
   });
 
   test("create book without authentication fails", async () => {
@@ -132,7 +136,7 @@ describe("E2E Book Workflow", () => {
         isbn: `978000103${timestamp}`,
       }),
     });
-    const { book: created } = await createResponse.json();
+    const { book: created } = (await createResponse.json()) as { book: Entry<BookEntitySnapshot> };
 
     // Get book
     const getResponse = await fetch(`${baseUrl}/books/${created.entityId}`, {
@@ -141,7 +145,7 @@ describe("E2E Book Workflow", () => {
 
     expect(getResponse.status).toBe(200);
 
-    const { book } = await getResponse.json();
+    const { book } = (await getResponse.json()) as { book: Entry<BookEntitySnapshot> };
     expect(book.entityId).toBe(created.entityId);
     expect(book.data.title).toBe("Get Me Book");
   });
@@ -172,7 +176,7 @@ describe("E2E Book Workflow", () => {
         pageCount: 100,
       }),
     });
-    const { book: created } = await createResponse.json();
+    const { book: created } = (await createResponse.json()) as { book: Entry<BookEntitySnapshot> };
 
     // Update book
     const updateResponse = await fetch(`${baseUrl}/books/${created.entityId}`, {
@@ -190,11 +194,11 @@ describe("E2E Book Workflow", () => {
 
     expect(updateResponse.status).toBe(200);
 
-    const { book: updated } = await updateResponse.json();
+    const { book: updated } = (await updateResponse.json()) as { book: Entry<BookEntitySnapshot> };
     expect(updated.data.title).toBe("Updated Title");
-    expect(updated.data.pageCount).toBe(150);
-    expect(updated.data.publisher).toBe("New Publisher");
-    expect(updated.data.isbn).toBe(`978000104${timestamp}`); // Preserved
+    expect((updated.data as any).pageCount).toBe(150);
+    expect((updated.data as any).publisher).toBe("New Publisher");
+    expect((updated.data as any).isbn).toBe(`978000104${timestamp}`); // Preserved
   });
 
   test("update preserves unmodified fields", async () => {
@@ -215,7 +219,7 @@ describe("E2E Book Workflow", () => {
         pageCount: 200,
       }),
     });
-    const { book: created } = await createResponse.json();
+    const { book: created } = (await createResponse.json()) as { book: Entry<BookEntitySnapshot> };
 
     // Update only title
     const updateResponse = await fetch(`${baseUrl}/books/${created.entityId}`, {
@@ -229,12 +233,12 @@ describe("E2E Book Workflow", () => {
       }),
     });
 
-    const { book: updated } = await updateResponse.json();
+    const { book: updated } = (await updateResponse.json()) as { book: Entry<BookEntitySnapshot> };
     expect(updated.data.title).toBe("New Title Only");
-    expect(updated.data.isbn).toBe(`978000105${timestamp}`);
-    expect(updated.data.authors).toEqual(["Author One"]);
-    expect(updated.data.publisher).toBe("Original Publisher");
-    expect(updated.data.pageCount).toBe(200);
+    expect((updated.data as any).isbn).toBe(`978000105${timestamp}`);
+    expect((updated.data as any).authors).toEqual(["Author One"]);
+    expect((updated.data as any).publisher).toBe("Original Publisher");
+    expect((updated.data as any).pageCount).toBe(200);
   });
 
   test("delete book (soft delete)", async () => {
@@ -252,7 +256,7 @@ describe("E2E Book Workflow", () => {
         isbn: `978000106${timestamp}`,
       }),
     });
-    const { book: created } = await createResponse.json();
+    const { book: created } = (await createResponse.json()) as { book: Entry<BookEntitySnapshot> };
 
     // Delete book
     const deleteResponse = await fetch(`${baseUrl}/books/${created.entityId}`, {
@@ -263,7 +267,7 @@ describe("E2E Book Workflow", () => {
     expect(deleteResponse.status).toBe(200);
 
     // Verify book is soft-deleted (has deletedAt)
-    const { book: deleted } = await deleteResponse.json();
+    const { book: deleted } = (await deleteResponse.json()) as { book: Entry<BookEntitySnapshot> };
     expect(deleted.deletedAt).toBeDefined();
     expect(deleted.deletedAt).not.toBeNull();
 
@@ -289,7 +293,7 @@ describe("E2E Book Workflow", () => {
         isbn: `978000107${timestamp}`,
       }),
     });
-    const { book: book1 } = await book1Response.json();
+    const { book: book1 } = (await book1Response.json()) as { book: Entry<BookEntitySnapshot> };
 
     const book2Response = await fetch(`${baseUrl}/books`, {
       method: "POST",
@@ -302,7 +306,7 @@ describe("E2E Book Workflow", () => {
         isbn: `978000108${timestamp}`,
       }),
     });
-    const { book: book2 } = await book2Response.json();
+    const { book: book2 } = (await book2Response.json()) as { book: Entry<BookEntitySnapshot> };
 
     // List books
     const listResponse = await fetch(`${baseUrl}/books`, {
@@ -311,10 +315,10 @@ describe("E2E Book Workflow", () => {
 
     expect(listResponse.status).toBe(200);
 
-    const { books } = await listResponse.json();
+    const { books } = (await listResponse.json()) as { books: Entry<BookEntitySnapshot>[] };
     expect(books.length).toBeGreaterThanOrEqual(2);
-    expect(books.some((b: any) => b.entityId === book1.entityId)).toBe(true);
-    expect(books.some((b: any) => b.entityId === book2.entityId)).toBe(true);
+    expect(books.some((b) => b.entityId === book1.entityId)).toBe(true);
+    expect(books.some((b) => b.entityId === book2.entityId)).toBe(true);
   });
 
   test("list books without authentication fails", async () => {
@@ -339,7 +343,7 @@ describe("E2E Book Workflow", () => {
       }),
     });
     expect(createResponse.status).toBe(201);
-    const { book: created } = await createResponse.json();
+    const { book: created } = (await createResponse.json()) as { book: Entry<BookEntitySnapshot> };
     const bookId = created.entityId;
 
     // Read
@@ -347,7 +351,7 @@ describe("E2E Book Workflow", () => {
       headers: { Authorization: `Bearer ${token}` },
     });
     expect(readResponse.status).toBe(200);
-    const { book: read } = await readResponse.json();
+    const { book: read } = (await readResponse.json()) as { book: Entry<BookEntitySnapshot> };
     expect(read.data.title).toBe("CRUD Test Book");
 
     // Update
@@ -363,9 +367,9 @@ describe("E2E Book Workflow", () => {
       }),
     });
     expect(updateResponse.status).toBe(200);
-    const { book: updated } = await updateResponse.json();
+    const { book: updated } = (await updateResponse.json()) as { book: Entry<BookEntitySnapshot> };
     expect(updated.data.title).toBe("CRUD Updated Book");
-    expect(updated.data.pageCount).toBe(200);
+    expect((updated.data as any).pageCount).toBe(200);
 
     // Delete
     const deleteResponse = await fetch(`${baseUrl}/books/${bookId}`, {
@@ -398,16 +402,23 @@ describe("E2E Book Workflow", () => {
 
     expect(response.status).toBe(200);
 
-    const { results } = await response.json();
+    interface ProviderResult {
+      provider: string;
+      data: unknown | null;
+      error: string | null;
+      responseTime: number;
+    }
+
+    const { results } = (await response.json()) as { results: ProviderResult[] };
     // Should return results from at least one provider
     expect(results.length).toBeGreaterThan(0);
 
     // Check if we got data from any provider
-    const hasResults = results.some((result: any) => result.data !== null);
+    const hasResults = results.some((result) => result.data !== null);
     // Note: This might fail if all APIs are down, but that's expected
     if (hasResults) {
-      const firstResult = results.find((r: any) => r.data !== null);
-      expect(firstResult.data.title).toBeDefined();
+      const firstResult = results.find((r) => r.data !== null);
+      expect((firstResult?.data as { title?: string })?.title).toBeDefined();
     }
   });
 
@@ -441,7 +452,7 @@ describe("E2E Book Workflow", () => {
     // Should return 400 for invalid ISBN format
     expect(response.status).toBe(400);
 
-    const { error, code } = await response.json();
+    const { error, code } = (await response.json()) as ErrorResponse & { code: string };
     expect(error).toBe("Invalid ISBN format");
     expect(code).toBe("INVALID_ISBN");
   });
@@ -461,7 +472,7 @@ describe("E2E Book Workflow", () => {
         isbn: `978000110${timestamp}`,
       }),
     });
-    const { book: created } = await createResponse.json();
+    const { book: created } = (await createResponse.json()) as { book: Entry<BookEntitySnapshot> };
     const bookId = created.entityId;
 
     // Update #1
@@ -488,7 +499,7 @@ describe("E2E Book Workflow", () => {
     const currentResponse = await fetch(`${baseUrl}/books/${bookId}`, {
       headers: { Authorization: `Bearer ${token}` },
     });
-    const { book: current } = await currentResponse.json();
+    const { book: current } = (await currentResponse.json()) as { book: Entry<BookEntitySnapshot> };
     expect(current.data.title).toBe("History Book v3");
 
     // Verify history exists in database
