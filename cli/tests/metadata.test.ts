@@ -47,8 +47,9 @@ const sampleMetadata: BookMetadata = {
   title: "Effective Java",
   authors: ["Joshua Bloch"],
   publisher: "Addison-Wesley Professional",
-  publicationDate: "2017-12-27",
+  publishedDate: "2017-12-27",
   language: "en",
+  source: "google-books",
 };
 
 describe("metadata commands", () => {
@@ -430,6 +431,7 @@ describe("metadata commands", () => {
         isbn: "9780134685991",
         title: "Effective Java",
         authors: ["Joshua Bloch"],
+        source: "google-books",
       };
 
       const mockLookup = vi.fn().mockResolvedValue(minimalMetadata);
