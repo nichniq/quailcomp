@@ -74,7 +74,17 @@ bun run preview
 ### Specs APIs
 
 - `GET /api/specs/combined` - Get combined test specification markdown
-- `GET /api/specs/results` - Get test results summary (if available)
+- `GET /api/specs/results` - Get test results summary
+
+**Test Results:**
+
+Test results are automatically generated and stored in `.devtools/test-results.json` when:
+
+- Running the full test suite (`bun run test`)
+- Running the test reporter manually (`bun run test:report`)
+- DevTools watcher detects changes to test files (auto-generated after 2s debounce)
+
+If no results are available (404 response), run tests first to generate the results file.
 
 ### Coverage APIs
 

@@ -13,6 +13,7 @@ import { checkReadmes } from './tasks/check-readmes'
 import { typecheckDomains } from './tasks/typecheck-domains'
 import { lintStaged } from './tasks/lint-staged'
 import { generateSpecs } from './tasks/specs-from-tests'
+import { runTestReporter } from './tasks/test-reporter'
 
 export const rules: WatchRule[] = [
   {
@@ -53,6 +54,14 @@ export const rules: WatchRule[] = [
     watch: ['**/*.ts', '**/*.tsx', '**/*.js', '**/*.jsx', '**/*.vue', '!**/node_modules/**', '!**/dist/**'],
     run: lintStaged,
     debounce: 500,
+    runOnStart: false,
+  },
+  {
+    name: 'test-results',
+    description: 'Generate test results JSON when test files change',
+    watch: ['**/*.test.ts', '**/*.spec.ts', '!**/node_modules/**', '!**/dist/**'],
+    run: runTestReporter,
+    debounce: 2000,
     runOnStart: false,
   },
 ]

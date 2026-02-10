@@ -140,6 +140,49 @@ Runs ESLint on changed files.
 bun run devtools/watch/tasks/lint-staged.ts
 ```
 
+### test-reporter.ts
+
+Generates test results JSON for the DevTools UI.
+
+**What it does:**
+
+- Watches all `.test.ts` and `.spec.ts` files
+- Runs all test suites when test files change
+- Parses output from both Bun test and Vitest
+- Aggregates results into `.devtools/test-results.json`
+- Provides test statistics for the DevTools UI Test Specs page
+
+**Output:** `.devtools/test-results.json`
+
+**Run manually:**
+
+```bash
+bun run test:report
+```
+
+**Result format:**
+
+```json
+{
+  "timestamp": 1234567890,
+  "summary": {
+    "passed": 120,
+    "failed": 2,
+    "skipped": 5,
+    "total": 127
+  },
+  "files": [
+    {
+      "file": "data/client",
+      "passed": 15,
+      "failed": 0,
+      "skipped": 0,
+      "total": 15
+    }
+  ]
+}
+```
+
 ## Task Structure
 
 All tasks follow a common pattern:

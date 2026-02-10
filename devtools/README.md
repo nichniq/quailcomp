@@ -157,6 +157,14 @@ bun run devtools:ui:serve
 - **Debounce:** 500ms
 - **Output:** Linting errors and warnings
 
+### 5. Test Results Generation
+
+- **Watches:** All `.test.ts` and `.spec.ts` files
+- **Task:** Run all test suites and generate results JSON
+- **Debounce:** 2000ms
+- **Output:** `.devtools/test-results.json` with pass/fail/skip counts
+- **Manual:** Run `bun run test:report` to generate results without running full test suite
+
 ## Adding New Watch Rules
 
 Edit `devtools/watch/rules.ts`:
@@ -257,9 +265,27 @@ Returns test results summary (if available).
     "skipped": 3,
     "total": 45
   },
-  "files": [...]
+  "files": [
+    {
+      "file": "data/client",
+      "passed": 15,
+      "failed": 0,
+      "skipped": 0,
+      "total": 15
+    }
+  ]
 }
 ```
+
+**Generation:**
+
+Test results are automatically generated when:
+
+- Running `bun run test` (includes test:report at the end)
+- Running `bun run test:report` manually
+- DevTools watcher detects changes to test files (auto-runs after 2s debounce)
+
+The results are stored in `.devtools/test-results.json` and updated each time tests run.
 
 ### GET /api/coverage
 
@@ -432,7 +458,6 @@ Planned features (not yet implemented):
 - **Notification System** - Desktop/email notifications for failures
 - **Export Logs** - Download execution logs as JSON/CSV
 - **Enhanced Test Results** - Map individual tests to specification sections
-- **Test Result Storage** - Automatic storage of test runs in `.devtools/test-results.json`
 
 ## Testing
 
